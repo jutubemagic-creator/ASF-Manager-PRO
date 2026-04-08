@@ -1,0 +1,36 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        Title="ASF Manager PRO" Height="600" Width="900">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Левая панель -->
+        <StackPanel Grid.Column="0" Margin="10">
+            <TextBlock Text="Добавить аккаунт" FontSize="16"/>
+
+            <TextBox x:Name="NameBox" Margin="0,5" />
+            <TextBox x:Name="LoginBox" Margin="0,5" />
+            <TextBox x:Name="PasswordBox" Margin="0,5" />
+            <TextBox x:Name="ProxyBox" Margin="0,5" />
+
+            <Button Content="Добавить" Click="Add_Click" Margin="0,10"/>
+            <Button Content="Запустить ботов" Click="Run_Click"/>
+            <Button Content="Открыть профиль" Click="Open_Click"/>
+        </StackPanel>
+
+        <!-- Правая часть -->
+        <ListView x:Name="AccountsList" Grid.Column="1" Margin="10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Имя" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                    <GridViewColumn Header="Логин" DisplayMemberBinding="{Binding Login}" Width="150"/>
+                    <GridViewColumn Header="Прокси" DisplayMemberBinding="{Binding Proxy}" Width="150"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+    </Grid>
+</Window>
