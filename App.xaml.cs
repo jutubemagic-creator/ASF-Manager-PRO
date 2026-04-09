@@ -1,5 +1,8 @@
 using System.Windows;
 
-public partial class App : Application
+namespace ASFManagerPRO
 {
+    public partial class App : Application
+    {
+    }
 }
