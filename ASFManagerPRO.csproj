@@ -4,11 +4,39 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Настройки для сборки одного красивого EXE файла -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <!-- Чтобы index.html и accounts.json автоматически попадали в EXE -->
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Основной пакет для красивого WebView2 (встроенный браузер) -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
+    
+    <!-- Удаляем старые MaterialDesign, они больше не нужны -->
+    <!-- Если хочешь оставить — просто раскомментируй -->
+    <!--
     <PackageReference Include="MaterialDesignThemes" Version="5.0.0" />
     <PackageReference Include="MaterialDesignColors" Version="3.0.0" />
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Все файлы из папки проекта будут автоматически включены в EXE -->
+    <Content Include="index.html" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="accounts.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Если позже добавишь иконку -->
+    <!-- <Content Include="icon.ico" CopyToOutputDirectory="PreserveNewest" /> -->
   </ItemGroup>
 
 </Project>
