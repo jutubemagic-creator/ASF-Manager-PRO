@@ -2,62 +2,67 @@
 <html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>ASF Manager PRO v2.0</title>
+    <title>ASF Manager PRO v2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', system-ui, sans-serif; }
-        .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(16px); }
-        .modal { animation: modalPop 0.3s ease-out; }
-        @keyframes modalPop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); }
+        .modal { animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .table-row { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .table-row:hover { background-color: rgba(0, 180, 255, 0.1); transform: translateX(4px); }
     </style>
 </head>
 <body class="bg-[#0a0a0f] text-gray-100">
     <div class="flex h-screen">
         <!-- Сайдбар -->
-        <div class="w-72 bg-[#111827] border-r border-gray-800 flex flex-col">
-            <div class="p-6 border-b border-gray-800">
-                <h1 class="text-3xl font-bold flex items-center gap-3 text-[#00b4ff]">
-                    <i class="fas fa-robot"></i> ASF PRO
-                </h1>
-                <p class="text-gray-500 text-sm">Мощный локальный менеджер</p>
+        <div class="w-72 bg-[#111827] border-r border-[#1f2937] flex flex-col">
+            <div class="p-6 border-b border-[#1f2937]">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-[#00b4ff] rounded-2xl flex items-center justify-center text-xl">🤖</div>
+                    <h1 class="text-3xl font-bold tracking-tighter">ASF PRO</h1>
+                </div>
+                <p class="text-gray-400 text-sm mt-1">Локальный менеджер аккаунтов</p>
             </div>
 
-            <nav class="flex-1 p-4 space-y-1">
-                <button onclick="switchTab(0)" class="tab-btn active w-full flex items-center gap-3 px-5 py-3 rounded-2xl hover:bg-gray-800 transition">
-                    <i class="fas fa-users"></i> Аккаунты
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchTab(0)" class="tab-btn active w-full text-left px-5 py-4 rounded-3xl flex items-center gap-4 text-lg hover:bg-[#1f2937] transition-all">
+                    <i class="fas fa-users w-5"></i> Аккаунты
                 </button>
-                <button onclick="switchTab(1)" class="tab-btn w-full flex items-center gap-3 px-5 py-3 rounded-2xl hover:bg-gray-800 transition">
-                    <i class="fas fa-box"></i> Инвентарь
+                <button onclick="switchTab(1)" class="tab-btn w-full text-left px-5 py-4 rounded-3xl flex items-center gap-4 text-lg hover:bg-[#1f2937] transition-all">
+                    <i class="fas fa-box w-5"></i> Инвентарь
                 </button>
-                <button onclick="switchTab(2)" class="tab-btn w-full flex items-center gap-3 px-5 py-3 rounded-2xl hover:bg-gray-800 transition">
-                    <i class="fas fa-globe"></i> Прокси
-                </button>
-                <button onclick="switchTab(3)" class="tab-btn w-full flex items-center gap-3 px-5 py-3 rounded-2xl hover:bg-gray-800 transition">
-                    <i class="fas fa-steam-symbol"></i> ASF Управление
+                <button onclick="switchTab(2)" class="tab-btn w-full text-left px-5 py-4 rounded-3xl flex items-center gap-4 text-lg hover:bg-[#1f2937] transition-all">
+                    <i class="fas fa-globe w-5"></i> Прокси
                 </button>
             </nav>
         </div>
 
-        <!-- Основной контент -->
-        <div class="flex-1 overflow-auto" id="mainContent"></div>
+        <!-- Контент -->
+        <div class="flex-1 flex flex-col" id="mainContent"></div>
     </div>
 
-    <!-- Модальное окно редактирования аккаунта -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div class="glass w-full max-w-2xl rounded-3xl p-8 modal">
-            <h2 class="text-2xl font-semibold mb-6" id="modalTitle">Редактировать аккаунт</h2>
+    <!-- Модальное окно -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="glass w-[640px] rounded-3xl p-8 modal shadow-2xl border border-[#00b4ff]/20">
+            <h2 id="modalTitle" class="text-2xl font-semibold mb-6">Новый аккаунт</h2>
+            
             <div class="grid grid-cols-2 gap-4">
-                <input id="login" placeholder="Логин" class="bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3">
-                <input id="password" type="password" placeholder="Пароль" class="bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3">
-                <input id="email" placeholder="Почта" class="bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3">
-                <input id="emailPass" type="password" placeholder="Пароль от почты" class="bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3">
-                <input id="proxy" placeholder="Прокси (ip:port)" class="bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3 col-span-2">
-                <textarea id="mafile" placeholder="Содержимое mafile (JSON)" class="bg-gray-900 border border-gray-700 rounded-3xl px-4 py-3 col-span-2 h-32"></textarea>
+                <input id="login" placeholder="Логин Steam" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg">
+                <input id="password" type="password" placeholder="Пароль" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg">
+                <input id="email" placeholder="Почта" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg">
+                <input id="emailPass" type="password" placeholder="Пароль от почты" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg">
+                <input id="proxy" placeholder="Прокси (ip:port)" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg col-span-2">
+                <input id="pin" placeholder="PIN-код (если есть)" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-2xl px-5 py-4 text-lg">
+                <textarea id="mafile" placeholder="Содержимое mafile (JSON)" rows="4" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-3xl px-5 py-4 col-span-2 font-mono text-sm"></textarea>
+                <textarea id="notes" placeholder="Заметки" rows="2" class="bg-[#1f2937] border border-gray-700 focus:border-[#00b4ff] rounded-3xl px-5 py-4 col-span-2"></textarea>
             </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="saveAccount()" class="flex-1 bg-[#00b4ff] hover:bg-[#0099ff] py-4 rounded-2xl font-medium">Сохранить</button>
-                <button onclick="closeModal()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-4 rounded-2xl">Отмена</button>
+
+            <div class="flex gap-4 mt-8">
+                <button onclick="saveAccount()" class="flex-1 bg-[#00b4ff] hover:bg-[#00d4ff] text-black font-semibold py-5 rounded-3xl text-xl transition-all">Сохранить аккаунт</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-5 rounded-3xl text-xl">Отмена</button>
             </div>
         </div>
     </div>
@@ -66,60 +71,68 @@
     let accounts = [];
     let currentEditId = null;
 
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-gray-800'));
-        document.querySelectorAll('.tab-btn')[tab].classList.add('active', 'bg-gray-800');
-        if (tab === 0) renderAccounts();
+    function switchTab(n) {
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active', 'bg-[#1f2937]'));
+        document.querySelectorAll('.tab-btn')[n].classList.add('active', 'bg-[#1f2937]');
+        if (n === 0) renderAccounts();
     }
 
     function renderAccounts() {
+        const totalBalance = accounts.reduce((sum, a) => sum + parseFloat(a.Balance || 0), 0);
+        
         let html = `
         <div class="p-8">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-4xl font-semibold">Аккаунты <span class="text-gray-500 text-2xl">(${accounts.length})</span></h2>
-                <button onclick="addNewAccount()" 
-                        class="bg-[#00b4ff] hover:bg-[#0099ff] px-8 py-4 rounded-2xl flex items-center gap-3 text-lg font-medium">
-                    <i class="fas fa-plus"></i> Новый аккаунт
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h1 class="text-5xl font-semibold tracking-tighter">Аккаунты</h1>
+                    <p class="text-gray-400">${accounts.length} аккаунтов • ${totalBalance.toFixed(0)} ₽ общий баланс</p>
+                </div>
+                <button onclick="addNewAccount()" class="flex items-center gap-3 bg-[#00b4ff] hover:bg-[#00d4ff] text-black px-8 py-4 rounded-3xl text-xl font-semibold">
+                    <i class="fas fa-plus"></i> Добавить аккаунт
                 </button>
             </div>
 
-            <div class="bg-[#111827] rounded-3xl overflow-hidden border border-gray-800">
+            <div class="bg-[#111827] rounded-3xl border border-gray-700 overflow-hidden">
                 <table class="w-full">
-                    <thead>
-                        <tr class="text-left text-gray-400 border-b border-gray-800">
-                            <th class="p-6">Логин</th>
-                            <th class="p-6">Статус</th>
-                            <th class="p-6">Прокси</th>
-                            <th class="p-6">Баланс</th>
-                            <th class="p-6 text-right">Действия</th>
+                    <thead class="bg-[#1a2333]">
+                        <tr class="text-gray-400 text-sm uppercase tracking-widest">
+                            <th class="px-8 py-5 text-left">Логин</th>
+                            <th class="px-8 py-5 text-left">Статус</th>
+                            <th class="px-8 py-5 text-left">Прокси</th>
+                            <th class="px-8 py-5 text-left">PIN</th>
+                            <th class="px-8 py-5 text-left">Баланс</th>
+                            <th class="px-8 py-5 text-left">Дата создания</th>
+                            <th class="px-8 py-5 text-right">Действия</th>
                         </tr>
                     </thead>
-                    <tbody id="accountsTableBody"></tbody>
+                    <tbody id="tableBody" class="divide-y divide-gray-700"></tbody>
                 </table>
             </div>
         </div>`;
-
+        
         document.getElementById('mainContent').innerHTML = html;
         renderTable();
     }
 
     function renderTable() {
-        const tbody = document.getElementById('accountsTableBody');
+        const tbody = document.getElementById('tableBody');
         tbody.innerHTML = accounts.map(acc => `
-            <tr class="border-b border-gray-800 hover:bg-gray-900/50 transition">
-                <td class="p-6 font-medium">${acc.Login}</td>
-                <td class="p-6">
-                    <span class="px-4 py-1.5 rounded-full text-sm ${acc.Status === 'Online' ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/30 text-gray-400'}">
+            <tr class="table-row">
+                <td class="px-8 py-6 font-medium">${acc.Login}</td>
+                <td class="px-8 py-6">
+                    <span class="inline-flex px-4 py-1 rounded-2xl text-sm ${acc.Status === 'Online' ? 'bg-green-400/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}">
                         ${acc.Status}
                     </span>
                 </td>
-                <td class="p-6 text-gray-400">${acc.Proxy || '—'}</td>
-                <td class="p-6 font-mono">${acc.Balance}</td>
-                <td class="p-6 text-right space-x-2">
-                    <button onclick="runASF('${acc.Id}')" class="px-5 py-2 bg-green-600 hover:bg-green-500 rounded-xl text-sm">Запустить ASF</button>
-                    <button onclick="openAntiDetect('${acc.Id}')" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm">Браузер</button>
-                    <button onclick="editAccount('${acc.Id}')" class="px-5 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm">Редактировать</button>
-                    <button onclick="deleteAccount('${acc.Id}')" class="px-5 py-2 bg-red-600/80 hover:bg-red-600 rounded-xl text-sm">Удалить</button>
+                <td class="px-8 py-6 text-gray-400">${acc.Proxy || '—'}</td>
+                <td class="px-8 py-6 font-mono">${acc.Pin || '—'}</td>
+                <td class="px-8 py-6 font-medium">${acc.Balance}</td>
+                <td class="px-8 py-6 text-gray-400">${new Date(acc.CreatedAt).toLocaleDateString('ru-RU')}</td>
+                <td class="px-8 py-6 text-right space-x-2">
+                    <button onclick="runASF('${acc.Id}')" class="px-6 py-3 bg-green-600 hover:bg-green-500 rounded-2xl text-sm">ASF</button>
+                    <button onclick="openBrowser('${acc.Id}')" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl text-sm">Браузер</button>
+                    <button onclick="editAccount('${acc.Id}')" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-2xl text-sm">Изменить</button>
+                    <button onclick="deleteAccount('${acc.Id}')" class="px-6 py-3 bg-red-600/80 hover:bg-red-600 rounded-2xl text-sm">Удалить</button>
                 </td>
             </tr>
         `).join('');
@@ -127,13 +140,15 @@
 
     function addNewAccount() {
         currentEditId = null;
-        document.getElementById('modalTitle').textContent = 'Новый аккаунт';
+        document.getElementById('modalTitle').innerHTML = 'Новый аккаунт';
         document.getElementById('login').value = `acc_${Date.now().toString().slice(-6)}`;
         document.getElementById('password').value = '';
         document.getElementById('email').value = '';
         document.getElementById('emailPass').value = '';
         document.getElementById('proxy').value = '';
+        document.getElementById('pin').value = '';
         document.getElementById('mafile').value = '';
+        document.getElementById('notes').value = '';
         document.getElementById('modal').classList.remove('hidden');
     }
 
@@ -141,35 +156,40 @@
         const acc = accounts.find(a => a.Id === id);
         if (!acc) return;
         currentEditId = id;
-        document.getElementById('modalTitle').textContent = 'Редактировать аккаунт';
+        document.getElementById('modalTitle').innerHTML = `Редактировать <span class="text-[#00b4ff]">${acc.Login}</span>`;
         document.getElementById('login').value = acc.Login;
-        document.getElementById('password').value = acc.Password;
-        document.getElementById('email').value = acc.Email;
-        document.getElementById('emailPass').value = acc.EmailPass;
-        document.getElementById('proxy').value = acc.Proxy;
+        document.getElementById('password').value = acc.Password || '';
+        document.getElementById('email').value = acc.Email || '';
+        document.getElementById('emailPass').value = acc.EmailPass || '';
+        document.getElementById('proxy').value = acc.Proxy || '';
+        document.getElementById('pin').value = acc.Pin || '';
         document.getElementById('mafile').value = acc.MaFile || '';
+        document.getElementById('notes').value = acc.Notes || '';
         document.getElementById('modal').classList.remove('hidden');
     }
 
     function saveAccount() {
-        const data = {
-            Login: document.getElementById('login').value,
+        const newData = {
+            Login: document.getElementById('login').value.trim(),
             Password: document.getElementById('password').value,
             Email: document.getElementById('email').value,
             EmailPass: document.getElementById('emailPass').value,
             Proxy: document.getElementById('proxy').value,
+            Pin: document.getElementById('pin').value,
             MaFile: document.getElementById('mafile').value,
+            Notes: document.getElementById('notes').value,
             Status: "Offline",
             Balance: "0 ₽"
         };
 
         if (currentEditId) {
             const acc = accounts.find(a => a.Id === currentEditId);
-            Object.assign(acc, data);
+            Object.assign(acc, newData);
+            acc.UpdatedAt = new Date().toISOString();
         } else {
-            accounts.push({
+            accounts.unshift({
                 Id: crypto.randomUUID(),
-                ...data,
+                ...newData,
                 CreatedAt: new Date().toISOString(),
                 UpdatedAt: new Date().toISOString()
             });
@@ -188,12 +208,12 @@
         window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: id }));
     }
 
-    function openAntiDetect(id) {
+    function openBrowser(id) {
         window.chrome.webview.postMessage(JSON.stringify({ action: "openBrowser", data: id }));
     }
 
     function deleteAccount(id) {
-        if (confirm("Удалить аккаунт?")) {
+        if (confirm('Удалить этот аккаунт навсегда?')) {
             accounts = accounts.filter(a => a.Id !== id);
             saveToCSharp();
             renderAccounts();
@@ -211,7 +231,6 @@
         }
     };
 
-    // Запуск
     window.onload = () => {
         window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
     };
