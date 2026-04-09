@@ -1,100 +1,18 @@
-<Window x:Class="MainWindow"
+<Window x:Class="ASFManagerPRO.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="ASF Manager PRO"
-        Height="750"
-        Width="1400">
+        xmlns:web="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="ASF Manager PRO" 
+        Height="820" 
+        Width="1480"
+        WindowStartupLocation="CenterScreen"
+        Background="#0A0A0F"
+        FontFamily="Segoe UI">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- ЛЕВАЯ ПАНЕЛЬ (АККАУНТЫ) -->
-        <DockPanel Grid.Column="0">
-
-            <TextBlock Text="Аккаунты"
-                       FontSize="20"
-                       Margin="10"/>
-
-            <ListBox x:Name="AccountsList"
-                     DisplayMemberPath="Login"
-                     SelectionChanged="SelectAccount"
-                     Margin="10"/>
-
-            <Button Content="➕ Добавить"
-                    Click="Add_Click"
-                    Margin="10"/>
-
-        </DockPanel>
-
-        <!-- ПРАВАЯ ПАНЕЛЬ -->
-        <Grid Grid.Column="1" Margin="15">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="120"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- ВЕРХ -->
-            <StackPanel Orientation="Horizontal">
-
-                <Button Content="🚀 Запуск"
-                        Click="Run_Click"
-                        Margin="5"/>
-
-                <Button Content="🌐 Открыть профиль"
-                        Click="Open_Click"
-                        Margin="5"/>
-
-                <Button Content="💰 Обновить баланс"
-                        Margin="5"/>
-
-                <Button Content="🎒 Инвентарь"
-                        Margin="5"/>
-
-            </StackPanel>
-
-            <!-- ОСНОВНАЯ ПАНЕЛЬ -->
-            <Grid Grid.Row="1">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- ЛЕВАЯ ИНФА -->
-                <StackPanel Margin="10">
-
-                    <TextBlock Text="Информация" FontSize="18"/>
-
-                    <TextBox x:Name="LoginBox" Margin="5" />
-                    <TextBox x:Name="PasswordBox" Margin="5"/>
-                    <TextBox x:Name="EmailBox" Margin="5"/>
-                    <TextBox x:Name="EmailPassBox" Margin="5"/>
-
-                    <TextBox x:Name="SteamGuardBox" Margin="5"/>
-                    <TextBox x:Name="MaFileBox" Margin="5"/>
-
-                </StackPanel>
-
-                <!-- ПРАВАЯ ИНФА -->
-                <StackPanel Grid.Column="1" Margin="10">
-
-                    <TextBlock Text="Система" FontSize="18"/>
-
-                    <TextBox x:Name="ProxyBox" Margin="5"/>
-                    <TextBox x:Name="StatusBox" Margin="5"/>
-                    <TextBox x:Name="BalanceBox" Margin="5"/>
-
-                    <TextBox x:Name="CreatedBox" Margin="5"/>
-                    <TextBox x:Name="UpdatedBox" Margin="5"/>
-
-                </StackPanel>
-
-            </Grid>
-        </Grid>
+        <web:WebView2 x:Name="webView" 
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Stretch"
+                      Source="about:blank" />
     </Grid>
 </Window>
