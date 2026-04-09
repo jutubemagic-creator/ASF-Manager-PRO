@@ -13,7 +13,7 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
 
     - name: Publish
       run: dotnet publish -c Release -r win-x64 --self-contained true
@@ -22,4 +22,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ASF-PRO
-        path: bin/Release/net7.0-windows/win-x64/publish/
+        path: bin/Release/net8.0-windows/win-x64/publish/
