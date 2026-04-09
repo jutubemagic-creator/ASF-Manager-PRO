@@ -31,10 +31,6 @@ namespace ASFManagerPRO
                 string html = await File.ReadAllTextAsync(htmlPath);
                 webView.NavigateToString(html);
             }
-            else
-            {
-                MessageBox.Show("Файл index.html не найден!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
 
         private void WebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -55,9 +51,9 @@ namespace ASFManagerPRO
                     case "getAccounts":
                         SendToJS("accounts", Accounts);
                         break;
-                    case "openBrowser":
                     case "runASF":
-                        MessageBox.Show($"Команда {msg.Action} для: {msg.Data}");
+                    case "openBrowser":
+                        MessageBox.Show($"✅ Выполнена команда: {msg.Action}\nАккаунт ID: {msg.Data}\n\n(Здесь позже будет реальный запуск)");
                         break;
                 }
             }
@@ -97,6 +93,8 @@ namespace ASFManagerPRO
         public string SteamGuard { get; set; } = "";
         public string MaFile { get; set; } = "";
         public string Proxy { get; set; } = "";
+        public string Pin { get; set; } = "";
+        public string Notes { get; set; } = "";
         public string Status { get; set; } = "Offline";
         public string Balance { get; set; } = "0 ₽";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
