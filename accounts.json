@@ -1,0 +1,16 @@
+[
+  {
+    "Id": "00000000-0000-0000-0000-000000000001",
+    "Login": "example_account",
+    "Password": "password123",
+    "Email": "example@mail.com",
+    "EmailPass": "emailpass123",
+    "SteamGuard": "",
+    "MaFile": "",
+    "Proxy": "123.45.67.89:8080",
+    "Status": "Offline",
+    "Balance": "0 ₽",
+    "CreatedAt": "2026-04-01T12:00:00",
+    "UpdatedAt": "2026-04-09T22:00:00"
+  }
+]
