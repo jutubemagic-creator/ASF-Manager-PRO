@@ -44,33 +44,30 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                switch (msg?.Action)
+                if (msg == null) return;
+
+                switch (msg.Action)
                 {
                     case "saveAccounts":
-                        Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data);
+                        Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data) ?? new();
                         SaveAccounts();
                         break;
                     case "getAccounts":
                         SendToJS("accounts", Accounts);
                         break;
                     case "openBrowser":
-                        MessageBox.Show($"Открываем антидетект браузер для {msg.Data}");
-                        // Здесь можно запускать puppeteer или внешний браузер
-                        break;
                     case "runASF":
-                        MessageBox.Show($"Запуск ASF для аккаунта: {msg.Data}");
+                        MessageBox.Show($"Команда {msg.Action} для: {msg.Data}");
                         break;
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка обработки сообщения: " + ex.Message);
-            }
+            catch { }
         }
 
         private void SendToJS(string type, object data)
         {
-            string json = JsonSerializer.Serialize(new { type, data });
+            var message = new { type, data };
+            string json = JsonSerializer.Serialize(message);
             webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
         }
 
@@ -108,7 +105,7 @@ namespace ASFManagerPRO
 
     public class WebMessage
     {
-        public string Action { get; set; }
-        public string Data { get; set; }
+        public string Action { get; set; } = "";
+        public string Data { get; set; } = "";
     }
 }
