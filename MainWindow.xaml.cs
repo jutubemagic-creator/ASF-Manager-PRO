@@ -2,95 +2,85 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Web.WebView2.Core;
 
-public partial class MainWindow : Window
+namespace ASFManagerPRO
 {
-    public ObservableCollection<Account> Accounts = new();
-    private string path = "accounts.json";
-
-    private Account selected;
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
-        Load();
-        AccountsList.ItemsSource = Accounts;
-    }
+        public ObservableCollection<Account> Accounts { get; set; } = new();
+        private readonly string dataPath = "accounts.json";
 
-    private void Add_Click(object sender, RoutedEventArgs e)
-    {
-        var acc = new Account
+        public MainWindow()
         {
-            Login = "new_login",
-            CreatedAt = DateTime.Now.ToString(),
-            UpdatedAt = DateTime.Now.ToString(),
-            Status = "Оффлайн"
-        };
+            InitializeComponent();
+            LoadAccounts();
+            InitializeWebView();
+        }
 
-        Accounts.Add(acc);
-        Save();
-    }
-
-    private void SelectAccount(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    {
-        selected = AccountsList.SelectedItem as Account;
-
-        if (selected == null) return;
-
-        LoginBox.Text = selected.Login;
-        PasswordBox.Text = selected.Password;
-        EmailBox.Text = selected.Email;
-        EmailPassBox.Text = selected.EmailPass;
-        SteamGuardBox.Text = selected.SteamGuard;
-        MaFileBox.Text = selected.MaFile;
-
-        ProxyBox.Text = selected.Proxy;
-        StatusBox.Text = selected.Status;
-        BalanceBox.Text = selected.Balance;
-
-        CreatedBox.Text = selected.CreatedAt;
-        UpdatedBox.Text = selected.UpdatedAt;
-    }
-
-    private void Run_Click(object sender, RoutedEventArgs e)
-    {
-        MessageBox.Show("Запуск аккаунта");
-    }
-
-    private void Open_Click(object sender, RoutedEventArgs e)
-    {
-        MessageBox.Show("Антидетект браузер (будет дальше)");
-    }
-
-    private void Save()
-    {
-        File.WriteAllText(path, JsonSerializer.Serialize(Accounts));
-    }
-
-    private void Load()
-    {
-        if (File.Exists(path))
+        private async void InitializeWebView()
         {
-            var data = File.ReadAllText(path);
-            Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(data) ?? new();
+            await webView.EnsureCoreWebView2Async(null);
+            
+            // Передаём данные в JavaScript
+            webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
+            
+            string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html");
+            if (File.Exists(htmlPath))
+            {
+                string html = File.ReadAllText(htmlPath);
+                webView.NavigateToString(html);
+            }
+            else
+            {
+                MessageBox.Show("index.html не найден в папке с exe!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void WebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            try
+            {
+                string message = e.TryGetWebMessageAsString();
+                // Здесь будем обрабатывать команды от JS (добавление, сохранение и т.д.)
+                // Пока просто показываем
+                MessageBox.Show("Получено от JS: " + message);
+            }
+            catch { }
+        }
+
+        private void LoadAccounts()
+        {
+            if (File.Exists(dataPath))
+            {
+                string json = File.ReadAllText(dataPath);
+                Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json) ?? new();
+            }
+        }
+
+        public void SaveAccounts()
+        {
+            string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(dataPath, json);
         }
     }
-}
 
-public class Account
-{
-    public string Login { get; set; }
-    public string Password { get; set; }
-    public string Email { get; set; }
-    public string EmailPass { get; set; }
-    public string SteamGuard { get; set; }
-    public string MaFile { get; set; }
-
-    public string Proxy { get; set; }
-    public string Status { get; set; }
-    public string Balance { get; set; }
-
-    public string CreatedAt { get; set; }
-    public string UpdatedAt { get; set; }
+    // Класс аккаунта (расширенный)
+    public class Account
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Login { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string EmailPass { get; set; } = "";
+        public string SteamGuard { get; set; } = "";
+        public string MaFile { get; set; } = "";
+        public string Proxy { get; set; } = "";
+        public string Status { get; set; } = "Offline";
+        public string Balance { get; set; } = "0 ₽";
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    }
 }
