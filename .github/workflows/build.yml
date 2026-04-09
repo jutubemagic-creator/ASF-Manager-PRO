@@ -2,7 +2,7 @@ name: Build ASF Manager PRO
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -10,21 +10,23 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore packages
+        run: dotnet restore ASFManagerPRO.csproj
 
-      - name: Publish single EXE
-        run: dotnet publish -c Release -p:PublishSingleFile=true -p:SelfContained=true -p:RuntimeIdentifier=win-x64 --no-self-contained false -o publish
+      - name: Publish single-file EXE
+        run: dotnet publish ASFManagerPRO.csproj -c Release -p:PublishSingleFile=true -p:SelfContained=true -p:RuntimeIdentifier=win-x64 -o publish --verbosity normal
 
-      - name: Upload EXE
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: ASF-Manager-PRO
           path: publish/ASFManagerPRO.exe
+          if-no-files-found: error
