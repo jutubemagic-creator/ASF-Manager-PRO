@@ -12,7 +12,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     
-    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <!-- Убрали иконку, чтобы не было ошибки -->
     <Version>2.0.0</Version>
   </PropertyGroup>
 
