@@ -12,7 +12,6 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     
-    <!-- Убрали иконку, чтобы не было ошибки -->
     <Version>2.0.0</Version>
   </PropertyGroup>
 
