@@ -17,25 +17,23 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             LoadAccounts();
-            InitializeWebView();
+            InitializeAsync();
         }
 
-        private async void InitializeWebView()
+        private async void InitializeAsync()
         {
             await webView.EnsureCoreWebView2Async(null);
-            
-            // Передаём данные в JavaScript
             webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
-            
+
             string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html");
             if (File.Exists(htmlPath))
             {
-                string html = File.ReadAllText(htmlPath);
+                string html = await File.ReadAllTextAsync(htmlPath);
                 webView.NavigateToString(html);
             }
             else
             {
-                MessageBox.Show("index.html не найден в папке с exe!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Файл index.html не найден!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -43,12 +41,37 @@ namespace ASFManagerPRO
         {
             try
             {
-                string message = e.TryGetWebMessageAsString();
-                // Здесь будем обрабатывать команды от JS (добавление, сохранение и т.д.)
-                // Пока просто показываем
-                MessageBox.Show("Получено от JS: " + message);
+                string json = e.TryGetWebMessageAsString();
+                var msg = JsonSerializer.Deserialize<WebMessage>(json);
+
+                switch (msg?.Action)
+                {
+                    case "saveAccounts":
+                        Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data);
+                        SaveAccounts();
+                        break;
+                    case "getAccounts":
+                        SendToJS("accounts", Accounts);
+                        break;
+                    case "openBrowser":
+                        MessageBox.Show($"Открываем антидетект браузер для {msg.Data}");
+                        // Здесь можно запускать puppeteer или внешний браузер
+                        break;
+                    case "runASF":
+                        MessageBox.Show($"Запуск ASF для аккаунта: {msg.Data}");
+                        break;
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка обработки сообщения: " + ex.Message);
+            }
+        }
+
+        private void SendToJS(string type, object data)
+        {
+            string json = JsonSerializer.Serialize(new { type, data });
+            webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
         }
 
         private void LoadAccounts()
@@ -60,14 +83,13 @@ namespace ASFManagerPRO
             }
         }
 
-        public void SaveAccounts()
+        private void SaveAccounts()
         {
             string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(dataPath, json);
         }
     }
 
-    // Класс аккаунта (расширенный)
     public class Account
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -82,5 +104,11 @@ namespace ASFManagerPRO
         public string Balance { get; set; } = "0 ₽";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    }
+
+    public class WebMessage
+    {
+        public string Action { get; set; }
+        public string Data { get; set; }
     }
 }
