@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
@@ -8,23 +9,22 @@ public partial class MainWindow : Window
     public ObservableCollection<Account> Accounts = new();
     private string path = "accounts.json";
 
+    private Account selected;
+
     public MainWindow()
     {
         InitializeComponent();
         Load();
-        AccountsGrid.ItemsSource = Accounts;
+        AccountsList.ItemsSource = Accounts;
     }
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
         var acc = new Account
         {
-            Name = NameBox.Text,
-            Login = LoginBox.Text,
-            Password = PasswordBox.Text,
-            Email = EmailBox.Text,
-            EmailPass = EmailPassBox.Text,
-            Proxy = ProxyBox.Text,
+            Login = "new_login",
+            CreatedAt = DateTime.Now.ToString(),
+            UpdatedAt = DateTime.Now.ToString(),
             Status = "Оффлайн"
         };
 
@@ -32,23 +32,35 @@ public partial class MainWindow : Window
         Save();
     }
 
-    private void Delete_Click(object sender, RoutedEventArgs e)
+    private void SelectAccount(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (AccountsGrid.SelectedItem is Account acc)
-        {
-            Accounts.Remove(acc);
-            Save();
-        }
+        selected = AccountsList.SelectedItem as Account;
+
+        if (selected == null) return;
+
+        LoginBox.Text = selected.Login;
+        PasswordBox.Text = selected.Password;
+        EmailBox.Text = selected.Email;
+        EmailPassBox.Text = selected.EmailPass;
+        SteamGuardBox.Text = selected.SteamGuard;
+        MaFileBox.Text = selected.MaFile;
+
+        ProxyBox.Text = selected.Proxy;
+        StatusBox.Text = selected.Status;
+        BalanceBox.Text = selected.Balance;
+
+        CreatedBox.Text = selected.CreatedAt;
+        UpdatedBox.Text = selected.UpdatedAt;
     }
 
     private void Run_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Будет запуск ботов");
+        MessageBox.Show("Запуск аккаунта");
     }
 
     private void Open_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Будет антидетект браузер");
+        MessageBox.Show("Антидетект браузер (будет дальше)");
     }
 
     private void Save()
@@ -61,18 +73,24 @@ public partial class MainWindow : Window
         if (File.Exists(path))
         {
             var data = File.ReadAllText(path);
-            Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(data);
+            Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(data) ?? new();
         }
     }
 }
 
 public class Account
 {
-    public string Name { get; set; }
     public string Login { get; set; }
     public string Password { get; set; }
     public string Email { get; set; }
     public string EmailPass { get; set; }
+    public string SteamGuard { get; set; }
+    public string MaFile { get; set; }
+
     public string Proxy { get; set; }
     public string Status { get; set; }
+    public string Balance { get; set; }
+
+    public string CreatedAt { get; set; }
+    public string UpdatedAt { get; set; }
 }
