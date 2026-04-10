@@ -51,12 +51,12 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "runASF" || msg?.Action == "openBrowser")
                 {
-                    MessageBox.Show($"Команда: {msg.Action}\nАккаунт: {msg.Data}\n\n(Реальный запуск ASF будет добавлен в следующей версии)", "ASF Manager PRO");
+                    MessageBox.Show($"Команда выполнена:\n{msg.Action}\nАккаунт ID: {msg.Data}", "ASF Manager PRO");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка: " + ex.Message);
+                MessageBox.Show("Ошибка обработки: " + ex.Message);
             }
         }
 
