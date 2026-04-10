@@ -17,18 +17,21 @@ namespace ASFManagerPRO
     {
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
-        private string exeFolder;
+        private string appDataFolder;
 
         public MainWindow()
         {
             InitializeComponent();
             
-            // Получаем папку, где находится EXE файл
-            exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            if (string.IsNullOrEmpty(exeFolder))
-                exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+            // СОХРАНЯЕМ В ПАПКУ ДОКУМЕНТОВ - ЭТО НАДЁЖНОЕ МЕСТО!
+            string documentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            appDataFolder = Path.Combine(documentsFolder, "ASF_Manager_PRO");
             
-            dataPath = Path.Combine(exeFolder, "accounts.json");
+            // Создаём папку если её нет
+            if (!Directory.Exists(appDataFolder))
+                Directory.CreateDirectory(appDataFolder);
+            
+            dataPath = Path.Combine(appDataFolder, "accounts.json");
             
             LoadAccounts();
             Accounts.CollectionChanged += OnAccountsChanged;
@@ -44,12 +47,20 @@ namespace ASFManagerPRO
         {
             try
             {
-                // ПРОСТОЙ ПОДХОД - без указания папки, WebView2 сам создаст папку рядом с EXE
-                await webView.EnsureCoreWebView2Async();
+                // Папка для WebView2 тоже в Documents
+                string webViewDataPath = Path.Combine(appDataFolder, "WebView2Data");
+                if (!Directory.Exists(webViewDataPath))
+                    Directory.CreateDirectory(webViewDataPath);
+                
+                var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
+                await webView.EnsureCoreWebView2Async(env);
                 
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
 
+                // index.html лежит рядом с EXE
+                string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string htmlPath = Path.Combine(exeFolder, "index.html");
+                
                 if (File.Exists(htmlPath))
                 {
                     string html = await File.ReadAllTextAsync(htmlPath);
@@ -165,6 +176,7 @@ namespace ASFManagerPRO
         {
             try
             {
+                string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (File.Exists(asfPath))
@@ -205,6 +217,7 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
+            string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
@@ -316,11 +329,11 @@ namespace ASFManagerPRO
                         foreach (var acc in loaded)
                             Accounts.Add(acc);
                     }
-                    Console.WriteLine($"Загружено аккаунтов: {Accounts.Count} из {dataPath}");
+                    MessageBox.Show($"Загружено аккаунтов: {Accounts.Count}\nПуть: {dataPath}", "Загрузка", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    Console.WriteLine($"Файл не найден: {dataPath}");
+                    MessageBox.Show($"Файл с аккаунтами будет создан по пути:\n{dataPath}", "Первая загрузка", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
