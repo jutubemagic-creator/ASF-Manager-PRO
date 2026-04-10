@@ -17,23 +17,22 @@ namespace ASFManagerPRO
     {
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
-        private string webViewDataPath;
+        private string exeFolder;
 
         public MainWindow()
         {
             InitializeComponent();
             
-            // Получаем реальную папку, где находится EXE файл
-            string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            // Получаем папку, где находится EXE файл
+            exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (string.IsNullOrEmpty(exeFolder))
                 exeFolder = AppDomain.CurrentDomain.BaseDirectory;
             
             dataPath = Path.Combine(exeFolder, "accounts.json");
-            webViewDataPath = Path.Combine(exeFolder, "WebView2Data");
             
             LoadAccounts();
             Accounts.CollectionChanged += OnAccountsChanged;
-            _ = InitializeWebViewAsync();
+            InitializeWebView();
         }
 
         private void OnAccountsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -41,19 +40,16 @@ namespace ASFManagerPRO
             SaveAccounts();
         }
 
-        private async Task InitializeWebViewAsync()
+        private async void InitializeWebView()
         {
             try
             {
-                if (!Directory.Exists(webViewDataPath))
-                    Directory.CreateDirectory(webViewDataPath);
-                    
-                var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
-                await webView.EnsureCoreWebView2Async(env);
+                // ПРОСТОЙ ПОДХОД - без указания папки, WebView2 сам создаст папку рядом с EXE
+                await webView.EnsureCoreWebView2Async();
                 
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
 
-                string htmlPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "index.html");
+                string htmlPath = Path.Combine(exeFolder, "index.html");
                 if (File.Exists(htmlPath))
                 {
                     string html = await File.ReadAllTextAsync(htmlPath);
@@ -169,7 +165,6 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (File.Exists(asfPath))
@@ -210,7 +205,6 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
@@ -303,7 +297,7 @@ namespace ASFManagerPRO
             try
             {
                 string json = JsonSerializer.Serialize(new { type, data });
-                webView.CoreWebView2.ExecuteScriptAsync($"if(window.receiveFromCSharp) window.receiveFromCSharp({json});");
+                webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
             }
             catch { }
         }
@@ -322,11 +316,16 @@ namespace ASFManagerPRO
                         foreach (var acc in loaded)
                             Accounts.Add(acc);
                     }
+                    Console.WriteLine($"Загружено аккаунтов: {Accounts.Count} из {dataPath}");
+                }
+                else
+                {
+                    Console.WriteLine($"Файл не найден: {dataPath}");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки аккаунтов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка загрузки аккаунтов: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -336,10 +335,11 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
+                Console.WriteLine($"Сохранено аккаунтов: {Accounts.Count} в {dataPath}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения аккаунтов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка сохранения аккаунтов: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }
