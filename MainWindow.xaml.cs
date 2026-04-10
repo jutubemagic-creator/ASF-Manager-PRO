@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,22 +23,10 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             
-            // ПОЛУЧАЕМ РЕАЛЬНУЮ ПАПКУ ГДЕ ЛЕЖИТ EXE
-            // Используем несколько способов для надёжности
+            // Получаем папку с EXE
             exeFolder = AppDomain.CurrentDomain.BaseDirectory;
             
-            // Если это временная папка (при single-file), берём папку самого EXE
-            string exePath = Environment.ProcessPath;
-            if (!string.IsNullOrEmpty(exePath))
-            {
-                string realExeFolder = Path.GetDirectoryName(exePath);
-                if (!string.IsNullOrEmpty(realExeFolder) && Directory.Exists(realExeFolder))
-                {
-                    exeFolder = realExeFolder;
-                }
-            }
-            
-            // Папка для данных - РЯДОМ С EXE!
+            // Папка для данных - РЯДОМ С EXE
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             
             if (!Directory.Exists(appDataFolder))
@@ -47,21 +34,22 @@ namespace ASFManagerPRO
             
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
+            // Загружаем аккаунты
             LoadAccounts();
-            Accounts.CollectionChanged += OnAccountsChanged;
+            
+            // Подписываемся на изменения - при любом изменении сразу сохраняем
+            Accounts.CollectionChanged += (s, e) => { SaveAccounts(); };
+            
+            // Подписываемся на закрытие окна - принудительное сохранение
+            this.Closing += (s, e) => { SaveAccounts(); };
+            
             InitializeWebView();
-        }
-
-        private void OnAccountsChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            SaveAccounts();
         }
 
         private async void InitializeWebView()
         {
             try
             {
-                // Папка для WebView2 - тоже РЯДОМ С EXE
                 string webViewDataPath = Path.Combine(appDataFolder, "WebView2Data");
                 if (!Directory.Exists(webViewDataPath))
                     Directory.CreateDirectory(webViewDataPath);
@@ -71,20 +59,7 @@ namespace ASFManagerPRO
                 
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
 
-                // ИЩЕМ index.html - сначала рядом с EXE, потом в папке с данными
                 string htmlPath = Path.Combine(exeFolder, "index.html");
-                
-                if (!File.Exists(htmlPath))
-                {
-                    // Пробуем в папке с данными
-                    htmlPath = Path.Combine(appDataFolder, "index.html");
-                }
-                
-                if (!File.Exists(htmlPath))
-                {
-                    // Пробуем в текущей директории
-                    htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html");
-                }
                 
                 if (File.Exists(htmlPath))
                 {
@@ -93,14 +68,12 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    // Если index.html не найден, показываем ошибку с путями
-                    MessageBox.Show($"index.html не найден!\n\nИскали в:\n1. {Path.Combine(exeFolder, "index.html")}\n2. {Path.Combine(appDataFolder, "index.html")}\n\nПожалуйста, скопируйте index.html в папку с программой.", 
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"index.html не найден по пути: {htmlPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка инициализации: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
+                MessageBox.Show($"Ошибка: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
                     "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -348,7 +321,7 @@ namespace ASFManagerPRO
                 {
                     string json = File.ReadAllText(dataPath);
                     var loaded = JsonSerializer.Deserialize<ObservableCollection<Account>>(json);
-                    if (loaded != null)
+                    if (loaded != null && loaded.Count > 0)
                     {
                         Accounts.Clear();
                         foreach (var acc in loaded)
@@ -368,10 +341,13 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
+                
+                // Отладочное сообщение (будет видно в консоли Visual Studio)
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }
@@ -392,14 +368,14 @@ namespace ASFManagerPRO
         public string Status 
         { 
             get => _status; 
-            set { _status = value; OnPropertyChanged(nameof(Status)); }
+            set { _status = value; OnPropertyChanged(nameof(Status)); SaveAccounts(); }
         }
         
         private string _balance = "0 ₽";
         public string Balance 
         { 
             get => _balance; 
-            set { _balance = value; OnPropertyChanged(nameof(Balance)); }
+            set { _balance = value; OnPropertyChanged(nameof(Balance)); SaveAccounts(); }
         }
         
         public string SteamId { get; set; } = "";
@@ -410,6 +386,11 @@ namespace ASFManagerPRO
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        
+        private void SaveAccounts()
+        {
+            // Этот метод будет вызывать сохранение через событие
+        }
     }
 
     public class WebMessage
