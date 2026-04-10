@@ -10,8 +10,8 @@
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
         AllowsTransparency="False"
-        Icon="icon.ico">
-
+        Icon="">
+        
     <Grid>
         <web:WebView2 x:Name="webView" 
                       HorizontalAlignment="Stretch" 
