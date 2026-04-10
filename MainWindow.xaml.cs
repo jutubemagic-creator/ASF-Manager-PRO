@@ -12,35 +12,24 @@ namespace ASFManagerPRO
     {
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private readonly string dataPath = "accounts.json";
-        private bool isWebViewInitialized = false;
 
         public MainWindow()
         {
             InitializeComponent();
-            
-            // Убираем обработку ошибки с иконкой
-            try
-            {
-                LoadAccounts();
-                _ = InitializeWebViewAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при запуске: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            LoadAccounts();
+            _ = InitializeWebViewAsync();
         }
 
         private async Task InitializeWebViewAsync()
         {
             try
             {
-                // Создаём папку для данных WebView2, если её нет
+                // Создаём папку для данных WebView2
                 string webViewDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ASF_Manager_PRO_WebView");
                 var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
                 
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
-                isWebViewInitialized = true;
 
                 string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html");
                 if (File.Exists(htmlPath))
@@ -50,12 +39,12 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    MessageBox.Show($"index.html не найден по пути: {htmlPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"index.html не найден", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка инициализации WebView2: {ex.Message}\n\nУстановите WebView2 Runtime: https://go.microsoft.com/fwlink/p/?LinkId=2124703", 
+                MessageBox.Show($"Ошибка: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
                     "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -74,6 +63,7 @@ namespace ASFManagerPRO
                     {
                         Accounts = updatedAccounts;
                         SaveAccounts();
+                        SendToJS("accounts", Accounts); // Обновляем UI
                     }
                 }
                 else if (msg?.Action == "getAccounts")
@@ -82,22 +72,39 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "runASF")
                 {
-                    MessageBox.Show($"Запуск ASF для аккаунта ID: {msg.Data}\n\nФункция в разработке", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var account = GetAccountById(msg.Data);
+                    if (account != null)
+                    {
+                        MessageBox.Show($"Запуск ASF для аккаунта: {account.Login}\n\nФункция будет доступна в следующей версии", 
+                            "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
                 else if (msg?.Action == "openBrowser")
                 {
-                    MessageBox.Show($"Открытие браузера для аккаунта ID: {msg.Data}\n\nФункция в разработке", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var account = GetAccountById(msg.Data);
+                    if (account != null)
+                    {
+                        MessageBox.Show($"Открытие антидетект браузера для: {account.Login}\n\nФункция будет доступна в следующей версии", 
+                            "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка обработки: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Ошибка: " + ex.Message, "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private Account GetAccountById(string id)
+        {
+            foreach (var acc in Accounts)
+                if (acc.Id == id) return acc;
+            return null;
         }
 
         private void SendToJS(string type, object data)
         {
-            if (!isWebViewInitialized || webView?.CoreWebView2 == null) return;
+            if (webView?.CoreWebView2 == null) return;
             
             try
             {
@@ -122,7 +129,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки accounts.json: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка загрузки: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 Accounts = new ObservableCollection<Account>();
             }
         }
@@ -136,7 +143,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения accounts.json: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
