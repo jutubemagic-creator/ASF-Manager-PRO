@@ -2,133 +2,174 @@
 <html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>ASF Manager PRO v2.3</title>
+    <title>ASF Manager PRO v2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
-        .glass { background: rgba(255,255,255,0.09); backdrop-filter: blur(24px); }
-        .card:hover { transform: translateY(-8px); }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgb(0 180 255 / 0.2); }
     </style>
 </head>
 <body class="bg-[#0a0a0f] text-gray-100">
 
-    <div class="flex h-screen">
-        <!-- Сайдбар -->
-        <div class="w-72 bg-[#111827] border-r border-gray-800 p-6">
-            <h1 class="text-3xl font-bold mb-8 flex items-center gap-3">
-                <span class="text-[#00b4ff]">ASF</span> PRO
-            </h1>
-            <button onclick="addNewAccount()" class="w-full bg-[#00b4ff] text-black py-4 rounded-2xl font-semibold flex items-center justify-center gap-2">
-                <i class="fas fa-plus"></i> Новый аккаунт
-            </button>
-        </div>
-
-        <!-- Контент -->
-        <div class="flex-1 p-8 overflow-auto" id="mainContent"></div>
+<div class="flex h-screen">
+    <!-- Сайдбар -->
+    <div class="w-72 bg-[#111827] border-r border-gray-800 p-6 flex flex-col">
+        <h1 class="text-3xl font-bold mb-10 flex items-center gap-3">
+            <span class="text-[#00b4ff]">ASF</span> PRO
+        </h1>
+        <button onclick="addNewAccount()" 
+                class="w-full bg-[#00b4ff] hover:bg-[#00d4ff] text-black py-4 rounded-3xl font-semibold flex items-center justify-center gap-3">
+            <i class="fas fa-plus"></i> Новый аккаунт
+        </button>
     </div>
 
-    <!-- Модалка -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="glass w-[620px] rounded-3xl p-8">
-            <h2 id="modalTitle" class="text-2xl font-bold mb-6">Новый аккаунт</h2>
-            
-            <div class="space-y-4">
-                <input id="login" placeholder="Логин" class="w-full bg-[#1f2937] rounded-2xl px-5 py-4">
-                <input id="password" type="password" placeholder="Пароль" class="w-full bg-[#1f2937] rounded-2xl px-5 py-4">
-                <input id="email" placeholder="Почта" class="w-full bg-[#1f2937] rounded-2xl px-5 py-4">
-                <input id="proxy" placeholder="Прокси" class="w-full bg-[#1f2937] rounded-2xl px-5 py-4">
-            </div>
+    <!-- Основная область -->
+    <div class="flex-1 p-8 overflow-auto" id="mainContent"></div>
+</div>
 
-            <div class="mt-8 flex gap-4">
-                <!-- Главная кнопка с прямым вызовом -->
-                <button onclick="saveAccount()" 
-                        class="flex-1 bg-[#00b4ff] hover:bg-[#00d4ff] text-black py-5 rounded-2xl font-bold text-xl">
-                    Сохранить аккаунт
-                </button>
-                <button onclick="closeModal()" class="flex-1 bg-gray-700 py-5 rounded-2xl font-bold text-xl">Отмена</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    let accounts = [];
-
-    function renderAccounts() {
-        let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
-        accounts.forEach(acc => {
-            html += `
-            <div class="glass rounded-3xl p-6">
-                <h3 class="text-xl font-semibold">${acc.Login}</h3>
-                <p class="text-gray-400">${acc.Email || '—'}</p>
-                <button onclick="editAccount('${acc.Id}')" class="mt-4 text-sm text-[#00b4ff]">Редактировать</button>
-            </div>`;
-        });
-        html += `</div>`;
-        document.getElementById('mainContent').innerHTML = html;
-    }
-
-    function addNewAccount() {
-        document.getElementById('modalTitle').textContent = 'Новый аккаунт';
-        document.getElementById('login').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('email').value = '';
-        document.getElementById('proxy').value = '';
-        document.getElementById('modal').classList.remove('hidden');
-    }
-
-    function editAccount(id) {
-        alert("Редактирование пока в разработке");
-    }
-
-    function closeModal() {
-        document.getElementById('modal').classList.add('hidden');
-    }
-
-    // === САМАЯ ВАЖНАЯ ФУНКЦИЯ ===
-    function saveAccount() {
-        const newAcc = {
-            Id: crypto.randomUUID ? crypto.randomUUID() : 'acc-' + Date.now(),
-            Login: document.getElementById('login').value.trim() || "НовыйАккаунт",
-            Password: document.getElementById('password').value,
-            Email: document.getElementById('email').value,
-            Proxy: document.getElementById('proxy').value,
-            Status: "Offline",
-            Balance: "0 ₽",
-            CreatedAt: new Date().toISOString()
-        };
-
-        accounts.unshift(newAcc);
+<!-- Модальное окно -->
+<div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+    <div class="glass w-[700px] rounded-3xl p-8 max-h-[90vh] overflow-auto">
+        <h2 id="modalTitle" class="text-3xl font-bold mb-6">Новый аккаунт</h2>
         
-        // Отправляем в C#
-        try {
-            window.chrome.webview.postMessage(JSON.stringify({
-                action: "saveAccounts",
-                data: accounts
-            }));
-            alert("✅ Аккаунт сохранён!");
-            closeModal();
-            renderAccounts();
-        } catch (e) {
-            alert("Ошибка отправки: " + e.message);
-        }
+        <div class="grid grid-cols-2 gap-5">
+            <input id="login" placeholder="Логин Steam" class="bg-[#1f2937] rounded-2xl px-5 py-4">
+            <input id="password" type="password" placeholder="Пароль" class="bg-[#1f2937] rounded-2xl px-5 py-4">
+            <input id="email" placeholder="Почта" class="bg-[#1f2937] rounded-2xl px-5 py-4">
+            <input id="emailPass" type="password" placeholder="Пароль от почты" class="bg-[#1f2937] rounded-2xl px-5 py-4">
+            <input id="proxy" placeholder="Прокси (ip:port)" class="bg-[#1f2937] rounded-2xl px-5 py-4 col-span-2">
+            <input id="pin" placeholder="PIN-код" class="bg-[#1f2937] rounded-2xl px-5 py-4">
+            <textarea id="mafile" placeholder="MaFile (JSON)" rows="3" class="bg-[#1f2937] rounded-3xl px-5 py-4 col-span-2 font-mono text-sm"></textarea>
+            <textarea id="notes" placeholder="Заметки" rows="2" class="bg-[#1f2937] rounded-3xl px-5 py-4 col-span-2"></textarea>
+        </div>
+
+        <div class="flex gap-4 mt-8">
+            <button onclick="saveAccount()" class="flex-1 bg-[#00b4ff] hover:bg-[#00d4ff] text-black py-5 rounded-3xl font-bold text-xl">Сохранить</button>
+            <button onclick="closeModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 py-5 rounded-3xl font-bold text-xl">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let accounts = [];
+let currentEditId = null;
+
+function renderAccounts() {
+    let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+    
+    accounts.forEach(acc => {
+        html += `
+        <div class="card glass rounded-3xl p-6 relative group">
+            <div class="flex justify-between">
+                <div>
+                    <h3 class="text-2xl font-semibold">${acc.Login}</h3>
+                    <p class="text-gray-400 text-sm">${acc.Email || '—'}</p>
+                </div>
+                <span class="px-4 py-1 text-xs rounded-2xl ${acc.Status === 'Online' ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/30 text-gray-400'}">
+                    ${acc.Status}
+                </span>
+            </div>
+
+            <div class="mt-6 grid grid-cols-2 gap-y-3 text-sm">
+                <div class="text-gray-400">Прокси</div><div class="font-medium">${acc.Proxy || '—'}</div>
+                <div class="text-gray-400">PIN</div><div class="font-medium">${acc.Pin || '—'}</div>
+                <div class="text-gray-400">Баланс</div><div class="font-medium text-emerald-400">${acc.Balance}</div>
+            </div>
+
+            <div class="absolute bottom-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                <button onclick="event.stopImmediatePropagation(); editAccount('${acc.Id}')" class="px-5 py-2 bg-gray-700 hover:bg-gray-600 rounded-2xl text-sm">✏️</button>
+                <button onclick="event.stopImmediatePropagation(); deleteAccount('${acc.Id}')" class="px-5 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm">🗑</button>
+            </div>
+        </div>`;
+    });
+
+    html += `</div>`;
+    document.getElementById('mainContent').innerHTML = html;
+}
+
+function addNewAccount() {
+    currentEditId = null;
+    document.getElementById('modalTitle').textContent = 'Новый аккаунт';
+    document.getElementById('login').value = `acc_${Date.now().toString().slice(-6)}`;
+    document.getElementById('password').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('emailPass').value = '';
+    document.getElementById('proxy').value = '';
+    document.getElementById('pin').value = '';
+    document.getElementById('mafile').value = '';
+    document.getElementById('notes').value = '';
+    document.getElementById('modal').classList.remove('hidden');
+}
+
+function editAccount(id) {
+    const acc = accounts.find(a => a.Id === id);
+    if (!acc) return;
+    currentEditId = id;
+    document.getElementById('modalTitle').textContent = 'Редактировать аккаунт';
+    document.getElementById('login').value = acc.Login || '';
+    document.getElementById('password').value = acc.Password || '';
+    document.getElementById('email').value = acc.Email || '';
+    document.getElementById('emailPass').value = acc.EmailPass || '';
+    document.getElementById('proxy').value = acc.Proxy || '';
+    document.getElementById('pin').value = acc.Pin || '';
+    document.getElementById('mafile').value = acc.MaFile || '';
+    document.getElementById('notes').value = acc.Notes || '';
+    document.getElementById('modal').classList.remove('hidden');
+}
+
+function saveAccount() {
+    const data = {
+        Id: currentEditId || crypto.randomUUID(),
+        Login: document.getElementById('login').value.trim(),
+        Password: document.getElementById('password').value,
+        Email: document.getElementById('email').value,
+        EmailPass: document.getElementById('emailPass').value,
+        Proxy: document.getElementById('proxy').value,
+        Pin: document.getElementById('pin').value,
+        MaFile: document.getElementById('mafile').value,
+        Notes: document.getElementById('notes').value,
+        Status: "Offline",
+        Balance: "0 ₽",
+        CreatedAt: new Date().toISOString()
+    };
+
+    if (currentEditId) {
+        const index = accounts.findIndex(a => a.Id === currentEditId);
+        if (index !== -1) accounts[index] = data;
+    } else {
+        accounts.unshift(data);
     }
 
-    window.receiveFromCSharp = function(msg) {
-        if (msg.type === "accounts") {
-            accounts = msg.data || [];
-            renderAccounts();
-        }
-    };
+    window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: accounts }));
+    closeModal();
+    renderAccounts();
+}
 
-    // Загрузка при старте
-    window.onload = function() {
-        if (window.chrome && window.chrome.webview) {
-            window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
-        } else {
-            console.log("WebView2 не обнаружен");
-        }
-    };
-    </script>
+function deleteAccount(id) {
+    if (confirm("Удалить аккаунт навсегда?")) {
+        accounts = accounts.filter(a => a.Id !== id);
+        window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: accounts }));
+        renderAccounts();
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+window.receiveFromCSharp = function(msg) {
+    if (msg.type === "accounts") {
+        accounts = msg.data || [];
+        renderAccounts();
+    }
+};
+
+window.onload = () => {
+    window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
+};
+</script>
 </body>
 </html>
