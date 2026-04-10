@@ -35,7 +35,11 @@ namespace ASFManagerPRO
         {
             try
             {
-                string webViewDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ASF_Manager_PRO_WebView");
+                // Используем папку рядом с EXE, а не LocalAppData
+                string webViewDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WebView2Data");
+                if (!Directory.Exists(webViewDataPath))
+                    Directory.CreateDirectory(webViewDataPath);
+                    
                 var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
                 
@@ -74,6 +78,7 @@ namespace ASFManagerPRO
                                 foreach (var acc in newAccounts)
                                     Accounts.Add(acc);
                             }
+                            SaveAccounts();
                             SendToJS("accounts", Accounts);
                         }
                         break;
@@ -108,6 +113,14 @@ namespace ASFManagerPRO
                         SaveAccounts();
                         SendToJS("accounts", Accounts);
                         break;
+                        
+                    case "deleteAccount":
+                        DeleteAccount(msg.Data);
+                        break;
+                        
+                    case "updateBalance":
+                        UpdateBalance(msg.Data);
+                        break;
                 }
             }
             catch (Exception ex)
@@ -126,6 +139,7 @@ namespace ASFManagerPRO
                 
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
                 
                 string url = $"https://steamcommunity.com/inventory/{steamId}/{appId}/2?l=russian&count=200";
                 string response = await client.GetStringAsync(url);
@@ -158,7 +172,6 @@ namespace ASFManagerPRO
                     process.Start();
                     SendToJS("asfStarted", $"ASF запущен для {login}");
                     
-                    // Обновляем статус и время последнего запуска
                     var account = GetAccountByLogin(login);
                     if (account != null)
                     {
@@ -209,6 +222,32 @@ namespace ASFManagerPRO
             SaveAccounts();
             SendToJS("accounts", Accounts);
             SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
+        }
+        
+        private void DeleteAccount(string accountId)
+        {
+            var account = GetAccountById(accountId);
+            if (account != null)
+            {
+                Accounts.Remove(account);
+                SaveAccounts();
+                SendToJS("accounts", Accounts);
+            }
+        }
+        
+        private void UpdateBalance(string data)
+        {
+            var parts = data.Split('|');
+            string accountId = parts[0];
+            string newBalance = parts[1];
+            
+            var account = GetAccountById(accountId);
+            if (account != null)
+            {
+                account.Balance = newBalance;
+                SaveAccounts();
+                SendToJS("accounts", Accounts);
+            }
         }
 
         private Account? GetAccountByLogin(string login)
