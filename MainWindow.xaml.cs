@@ -40,30 +40,30 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                if (msg == null) return;
-
-                switch (msg.Action)
+                if (msg?.Action == "saveAccounts")
                 {
-                    case "saveAccounts":
-                        Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data) ?? new();
-                        SaveAccounts();
-                        break;
-                    case "getAccounts":
-                        SendToJS("accounts", Accounts);
-                        break;
-                    case "runASF":
-                    case "openBrowser":
-                        MessageBox.Show($"✅ Выполнена команда: {msg.Action}\nАккаунт ID: {msg.Data}\n\n(Здесь позже будет реальный запуск)");
-                        break;
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data, options) ?? new();
+                    SaveAccounts();
+                }
+                else if (msg?.Action == "getAccounts")
+                {
+                    SendToJS("accounts", Accounts);
+                }
+                else if (msg?.Action == "runASF" || msg?.Action == "openBrowser")
+                {
+                    MessageBox.Show($"Команда выполнена: {msg.Action}\nАккаунт: {msg.Data}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка: " + ex.Message);
+            }
         }
 
         private void SendToJS(string type, object data)
         {
-            var message = new { type, data };
-            string json = JsonSerializer.Serialize(message);
+            string json = JsonSerializer.Serialize(new { type, data });
             webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
         }
 
@@ -72,13 +72,15 @@ namespace ASFManagerPRO
             if (File.Exists(dataPath))
             {
                 string json = File.ReadAllText(dataPath);
-                Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json) ?? new();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json, options) ?? new();
             }
         }
 
         private void SaveAccounts()
         {
-            string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
+            var options = new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true };
+            string json = JsonSerializer.Serialize(Accounts, options);
             File.WriteAllText(dataPath, json);
         }
     }
