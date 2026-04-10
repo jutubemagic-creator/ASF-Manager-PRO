@@ -40,7 +40,7 @@ namespace ASFManagerPRO
             // Подписываемся на изменения - при любом изменении сразу сохраняем
             Accounts.CollectionChanged += (s, e) => { SaveAccounts(); };
             
-            // Подписываемся на закрытие окна - принудительное сохранение
+            // Подписываемся на закрытие окна
             this.Closing += (s, e) => { SaveAccounts(); };
             
             InitializeWebView();
@@ -78,7 +78,7 @@ namespace ASFManagerPRO
             }
         }
 
-        private async void WebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        private async void WebView_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
@@ -166,7 +166,7 @@ namespace ASFManagerPRO
                 var inventory = JsonSerializer.Deserialize<SteamInventory>(response);
                 SendToJS("inventoryData", new { appId, data = inventory });
             }
-            catch (Exception ex)
+            catch
             {
                 SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный или неверный AppID.");
             }
@@ -335,14 +335,15 @@ namespace ASFManagerPRO
             }
         }
 
-        private void SaveAccounts()
+        // ПУБЛИЧНЫЙ МЕТОД - ДОСТУПЕН ИЗ APP.XAML.CS
+        public void SaveAccounts()
         {
             try
             {
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
                 
-                // Отладочное сообщение (будет видно в консоли Visual Studio)
+                // Отладочное сообщение
                 Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
@@ -368,14 +369,14 @@ namespace ASFManagerPRO
         public string Status 
         { 
             get => _status; 
-            set { _status = value; OnPropertyChanged(nameof(Status)); SaveAccounts(); }
+            set { _status = value; OnPropertyChanged(nameof(Status)); }
         }
         
         private string _balance = "0 ₽";
         public string Balance 
         { 
             get => _balance; 
-            set { _balance = value; OnPropertyChanged(nameof(Balance)); SaveAccounts(); }
+            set { _balance = value; OnPropertyChanged(nameof(Balance)); }
         }
         
         public string SteamId { get; set; } = "";
@@ -386,11 +387,6 @@ namespace ASFManagerPRO
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        
-        private void SaveAccounts()
-        {
-            // Этот метод будет вызывать сохранение через событие
-        }
     }
 
     public class WebMessage
