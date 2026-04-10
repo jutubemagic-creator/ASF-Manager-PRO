@@ -3,14 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:web="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="ASF Manager PRO v2.6" 
-        Height="920" 
-        Width="1680"
+        Height="768" 
+        Width="1366"
+        MinHeight="600"
+        MinWidth="1024"
         WindowStartupLocation="CenterScreen"
         Background="#0A0A0F"
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
-        AllowsTransparency="False"
-        Icon="">
+        AllowsTransparency="False">
         
     <Grid>
         <web:WebView2 x:Name="webView" 
