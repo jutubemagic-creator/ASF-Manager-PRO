@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 
@@ -17,10 +16,10 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             LoadAccounts();
-            InitializeAsync();
+            _ = InitializeWebViewAsync();
         }
 
-        private async void InitializeAsync()
+        private async Task InitializeWebViewAsync()
         {
             await webView.EnsureCoreWebView2Async(null);
             webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
@@ -40,30 +39,28 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                if (msg?.Action == "saveAccounts")
+                if (msg == null) return;
+
+                if (msg.Action == "saveAccounts")
                 {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data, options) ?? new();
+                    Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data) ?? new();
                     SaveAccounts();
                 }
-                else if (msg?.Action == "getAccounts")
+                else if (msg.Action == "getAccounts")
                 {
                     SendToJS("accounts", Accounts);
-                }
-                else if (msg?.Action == "runASF" || msg?.Action == "openBrowser")
-                {
-                    MessageBox.Show($"Команда выполнена: {msg.Action}\nАккаунт: {msg.Data}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка: " + ex.Message);
+                MessageBox.Show("Ошибка в WebMessage: " + ex.Message, "Debug", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         private void SendToJS(string type, object data)
         {
-            string json = JsonSerializer.Serialize(new { type, data });
+            var message = new { type, data };
+            string json = JsonSerializer.Serialize(message);
             webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
         }
 
@@ -72,35 +69,27 @@ namespace ASFManagerPRO
             if (File.Exists(dataPath))
             {
                 string json = File.ReadAllText(dataPath);
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json, options) ?? new();
+                Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json) ?? new();
             }
         }
 
         private void SaveAccounts()
         {
-            var options = new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true };
-            string json = JsonSerializer.Serialize(Accounts, options);
+            string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(dataPath, json);
         }
     }
 
     public class Account
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; } = "";
         public string Login { get; set; } = "";
         public string Password { get; set; } = "";
         public string Email { get; set; } = "";
-        public string EmailPass { get; set; } = "";
-        public string SteamGuard { get; set; } = "";
-        public string MaFile { get; set; } = "";
         public string Proxy { get; set; } = "";
-        public string Pin { get; set; } = "";
-        public string Notes { get; set; } = "";
         public string Status { get; set; } = "Offline";
         public string Balance { get; set; } = "0 ₽";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public string CreatedAt { get; set; } = "";
     }
 
     public class WebMessage
