@@ -23,6 +23,9 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             
+            // Подписываемся на событие закрытия в коде, а не в XAML
+            this.Closing += Window_Closing;
+            
             // Получаем папку с EXE
             exeFolder = AppDomain.CurrentDomain.BaseDirectory;
             
@@ -39,9 +42,6 @@ namespace ASFManagerPRO
             
             // Подписываемся на изменения - при любом изменении сразу сохраняем
             Accounts.CollectionChanged += (s, e) => { SaveAccounts(); };
-            
-            // Подписываемся на закрытие окна
-            this.Closing += (s, e) => { SaveAccounts(); };
             
             InitializeWebView();
         }
@@ -350,6 +350,12 @@ namespace ASFManagerPRO
             {
                 MessageBox.Show($"Ошибка сохранения: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+        
+        // ОБРАБОТЧИК ЗАКРЫТИЯ ОКНА
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            SaveAccounts();
         }
     }
 
