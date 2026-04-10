@@ -2,13 +2,13 @@
 <html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>ASF Manager PRO v2.5</title>
+    <title>ASF Manager PRO v2.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); }
         .card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 180 255 / 0.3); }
     </style>
@@ -22,37 +22,52 @@
             <div class="w-10 h-10 bg-gradient-to-br from-[#00b4ff] to-cyan-400 rounded-3xl flex items-center justify-center text-3xl">🤖</div>
             <h1 class="text-4xl font-bold tracking-tighter">ASF PRO</h1>
         </div>
-        
-        <button onclick="addNewAccount()" class="w-full py-4 bg-[#00b4ff] text-black rounded-3xl font-semibold flex items-center justify-center gap-3 hover:scale-105 transition">
-            <i class="fas fa-plus"></i> Новый аккаунт
-        </button>
 
-        <div class="mt-auto pt-8 text-xs text-gray-500">
-            v2.5 • Все данные только на твоём ПК
-        </div>
+        <nav class="space-y-2">
+            <button onclick="switchTab(0)" class="tab-btn active w-full text-left px-5 py-4 rounded-3xl flex items-center gap-4 hover:bg-white/10">
+                <i class="fas fa-users"></i> Аккаунты
+            </button>
+            <button onclick="switchTab(1)" class="tab-btn w-full text-left px-5 py-4 rounded-3xl flex items-center gap-4 hover:bg-white/10">
+                <i class="fas fa-box"></i> Инвентарь
+            </button>
+        </nav>
     </div>
 
-    <!-- Главная область -->
+    <!-- Основная область -->
     <div class="flex-1 p-8 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальное окно -->
-<div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+<!-- Детальное окно аккаунта -->
+<div id="detailModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+    <div class="glass w-[780px] rounded-3xl p-8 max-h-[92vh] overflow-auto">
+        <h2 id="detailTitle" class="text-3xl font-bold mb-6"></h2>
+        
+        <div class="grid grid-cols-2 gap-6 text-sm" id="detailContent"></div>
+
+        <div class="flex gap-4 mt-10">
+            <button onclick="editCurrentAccount()" class="flex-1 py-4 bg-[#00b4ff] text-black font-semibold rounded-3xl">Редактировать</button>
+            <button onclick="closeDetailModal()" class="flex-1 py-4 bg-gray-700 font-semibold rounded-3xl">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div id="editModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
     <div class="glass w-[720px] rounded-3xl p-8">
-        <h2 id="modalTitle" class="text-3xl font-bold mb-8">Новый аккаунт</h2>
+        <h2 id="editTitle" class="text-3xl font-bold mb-8">Редактировать аккаунт</h2>
         <div class="grid grid-cols-2 gap-5">
-            <input id="login" placeholder="Логин Steam" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg">
-            <input id="password" type="password" placeholder="Пароль Steam" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg">
-            <input id="email" placeholder="Почта" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg">
-            <input id="emailPass" type="password" placeholder="Пароль от почты" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg">
-            <input id="proxy" placeholder="Прокси ip:port" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg col-span-2">
-            <input id="pin" placeholder="PIN-код" class="bg-[#1f2937] rounded-3xl px-6 py-5 text-lg">
-            <textarea id="mafile" placeholder="MaFile (JSON)" rows="4" class="bg-[#1f2937] rounded-3xl px-6 py-5 col-span-2 font-mono"></textarea>
-            <textarea id="notes" placeholder="Заметки" rows="2" class="bg-[#1f2937] rounded-3xl px-6 py-5 col-span-2"></textarea>
+            <input id="editLogin" placeholder="Логин" class="bg-[#1f2937] rounded-3xl px-6 py-5">
+            <input id="editPassword" type="password" placeholder="Пароль" class="bg-[#1f2937] rounded-3xl px-6 py-5">
+            <input id="editEmail" placeholder="Почта" class="bg-[#1f2937] rounded-3xl px-6 py-5">
+            <input id="editEmailPass" type="password" placeholder="Пароль от почты" class="bg-[#1f2937] rounded-3xl px-6 py-5">
+            <input id="editProxy" placeholder="Прокси" class="bg-[#1f2937] rounded-3xl px-6 py-5 col-span-2">
+            <input id="editPin" placeholder="PIN-код" class="bg-[#1f2937] rounded-3xl px-6 py-5">
+            <textarea id="editMaFile" placeholder="MaFile (JSON)" rows="4" class="bg-[#1f2937] rounded-3xl px-6 py-5 col-span-2 font-mono"></textarea>
+            <textarea id="editNotes" placeholder="Заметки" rows="3" class="bg-[#1f2937] rounded-3xl px-6 py-5 col-span-2"></textarea>
         </div>
         <div class="flex gap-4 mt-8">
-            <button onclick="saveAccount()" class="flex-1 py-5 text-xl font-bold bg-[#00b4ff] hover:bg-cyan-400 text-black rounded-3xl">Сохранить аккаунт</button>
-            <button onclick="closeModal()" class="flex-1 py-5 text-xl font-bold bg-gray-700 hover:bg-gray-600 rounded-3xl">Отмена</button>
+            <button onclick="saveEditedAccount()" class="flex-1 py-5 bg-[#00b4ff] text-black font-bold rounded-3xl">Сохранить изменения</button>
+            <button onclick="closeEditModal()" class="flex-1 py-5 bg-gray-700 font-bold rounded-3xl">Отмена</button>
         </div>
     </div>
 </div>
@@ -61,83 +76,122 @@
 let accounts = [];
 let currentEditId = null;
 
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn')[tab].classList.add('active');
+    if (tab === 0) renderAccounts();
+    if (tab === 1) renderInventory();
+}
+
 function renderAccounts() {
     let html = `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">`;
     
     accounts.forEach(acc => {
         html += `
-        <div class="card glass rounded-3xl p-6">
+        <div onclick="showAccountDetail('${acc.Id}')" class="card glass rounded-3xl p-6 cursor-pointer">
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-[#00b4ff] to-cyan-400 rounded-2xl flex items-center justify-center text-3xl">${acc.Login[0].toUpperCase()}</div>
+                    <div class="w-12 h-12 bg-gradient-to-br from-[#00b4ff] to-cyan-400 rounded-2xl flex items-center justify-center text-3xl font-bold">${acc.Login[0]?.toUpperCase() || '?'}</div>
                     <div>
                         <h3 class="text-2xl font-semibold">${acc.Login}</h3>
-                        <p class="text-gray-400">${acc.Email || '—'}</p>
+                        <p class="text-gray-400 text-sm">${acc.Email || '—'}</p>
                     </div>
                 </div>
-                <span class="px-5 py-2 text-sm rounded-3xl ${acc.Status === 'Online' ? 'bg-green-400 text-black' : 'bg-gray-600'}">${acc.Status}</span>
+                <span class="px-5 py-2 text-xs rounded-3xl ${acc.Status === 'Online' ? 'bg-green-400 text-black' : 'bg-gray-600'}">${acc.Status}</span>
             </div>
-
-            <div class="mt-8 space-y-4 text-sm">
-                <div class="flex justify-between"><span class="text-gray-400">Прокси</span><span>${acc.Proxy || '—'}</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">PIN</span><span>${acc.Pin || '—'}</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Баланс</span><span class="text-emerald-400">${acc.Balance}</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Создан</span><span>${new Date(acc.CreatedAt).toLocaleDateString('ru-RU')}</span></div>
-            </div>
-
-            <div class="mt-8 flex gap-3">
-                <button onclick="event.stopImmediatePropagation(); runASF('${acc.Id}')" class="flex-1 py-3 bg-green-600 hover:bg-green-500 rounded-2xl">Запустить ASF</button>
-                <button onclick="event.stopImmediatePropagation(); openBrowser('${acc.Id}')" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl">Антидетект</button>
-                <button onclick="event.stopImmediatePropagation(); editAccount('${acc.Id}')" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-2xl">✏️</button>
-                <button onclick="event.stopImmediatePropagation(); deleteAccount('${acc.Id}')" class="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-2xl">🗑</button>
+            <div class="mt-6 space-y-2 text-sm">
+                <div><span class="text-gray-400">Прокси:</span> ${acc.Proxy || '—'}</div>
+                <div><span class="text-gray-400">Баланс:</span> <span class="text-emerald-400">${acc.Balance}</span></div>
             </div>
         </div>`;
     });
-    
     html += `</div>`;
     document.getElementById('mainContent').innerHTML = html;
 }
 
+function showAccountDetail(id) {
+    const acc = accounts.find(a => a.Id === id);
+    if (!acc) return;
+    currentEditId = id;
+
+    document.getElementById('detailTitle').innerHTML = `Аккаунт: <span class="text-[#00b4ff]">${acc.Login}</span>`;
+
+    let content = `
+        <div class="space-y-5">
+            <div><strong>Логин:</strong> ${acc.Login}</div>
+            <div><strong>Пароль:</strong> ${acc.Password || '—'}</div>
+            <div><strong>Почта:</strong> ${acc.Email || '—'}</div>
+            <div><strong>Пароль от почты:</strong> ${acc.EmailPass || '—'}</div>
+            <div><strong>Прокси:</strong> ${acc.Proxy || '—'}</div>
+            <div><strong>PIN-код:</strong> ${acc.Pin || '—'}</div>
+            <div><strong>Статус:</strong> ${acc.Status}</div>
+            <div><strong>Баланс:</strong> ${acc.Balance}</div>
+            <div><strong>Дата создания:</strong> ${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div>
+        </div>
+        <div class="col-span-2 mt-6">
+            <strong>MaFile:</strong>
+            <pre class="bg-[#0a0a0f] p-5 rounded-2xl text-xs overflow-auto max-h-64">${acc.MaFile || '—'}</pre>
+        </div>
+        <div class="col-span-2">
+            <strong>Заметки:</strong>
+            <p class="bg-[#0a0a0f] p-5 rounded-2xl whitespace-pre-wrap">${acc.Notes || 'Нет заметок'}</p>
+        </div>
+    `;
+
+    document.getElementById('detailContent').innerHTML = content;
+    document.getElementById('detailModal').classList.remove('hidden');
+}
+
+function editCurrentAccount() {
+    closeDetailModal();
+    editAccount(currentEditId);
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+}
+
 function addNewAccount() {
     currentEditId = null;
-    document.getElementById('modalTitle').innerHTML = 'Новый аккаунт';
-    document.getElementById('login').value = `acc_${Date.now().toString().slice(-6)}`;
-    document.getElementById('password').value = '';
-    document.getElementById('email').value = '';
-    document.getElementById('emailPass').value = '';
-    document.getElementById('proxy').value = '';
-    document.getElementById('pin').value = '';
-    document.getElementById('mafile').value = '';
-    document.getElementById('notes').value = '';
-    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('editTitle').textContent = 'Новый аккаунт';
+    document.getElementById('editLogin').value = `acc_${Date.now().toString().slice(-6)}`;
+    document.getElementById('editPassword').value = '';
+    document.getElementById('editEmail').value = '';
+    document.getElementById('editEmailPass').value = '';
+    document.getElementById('editProxy').value = '';
+    document.getElementById('editPin').value = '';
+    document.getElementById('editMaFile').value = '';
+    document.getElementById('editNotes').value = '';
+    document.getElementById('editModal').classList.remove('hidden');
 }
 
 function editAccount(id) {
     const acc = accounts.find(a => a.Id === id);
+    if (!acc) return;
     currentEditId = id;
-    document.getElementById('modalTitle').innerHTML = `Редактировать <span class="text-[#00b4ff]">${acc.Login}</span>`;
-    document.getElementById('login').value = acc.Login || '';
-    document.getElementById('password').value = acc.Password || '';
-    document.getElementById('email').value = acc.Email || '';
-    document.getElementById('emailPass').value = acc.EmailPass || '';
-    document.getElementById('proxy').value = acc.Proxy || '';
-    document.getElementById('pin').value = acc.Pin || '';
-    document.getElementById('mafile').value = acc.MaFile || '';
-    document.getElementById('notes').value = acc.Notes || '';
-    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('editTitle').textContent = 'Редактировать аккаунт';
+    document.getElementById('editLogin').value = acc.Login || '';
+    document.getElementById('editPassword').value = acc.Password || '';
+    document.getElementById('editEmail').value = acc.Email || '';
+    document.getElementById('editEmailPass').value = acc.EmailPass || '';
+    document.getElementById('editProxy').value = acc.Proxy || '';
+    document.getElementById('editPin').value = acc.Pin || '';
+    document.getElementById('editMaFile').value = acc.MaFile || '';
+    document.getElementById('editNotes').value = acc.Notes || '';
+    document.getElementById('editModal').classList.remove('hidden');
 }
 
-function saveAccount() {
+function saveEditedAccount() {
     const data = {
         Id: currentEditId || 'acc-' + Date.now(),
-        Login: document.getElementById('login').value.trim(),
-        Password: document.getElementById('password').value,
-        Email: document.getElementById('email').value,
-        EmailPass: document.getElementById('emailPass').value,
-        Proxy: document.getElementById('proxy').value,
-        Pin: document.getElementById('pin').value,
-        MaFile: document.getElementById('mafile').value,
-        Notes: document.getElementById('notes').value,
+        Login: document.getElementById('editLogin').value.trim(),
+        Password: document.getElementById('editPassword').value,
+        Email: document.getElementById('editEmail').value,
+        EmailPass: document.getElementById('editEmailPass').value,
+        Proxy: document.getElementById('editProxy').value,
+        Pin: document.getElementById('editPin').value,
+        MaFile: document.getElementById('editMaFile').value,
+        Notes: document.getElementById('editNotes').value,
         Status: "Offline",
         Balance: "0 ₽",
         CreatedAt: new Date().toISOString()
@@ -151,8 +205,12 @@ function saveAccount() {
     }
 
     window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: accounts }));
-    closeModal();
+    closeEditModal();
     renderAccounts();
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
 }
 
 function deleteAccount(id) {
@@ -171,8 +229,13 @@ function openBrowser(id) {
     window.chrome.webview.postMessage(JSON.stringify({ action: "openBrowser", data: id }));
 }
 
-function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
+function renderInventory() {
+    document.getElementById('mainContent').innerHTML = `
+        <div class="max-w-2xl mx-auto text-center py-20">
+            <h2 class="text-5xl font-bold mb-6">Инвентарь</h2>
+            <p class="text-gray-400 mb-10">Здесь будет просмотр и массовый трансфер предметов со всех аккаунтов</p>
+            <button onclick="alert('Функция массового инвентаря в разработке')" class="px-10 py-5 bg-[#00b4ff] text-black rounded-3xl text-xl font-semibold">Загрузить инвентарь всех аккаунтов</button>
+        </div>`;
 }
 
 window.receiveFromCSharp = function(msg) {
