@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 
@@ -39,28 +40,29 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                if (msg == null) return;
-
-                if (msg.Action == "saveAccounts")
+                if (msg?.Action == "saveAccounts")
                 {
                     Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data) ?? new();
                     SaveAccounts();
                 }
-                else if (msg.Action == "getAccounts")
+                else if (msg?.Action == "getAccounts")
                 {
                     SendToJS("accounts", Accounts);
+                }
+                else if (msg?.Action == "runASF" || msg?.Action == "openBrowser")
+                {
+                    MessageBox.Show($"Команда: {msg.Action}\nАккаунт: {msg.Data}\n\n(Реальный запуск ASF будет добавлен в следующей версии)", "ASF Manager PRO");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка в WebMessage: " + ex.Message, "Debug", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Ошибка: " + ex.Message);
             }
         }
 
         private void SendToJS(string type, object data)
         {
-            var message = new { type, data };
-            string json = JsonSerializer.Serialize(message);
+            string json = JsonSerializer.Serialize(new { type, data });
             webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
         }
 
@@ -86,10 +88,14 @@ namespace ASFManagerPRO
         public string Login { get; set; } = "";
         public string Password { get; set; } = "";
         public string Email { get; set; } = "";
+        public string EmailPass { get; set; } = "";
         public string Proxy { get; set; } = "";
+        public string Pin { get; set; } = "";
+        public string MaFile { get; set; } = "";
+        public string Notes { get; set; } = "";
         public string Status { get; set; } = "Offline";
         public string Balance { get; set; } = "0 ₽";
-        public string CreatedAt { get; set; } = "";
+        public string CreatedAt { get; set; } = DateTime.Now.ToString("o");
     }
 
     public class WebMessage
