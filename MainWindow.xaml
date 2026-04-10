@@ -11,7 +11,8 @@
         Background="#0A0A0F"
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
-        AllowsTransparency="False">
+        AllowsTransparency="False"
+        Closing="Window_Closing">
         
     <Grid>
         <web:WebView2 x:Name="webView" 
