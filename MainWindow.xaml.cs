@@ -1,5 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -14,13 +16,19 @@ namespace ASFManagerPRO
     {
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private readonly string dataPath = "accounts.json";
-        private readonly string asfPath = "ASF.exe"; // Путь к ASF
+        private readonly string asfPath = "ASF.exe";
 
         public MainWindow()
         {
             InitializeComponent();
             LoadAccounts();
+            Accounts.CollectionChanged += OnAccountsChanged;
             _ = InitializeWebViewAsync();
+        }
+
+        private void OnAccountsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            SaveAccounts();
         }
 
         private async Task InitializeWebViewAsync()
@@ -59,8 +67,13 @@ namespace ASFManagerPRO
                     case "saveAccounts":
                         if (msg.Data != null)
                         {
-                            Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data) ?? new();
-                            SaveAccounts();
+                            var newAccounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(msg.Data);
+                            if (newAccounts != null)
+                            {
+                                Accounts.Clear();
+                                foreach (var acc in newAccounts)
+                                    Accounts.Add(acc);
+                            }
                             SendToJS("accounts", Accounts);
                         }
                         break;
@@ -77,8 +90,8 @@ namespace ASFManagerPRO
                         RunASF(msg.Data);
                         break;
 
-                    case "stopASF":
-                        StopASF(msg.Data);
+                    case "runASFForAll":
+                        RunASFForAll();
                         break;
 
                     case "updateLastLogin":
@@ -89,6 +102,12 @@ namespace ASFManagerPRO
                         Clipboard.SetText(msg.Data);
                         SendToJS("copyResult", new { success = true });
                         break;
+
+                    case "deleteAllAccounts":
+                        Accounts.Clear();
+                        SaveAccounts();
+                        SendToJS("accounts", Accounts);
+                        break;
                 }
             }
             catch (Exception ex)
@@ -97,23 +116,26 @@ namespace ASFManagerPRO
             }
         }
 
-        private async Task GetInventory(string steamId)
+        private async Task GetInventory(string parameters)
         {
             try
             {
-                // Используем Steam API для получения инвентаря (пример для CS:GO/CS2)
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
+                var parts = parameters.Split('|');
+                string steamId = parts[0];
+                string appId = parts.Length > 1 ? parts[1] : "730";
                 
-                string url = $"https://steamcommunity.com/inventory/{steamId}/730/2?l=russian&count=100";
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(15);
+                
+                string url = $"https://steamcommunity.com/inventory/{steamId}/{appId}/2?l=russian&count=200";
                 string response = await client.GetStringAsync(url);
                 
                 var inventory = JsonSerializer.Deserialize<SteamInventory>(response);
-                SendToJS("inventoryData", inventory);
+                SendToJS("inventoryData", new { appId, data = inventory });
             }
-            catch
+            catch (Exception ex)
             {
-                SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный.");
+                SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный или неверный AppID.");
             }
         }
 
@@ -135,6 +157,16 @@ namespace ASFManagerPRO
                     };
                     process.Start();
                     SendToJS("asfStarted", $"ASF запущен для {login}");
+                    
+                    // Обновляем статус и время последнего запуска
+                    var account = GetAccountByLogin(login);
+                    if (account != null)
+                    {
+                        account.Status = "Online";
+                        account.LastLogin = DateTime.Now.ToString("o");
+                        SaveAccounts();
+                        SendToJS("accounts", Accounts);
+                    }
                 }
                 else
                 {
@@ -147,13 +179,43 @@ namespace ASFManagerPRO
             }
         }
 
-        private void StopASF(string login)
+        private void RunASFForAll()
         {
-            foreach (var process in Process.GetProcessesByName("ASF"))
+            int successCount = 0;
+            foreach (var account in Accounts)
             {
-                try { process.Kill(); } catch { }
+                try
+                {
+                    if (File.Exists(asfPath))
+                    {
+                        var process = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = asfPath,
+                                Arguments = $"--command --cryptkey \"{account.Login}\"",
+                                UseShellExecute = false,
+                                CreateNoWindow = true
+                            }
+                        };
+                        process.Start();
+                        account.Status = "Online";
+                        account.LastLogin = DateTime.Now.ToString("o");
+                        successCount++;
+                    }
+                }
+                catch { }
             }
-            SendToJS("asfStopped", $"ASF остановлен для {login}");
+            SaveAccounts();
+            SendToJS("accounts", Accounts);
+            SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
+        }
+
+        private Account? GetAccountByLogin(string login)
+        {
+            foreach (var acc in Accounts)
+                if (acc.Login == login) return acc;
+            return null;
         }
 
         private void UpdateLastLogin(string accountId)
@@ -167,7 +229,7 @@ namespace ASFManagerPRO
             }
         }
 
-        private Account GetAccountById(string id)
+        private Account? GetAccountById(string id)
         {
             foreach (var acc in Accounts)
                 if (acc.Id == id) return acc;
@@ -193,10 +255,16 @@ namespace ASFManagerPRO
                 if (File.Exists(dataPath))
                 {
                     string json = File.ReadAllText(dataPath);
-                    Accounts = JsonSerializer.Deserialize<ObservableCollection<Account>>(json) ?? new();
+                    var loaded = JsonSerializer.Deserialize<ObservableCollection<Account>>(json);
+                    if (loaded != null)
+                    {
+                        Accounts.Clear();
+                        foreach (var acc in loaded)
+                            Accounts.Add(acc);
+                    }
                 }
             }
-            catch { Accounts = new(); }
+            catch { }
         }
 
         private void SaveAccounts()
@@ -210,7 +278,7 @@ namespace ASFManagerPRO
         }
     }
 
-    public class Account
+    public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = "";
         public string Login { get; set; } = "";
@@ -221,13 +289,29 @@ namespace ASFManagerPRO
         public string Pin { get; set; } = "";
         public string MaFile { get; set; } = "";
         public string Notes { get; set; } = "";
-        public string Status { get; set; } = "Offline";
-        public string Balance { get; set; } = "0 ₽";
+        
+        private string _status = "Offline";
+        public string Status 
+        { 
+            get => _status; 
+            set { _status = value; OnPropertyChanged(nameof(Status)); }
+        }
+        
+        private string _balance = "0 ₽";
+        public string Balance 
+        { 
+            get => _balance; 
+            set { _balance = value; OnPropertyChanged(nameof(Balance)); }
+        }
+        
         public string SteamId { get; set; } = "";
         public string CreatedAt { get; set; } = DateTime.Now.ToString("o");
         public string LastLogin { get; set; } = "";
         public int CardsRemaining { get; set; } = 0;
         public int GamesCount { get; set; } = 0;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     public class WebMessage
@@ -239,24 +323,25 @@ namespace ASFManagerPRO
     public class SteamInventory
     {
         public bool success { get; set; }
-        public SteamInventoryItem[] assets { get; set; }
-        public SteamInventoryDescription[] descriptions { get; set; }
+        public SteamInventoryItem[]? assets { get; set; }
+        public SteamInventoryDescription[]? descriptions { get; set; }
+        public int total_inventory_count { get; set; }
     }
 
     public class SteamInventoryItem
     {
-        public string assetid { get; set; }
-        public string classid { get; set; }
+        public string assetid { get; set; } = "";
+        public string classid { get; set; } = "";
         public int amount { get; set; }
     }
 
     public class SteamInventoryDescription
     {
-        public string classid { get; set; }
-        public string name { get; set; }
-        public string market_hash_name { get; set; }
-        public string icon_url { get; set; }
-        public string type { get; set; }
-        public string rarity { get; set; }
+        public string classid { get; set; } = "";
+        public string name { get; set; } = "";
+        public string market_hash_name { get; set; } = "";
+        public string icon_url { get; set; } = "";
+        public string type { get; set; } = "";
+        public string rarity { get; set; } = "";
     }
 }
