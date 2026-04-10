@@ -15,7 +15,6 @@
     
     <WebView2LoaderPreference>Static</WebView2LoaderPreference>
     <Version>2.6.0</Version>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -30,7 +29,6 @@
   <ItemGroup>
     <Content Include="index.html" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="accounts.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="icon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
