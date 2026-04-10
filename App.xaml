@@ -4,12 +4,7 @@
              StartupUri="MainWindow.xaml">
     
     <Application.Resources>
-        <!-- Простая тёмная тема без MaterialDesign -->
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!-- Можно добавить свои стили позже -->
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <!-- Чистая тёмная тема без MaterialDesign -->
     </Application.Resources>
     
 </Application>
