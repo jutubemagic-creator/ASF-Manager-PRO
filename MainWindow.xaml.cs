@@ -25,10 +25,10 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             
-            this.Closing += Window_Closing!;
-            this.PreviewKeyDown += Window_PreviewKeyDown!;
+            this.Closing += Window_Closing;
+            this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // ПРОСТО - папка рядом с EXE (теперь работает, т.к. SingleFile отключён)
+            // Получаем папку где находится EXE
             string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
             string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             
@@ -39,13 +39,11 @@ namespace ASFManagerPRO
             
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
-            // Показываем путь для отладки
-            MessageBox.Show($"Данные сохраняются в:\n{dataPath}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
-            
+            // Загружаем аккаунты
             LoadAccounts();
             
-            Accounts.CollectionChanged += (s, e) => { if (!isClosing) SaveAccounts(); };
-            Accounts.CollectionChanged += OnAccountsCollectionChanged!;
+            // Подписываемся на изменения
+            Accounts.CollectionChanged += OnAccountsCollectionChanged;
             
             InitializeWebView();
         }
@@ -58,16 +56,17 @@ namespace ASFManagerPRO
             {
                 foreach (Account item in e.NewItems)
                 {
-                    item.PropertyChanged += Account_PropertyChanged!;
+                    item.PropertyChanged += Account_PropertyChanged;
                 }
             }
             if (e.OldItems != null)
             {
                 foreach (Account item in e.OldItems)
                 {
-                    item.PropertyChanged -= Account_PropertyChanged!;
+                    item.PropertyChanged -= Account_PropertyChanged;
                 }
             }
+            SaveAccounts();
         }
 
         private void Account_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -113,15 +112,19 @@ namespace ASFManagerPRO
                 var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
                 
-                webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived!;
+                webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                string htmlContent = FindIndexHtml();
+                // Ищем index.html
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string htmlPath = Path.Combine(exeFolder, "index.html");
                 
-                if (!string.IsNullOrEmpty(htmlContent))
+                if (File.Exists(htmlPath))
                 {
-                    webView.NavigateToString(htmlContent);
+                    string html = await File.ReadAllTextAsync(htmlPath);
+                    webView.NavigateToString(html);
                 }
                 else
                 {
@@ -130,35 +133,38 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка WebView2: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
+                    "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private string FindIndexHtml()
-        {
-            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            
-            string[] paths = {
-                Path.Combine(exeFolder, "index.html"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html"),
-                Path.Combine(Environment.CurrentDirectory, "index.html"),
-                Path.Combine(appDataFolder, "index.html")
-            };
-            
-            foreach (var path in paths)
-            {
-                if (File.Exists(path))
-                {
-                    try { return File.ReadAllText(path); } catch { }
-                }
-            }
-            return "";
         }
 
         private string GetFallbackHtml()
         {
-            return @"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>ASF Manager PRO</title><style>body{background:#0a0a0f;color:white;font-family:sans-serif;text-align:center;padding:50px;}</style></head><body><h1>ASF Manager PRO v3.3</h1><p>index.html не найден</p></body></html>";
+            return @"<!DOCTYPE html>
+            <html>
+            <head><meta charset='UTF-8'><title>ASF Manager PRO</title>
+            <style>
+                body { background: #0a0a0f; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
+                button { background: #00b4ff; color: black; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; }
+            </style>
+            </head>
+            <body>
+                <h1>ASF Manager PRO v3.3</h1>
+                <p>index.html не найден. Убедитесь, что файл находится в папке с программой.</p>
+                <button onclick='window.chrome.webview.postMessage(JSON.stringify({action:\"getAccounts\"}))'>Загрузить</button>
+                <div id='accounts'></div>
+                <script>
+                    window.receiveFromCSharp = function(msg) {
+                        if(msg.type === 'accounts') {
+                            document.getElementById('accounts').innerHTML = '<pre>' + JSON.stringify(msg.data, null, 2) + '</pre>';
+                        }
+                    };
+                    window.onload = () => {
+                        window.chrome.webview.postMessage(JSON.stringify({action:\"getAccounts\"}));
+                    };
+                </script>
+            </body>
+            </html>";
         }
 
         private async void WebView_WebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
@@ -457,7 +463,7 @@ namespace ASFManagerPRO
                         Accounts.Clear();
                         foreach (var acc in loaded)
                         {
-                            acc.PropertyChanged += Account_PropertyChanged!;
+                            acc.PropertyChanged += Account_PropertyChanged;
                             Accounts.Add(acc);
                         }
                     }
@@ -478,6 +484,8 @@ namespace ASFManagerPRO
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
+                
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
