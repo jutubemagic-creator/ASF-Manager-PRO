@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -21,8 +22,6 @@ namespace ASFManagerPRO
         private string appDataFolder;
         private string exeFolder;
         private bool isClosing = false;
-        private string? pendingInventorySteamId;
-        private string? pendingInventoryAppId;
 
         public MainWindow()
         {
@@ -31,34 +30,30 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // Определяем правильную папку для данных (рядом с EXE, а не во временной папке)
-            string executablePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            if (!string.IsNullOrEmpty(executablePath))
-            {
-                exeFolder = Path.GetDirectoryName(executablePath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            }
-            else
-            {
-                exeFolder = AppDomain.CurrentDomain.BaseDirectory;
-            }
+            // ========== КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ==========
+            // Получаем реальную папку, где находится EXE файл
+            string executablePath = Assembly.GetExecutingAssembly().Location;
+            exeFolder = Path.GetDirectoryName(executablePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             
-            // Если это временная папка single-file (содержит .exe в имени), ищем родительскую
-            if (exeFolder.Contains(".exe") && exeFolder.Contains("temp") || exeFolder.Contains("Temporary"))
+            // Дополнительная проверка: если путь содержит временную папку .NET single-file
+            // (обычно содержит ".exe" в пути и "temp" или "Temporary")
+            if (exeFolder.Contains(".exe") && (exeFolder.Contains("temp", StringComparison.OrdinalIgnoreCase) || 
+                exeFolder.Contains("Temporary", StringComparison.OrdinalIgnoreCase)))
             {
-                // Пробуем найти EXE в текущей директории
-                string currentDir = Environment.CurrentDirectory;
-                if (File.Exists(Path.Combine(currentDir, "ASFManagerPRO.exe")))
+                // Пробуем получить путь из командной строки
+                string? mainModulePath = Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(mainModulePath) && File.Exists(mainModulePath))
                 {
-                    exeFolder = currentDir;
+                    exeFolder = Path.GetDirectoryName(mainModulePath)!;
                 }
-                // Или в директории запуска
-                else if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ASFManagerPRO.exe")))
+                else
                 {
-                    exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+                    // Используем текущую рабочую директорию
+                    exeFolder = Environment.CurrentDirectory;
                 }
             }
             
-            // Папка для данных - РЯДОМ С EXE
+            // Папка для данных - РЯДОМ С EXE (не во временной!)
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             
             if (!Directory.Exists(appDataFolder))
@@ -66,16 +61,17 @@ namespace ASFManagerPRO
             
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
+            // Отладочный вывод (можно удалить после проверки)
+            MessageBox.Show($"EXE папка: {exeFolder}\nДанные: {dataPath}", "Отладка", MessageBoxButton.OK, MessageBoxImage.Information);
+            
             // Создаём резервную копию если файл существует
             CreateBackupIfNeeded();
             
             // Загружаем аккаунты
             LoadAccounts();
             
-            // Подписываемся на изменения - при любом изменении сразу сохраняем
+            // Подписываемся на изменения
             Accounts.CollectionChanged += (s, e) => { if (!isClosing) SaveAccounts(); };
-            
-            // Подписываемся на изменения свойств каждого аккаунта
             Accounts.CollectionChanged += OnAccountsCollectionChanged;
             
             InitializeWebView();
@@ -134,25 +130,21 @@ namespace ASFManagerPRO
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // Ctrl+N - новый аккаунт
             if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 SendToJS("hotkey", "new");
                 e.Handled = true;
             }
-            // Ctrl+S - сохранить (отправляем в JS, там текущее редактирование)
             else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 SendToJS("hotkey", "save");
                 e.Handled = true;
             }
-            // Ctrl+F - поиск
             else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 SendToJS("hotkey", "search");
                 e.Handled = true;
             }
-            // Del - удалить (если открыт детальный просмотр)
             else if (e.Key == Key.Delete)
             {
                 SendToJS("hotkey", "delete");
@@ -180,13 +172,12 @@ namespace ASFManagerPRO
                 
                 if (!string.IsNullOrEmpty(htmlContent))
                 {
-                    webView.NavigateToString(htmlContent);
+                    await webView.NavigateToStringAsync(htmlContent);
                 }
                 else
                 {
-                    // Встроенный fallback HTML
                     string fallbackHtml = GetFallbackHtml();
-                    webView.NavigateToString(fallbackHtml);
+                    await webView.NavigateToStringAsync(fallbackHtml);
                     MessageBox.Show("index.html не найден, используется встроенная версия", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
@@ -199,15 +190,12 @@ namespace ASFManagerPRO
 
         private string FindIndexHtml()
         {
-            // Список возможных путей для поиска
             string[] possiblePaths = {
                 Path.Combine(exeFolder, "index.html"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html"),
                 Path.Combine(Environment.CurrentDirectory, "index.html"),
                 Path.Combine(appDataFolder, "index.html"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "index.html"),
-                Path.Combine(Directory.GetCurrentDirectory(), "index.html"),
-                Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location) ?? "", "index.html")
+                Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "index.html")
             };
             
             foreach (var path in possiblePaths)
@@ -296,38 +284,11 @@ namespace ASFManagerPRO
                     case "massUpdate":
                         MassUpdateAccounts(msg.Data);
                         break;
-                    
-                    case "checkCredentials":
-                        await CheckCredentials(msg.Data);
-                        break;
                 }
             }
             catch (Exception ex)
             {
                 SendToJS("error", ex.Message);
-            }
-        }
-
-        private async Task CheckCredentials(string loginData)
-        {
-            try
-            {
-                var parts = loginData.Split('|');
-                string login = parts[0];
-                string password = parts[1];
-                
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
-                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-                
-                // Проверка через Steam API (базовая)
-                string url = $"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=YOUR_API_KEY&steamids=0";
-                // В реальности нужен API ключ, пока отправляем заглушку
-                SendToJS("credentialResult", new { login, valid = true, message = "Проверка в разработке" });
-            }
-            catch
-            {
-                SendToJS("credentialResult", new { login = loginData.Split('|')[0], valid = false, message = "Ошибка проверки" });
             }
         }
 
@@ -557,7 +518,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка загрузки: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -587,9 +548,7 @@ namespace ASFManagerPRO
         {
             isClosing = true;
             SaveAccounts();
-            
-            // Даём время на сохранение
-            Task.Delay(100).Wait();
+            Thread.Sleep(100); // Даём время на запись
         }
     }
 
@@ -612,101 +571,22 @@ namespace ASFManagerPRO
         private int _cardsRemaining = 0;
         private int _gamesCount = 0;
 
-        public string Id 
-        { 
-            get => _id; 
-            set { _id = value; OnPropertyChanged(); }
-        }
-        
-        public string Login 
-        { 
-            get => _login; 
-            set { _login = value; OnPropertyChanged(); }
-        }
-        
-        public string Password 
-        { 
-            get => _password; 
-            set { _password = value; OnPropertyChanged(); }
-        }
-        
-        public string Email 
-        { 
-            get => _email; 
-            set { _email = value; OnPropertyChanged(); }
-        }
-        
-        public string EmailPass 
-        { 
-            get => _emailPass; 
-            set { _emailPass = value; OnPropertyChanged(); }
-        }
-        
-        public string Proxy 
-        { 
-            get => _proxy; 
-            set { _proxy = value; OnPropertyChanged(); }
-        }
-        
-        public string Pin 
-        { 
-            get => _pin; 
-            set { _pin = value; OnPropertyChanged(); }
-        }
-        
-        public string MaFile 
-        { 
-            get => _maFile; 
-            set { _maFile = value; OnPropertyChanged(); }
-        }
-        
-        public string Notes 
-        { 
-            get => _notes; 
-            set { _notes = value; OnPropertyChanged(); }
-        }
-        
-        public string Status 
-        { 
-            get => _status; 
-            set { _status = value; OnPropertyChanged(); }
-        }
-        
-        public string Balance 
-        { 
-            get => _balance; 
-            set { _balance = value; OnPropertyChanged(); }
-        }
-        
-        public string SteamId 
-        { 
-            get => _steamId; 
-            set { _steamId = value; OnPropertyChanged(); }
-        }
-        
-        public string CreatedAt 
-        { 
-            get => string.IsNullOrEmpty(_createdAt) ? DateTime.Now.ToString("o") : _createdAt; 
-            set { _createdAt = value; OnPropertyChanged(); }
-        }
-        
-        public string LastLogin 
-        { 
-            get => _lastLogin; 
-            set { _lastLogin = value; OnPropertyChanged(); }
-        }
-        
-        public int CardsRemaining 
-        { 
-            get => _cardsRemaining; 
-            set { _cardsRemaining = value; OnPropertyChanged(); }
-        }
-        
-        public int GamesCount 
-        { 
-            get => _gamesCount; 
-            set { _gamesCount = value; OnPropertyChanged(); }
-        }
+        public string Id { get => _id; set { _id = value; OnPropertyChanged(); } }
+        public string Login { get => _login; set { _login = value; OnPropertyChanged(); } }
+        public string Password { get => _password; set { _password = value; OnPropertyChanged(); } }
+        public string Email { get => _email; set { _email = value; OnPropertyChanged(); } }
+        public string EmailPass { get => _emailPass; set { _emailPass = value; OnPropertyChanged(); } }
+        public string Proxy { get => _proxy; set { _proxy = value; OnPropertyChanged(); } }
+        public string Pin { get => _pin; set { _pin = value; OnPropertyChanged(); } }
+        public string MaFile { get => _maFile; set { _maFile = value; OnPropertyChanged(); } }
+        public string Notes { get => _notes; set { _notes = value; OnPropertyChanged(); } }
+        public string Status { get => _status; set { _status = value; OnPropertyChanged(); } }
+        public string Balance { get => _balance; set { _balance = value; OnPropertyChanged(); } }
+        public string SteamId { get => _steamId; set { _steamId = value; OnPropertyChanged(); } }
+        public string CreatedAt { get => string.IsNullOrEmpty(_createdAt) ? DateTime.Now.ToString("o") : _createdAt; set { _createdAt = value; OnPropertyChanged(); } }
+        public string LastLogin { get => _lastLogin; set { _lastLogin = value; OnPropertyChanged(); } }
+        public int CardsRemaining { get => _cardsRemaining; set { _cardsRemaining = value; OnPropertyChanged(); } }
+        public int GamesCount { get => _gamesCount; set { _gamesCount = value; OnPropertyChanged(); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = "") => 
