@@ -11,7 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 
 namespace ASFManagerPRO
 {
@@ -27,20 +27,17 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             
-            this.Closing += Window_Closing;
-            this.PreviewKeyDown += Window_PreviewKeyDown;
+            this.Closing += Window_Closing!;
+            this.PreviewKeyDown += Window_PreviewKeyDown!;
             
-            // ========== КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ==========
             // Получаем реальную папку, где находится EXE файл
             string executablePath = Assembly.GetExecutingAssembly().Location;
             exeFolder = Path.GetDirectoryName(executablePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             
             // Дополнительная проверка: если путь содержит временную папку .NET single-file
-            // (обычно содержит ".exe" в пути и "temp" или "Temporary")
             if (exeFolder.Contains(".exe") && (exeFolder.Contains("temp", StringComparison.OrdinalIgnoreCase) || 
                 exeFolder.Contains("Temporary", StringComparison.OrdinalIgnoreCase)))
             {
-                // Пробуем получить путь из командной строки
                 string? mainModulePath = Process.GetCurrentProcess().MainModule?.FileName;
                 if (!string.IsNullOrEmpty(mainModulePath) && File.Exists(mainModulePath))
                 {
@@ -48,21 +45,17 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    // Используем текущую рабочую директорию
                     exeFolder = Environment.CurrentDirectory;
                 }
             }
             
-            // Папка для данных - РЯДОМ С EXE (не во временной!)
+            // Папка для данных - РЯДОМ С EXE
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             
             if (!Directory.Exists(appDataFolder))
                 Directory.CreateDirectory(appDataFolder);
             
             dataPath = Path.Combine(appDataFolder, "accounts.json");
-            
-            // Отладочный вывод (можно удалить после проверки)
-            MessageBox.Show($"EXE папка: {exeFolder}\nДанные: {dataPath}", "Отладка", MessageBoxButton.OK, MessageBoxImage.Information);
             
             // Создаём резервную копию если файл существует
             CreateBackupIfNeeded();
@@ -72,7 +65,7 @@ namespace ASFManagerPRO
             
             // Подписываемся на изменения
             Accounts.CollectionChanged += (s, e) => { if (!isClosing) SaveAccounts(); };
-            Accounts.CollectionChanged += OnAccountsCollectionChanged;
+            Accounts.CollectionChanged += OnAccountsCollectionChanged!;
             
             InitializeWebView();
         }
@@ -86,7 +79,6 @@ namespace ASFManagerPRO
                     string backupPath = Path.Combine(appDataFolder, $"accounts_backup_{DateTime.Now:yyyyMMdd_HHmmss}.json");
                     File.Copy(dataPath, backupPath, overwrite: true);
                     
-                    // Удаляем старые бэкапы (старше 7 дней)
                     var backupFiles = Directory.GetFiles(appDataFolder, "accounts_backup_*.json");
                     foreach (var file in backupFiles)
                     {
@@ -108,14 +100,14 @@ namespace ASFManagerPRO
             {
                 foreach (Account item in e.NewItems)
                 {
-                    item.PropertyChanged += Account_PropertyChanged;
+                    item.PropertyChanged += Account_PropertyChanged!;
                 }
             }
             if (e.OldItems != null)
             {
                 foreach (Account item in e.OldItems)
                 {
-                    item.PropertyChanged -= Account_PropertyChanged;
+                    item.PropertyChanged -= Account_PropertyChanged!;
                 }
             }
         }
@@ -160,25 +152,23 @@ namespace ASFManagerPRO
                 if (!Directory.Exists(webViewDataPath))
                     Directory.CreateDirectory(webViewDataPath);
                 
-                var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
+                var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
                 
-                webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
+                webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived!;
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                // Поиск index.html в нескольких местах
                 string htmlContent = FindIndexHtml();
                 
                 if (!string.IsNullOrEmpty(htmlContent))
                 {
-                    await webView.NavigateToStringAsync(htmlContent);
+                    webView.NavigateToString(htmlContent);
                 }
                 else
                 {
                     string fallbackHtml = GetFallbackHtml();
-                    await webView.NavigateToStringAsync(fallbackHtml);
-                    MessageBox.Show("index.html не найден, используется встроенная версия", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    webView.NavigateToString(fallbackHtml);
                 }
             }
             catch (Exception ex)
@@ -218,7 +208,7 @@ namespace ASFManagerPRO
             return @"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>ASF Manager PRO</title><style>body{background:#0a0a0f;color:white;font-family:sans-serif;text-align:center;padding:50px;}</style></head><body><h1>ASF Manager PRO v3.3</h1><p>Не удалось загрузить index.html</p><p>Пожалуйста, убедитесь, что файл index.html находится в папке с программой.</p></body></html>";
         }
 
-        private async void WebView_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+        private async void WebView_WebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
@@ -510,7 +500,7 @@ namespace ASFManagerPRO
                         Accounts.Clear();
                         foreach (var acc in loaded)
                         {
-                            acc.PropertyChanged += Account_PropertyChanged;
+                            acc.PropertyChanged += Account_PropertyChanged!;
                             Accounts.Add(acc);
                         }
                     }
@@ -548,7 +538,7 @@ namespace ASFManagerPRO
         {
             isClosing = true;
             SaveAccounts();
-            Thread.Sleep(100); // Даём время на запись
+            System.Threading.Thread.Sleep(100);
         }
     }
 
