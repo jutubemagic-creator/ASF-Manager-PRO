@@ -128,38 +128,13 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    string fallbackHtml = @"<!DOCTYPE html>
-                    <html>
-                    <head><meta charset='UTF-8'><title>ASF Manager PRO</title>
-                    <style>
-                        body { background: #0a0a0f; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
-                        button { background: #00b4ff; color: black; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; margin: 5px; }
-                    </style>
-                    </head>
-                    <body>
-                        <h1>ASF Manager PRO v3.3</h1>
-                        <p>index.html не найден. Убедитесь, что файл находится в папке с программой.</p>
-                        <button onclick='window.chrome.webview.postMessage(JSON.stringify({action:\"getAccounts\"}))'>Загрузить аккаунты</button>
-                        <div id='accounts'></div>
-                        <script>
-                            window.receiveFromCSharp = function(msg) {
-                                if(msg.type === 'accounts') {
-                                    document.getElementById('accounts').innerHTML = '<pre style=\"text-align:left;background:#1f2937;padding:20px;border-radius:10px;overflow:auto;\">' + JSON.stringify(msg.data, null, 2) + '</pre>';
-                                }
-                            };
-                            window.onload = function() {
-                                window.chrome.webview.postMessage(JSON.stringify({action:\"getAccounts\"}));
-                            };
-                        </script>
-                    </body>
-                    </html>";
-                    webView.NavigateToString(fallbackHtml);
+                    // Простой fallback HTML без сложных кавычек
+                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;text-align:center;padding:50px;'><h1>ASF Manager PRO v3.3</h1><p>index.html not found</p></body></html>");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
-                    "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -297,7 +272,7 @@ namespace ASFManagerPRO
             }
             catch
             {
-                SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный или неверный AppID.");
+                SendToJS("inventoryError", "Не удалось загрузить инвентарь.");
             }
         }
 
@@ -335,7 +310,7 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    SendToJS("asfError", $"ASF.exe не найден. Поместите ASF в папку: {exeFolder}");
+                    SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 }
             }
             catch (Exception ex)
@@ -353,7 +328,7 @@ namespace ASFManagerPRO
             
             if (!File.Exists(asfPath))
             {
-                SendToJS("asfError", $"ASF.exe не найден в папке: {exeFolder}");
+                SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 return;
             }
             
@@ -480,8 +455,6 @@ namespace ASFManagerPRO
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
-                
-                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
@@ -493,7 +466,6 @@ namespace ASFManagerPRO
         {
             isClosing = true;
             SaveAccounts();
-            Thread.Sleep(100);
         }
     }
 
