@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     
-    <!-- ОТКЛЮЧАЕМ SingleFile - это КЛЮЧЕВОЕ изменение! -->
+    <!-- ОТКЛЮЧАЕМ SingleFile - данные будут сохраняться рядом с EXE -->
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
