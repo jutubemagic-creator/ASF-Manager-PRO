@@ -18,11 +18,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
-        run: dotnet publish ASFManagerPRO.csproj -c Release -o publish
+      - name: Publish single-file EXE
+        run: dotnet publish ASFManagerPRO.csproj -c Release -p:PublishSingleFile=true -p:SelfContained=true -p:RuntimeIdentifier=win-x64 -o publish
 
-      - name: Upload artifact
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: ASF-Manager-PRO
-          path: publish/
+          path: publish/ASFManagerPRO.exe
