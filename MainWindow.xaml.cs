@@ -28,11 +28,9 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // Получаем папку где находится EXE (реальный путь, не временный)
-            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            
-            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
+            // Сохраняем в LOCALAPPDATA - это постоянное место, не зависит от временной папки EXE
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            appDataFolder = Path.Combine(localAppData, "ASF_Manager_PRO");
             
             if (!Directory.Exists(appDataFolder))
                 Directory.CreateDirectory(appDataFolder);
@@ -101,9 +99,13 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
+                // Ищем index.html - сначала в папке с EXE (временная), потом в папке данных
                 string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string exeFolder = Path.GetDirectoryName(exePath) ?? "";
                 string htmlPath = Path.Combine(exeFolder, "index.html");
+                
+                if (!File.Exists(htmlPath))
+                    htmlPath = Path.Combine(appDataFolder, "index.html");
                 
                 if (File.Exists(htmlPath))
                 {
@@ -112,14 +114,41 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;text-align:center;padding:50px;font-family:sans-serif;'><h1>ASF Manager PRO v3.3</h1><p>index.html not found</p></body></html>");
+                    webView.NavigateToString(GetEmbeddedHtml());
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
-                    "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка WebView2: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private string GetEmbeddedHtml()
+        {
+            return @"<!DOCTYPE html>
+            <html>
+            <head><meta charset='UTF-8'><title>ASF Manager PRO</title></head>
+            <body style='background:#0a0a0f;color:white;text-align:center;padding:50px;font-family:sans-serif;'>
+                <h1>ASF Manager PRO v3.3</h1>
+                <p>Загрузка...</p>
+                <div id='content'></div>
+                <script>
+                    let accounts = [];
+                    function render() {
+                        document.getElementById('content').innerHTML = '<pre>' + JSON.stringify(accounts, null, 2) + '</pre>';
+                    }
+                    window.receiveFromCSharp = function(msg) {
+                        if(msg.type === 'accounts') {
+                            accounts = msg.data || [];
+                            render();
+                        }
+                    };
+                    window.onload = function() {
+                        window.chrome.webview.postMessage(JSON.stringify({action:'getAccounts'}));
+                    };
+                </script>
+            </body>
+            </html>";
         }
 
         private async void WebView_WebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
@@ -258,9 +287,14 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
-                string asfPath = Path.Combine(exeFolder, "ASF.exe");
+                // Ищем ASF.exe в разных местах
+                string asfPath = Path.Combine(appDataFolder, "ASF.exe");
+                if (!File.Exists(asfPath))
+                {
+                    string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                    string exeFolder = Path.GetDirectoryName(exePath) ?? "";
+                    asfPath = Path.Combine(exeFolder, "ASF.exe");
+                }
                 
                 if (File.Exists(asfPath))
                 {
@@ -288,7 +322,7 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
+                    SendToJS("asfError", $"ASF.exe не найден");
                 }
             }
             catch (Exception ex)
@@ -300,13 +334,17 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            string asfPath = Path.Combine(exeFolder, "ASF.exe");
+            string asfPath = Path.Combine(appDataFolder, "ASF.exe");
+            if (!File.Exists(asfPath))
+            {
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? "";
+                asfPath = Path.Combine(exeFolder, "ASF.exe");
+            }
             
             if (!File.Exists(asfPath))
             {
-                SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
+                SendToJS("asfError", $"ASF.exe не найден");
                 return;
             }
             
