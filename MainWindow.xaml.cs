@@ -19,6 +19,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
+        private bool isClosing = false;
 
         public MainWindow()
         {
@@ -27,8 +28,10 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // ПРОСТО - папка рядом с EXE (теперь работает, т.к. SingleFile отключён)
-            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+            // Получаем папку где находится EXE (реальный путь, не временный)
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             
             if (!Directory.Exists(appDataFolder))
@@ -37,9 +40,38 @@ namespace ASFManagerPRO
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
             LoadAccounts();
-            Accounts.CollectionChanged += (s, e) => SaveAccounts();
+            Accounts.CollectionChanged += OnAccountsCollectionChanged;
             
             InitializeWebView();
+        }
+
+        private void OnAccountsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (isClosing) return;
+            
+            if (e.NewItems != null)
+            {
+                foreach (Account item in e.NewItems)
+                {
+                    item.PropertyChanged += Account_PropertyChanged;
+                }
+            }
+            if (e.OldItems != null)
+            {
+                foreach (Account item in e.OldItems)
+                {
+                    item.PropertyChanged -= Account_PropertyChanged;
+                }
+            }
+            SaveAccounts();
+        }
+
+        private void Account_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (!isClosing)
+            {
+                SaveAccounts();
+            }
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -69,7 +101,9 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html");
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string htmlPath = Path.Combine(exeFolder, "index.html");
                 
                 if (File.Exists(htmlPath))
                 {
@@ -78,12 +112,13 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;text-align:center;padding:50px;'><h1>ASF Manager PRO v3.3</h1><p>index.html not found</p></body></html>");
+                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;text-align:center;padding:50px;font-family:sans-serif;'><h1>ASF Manager PRO v3.3</h1><p>index.html not found</p></body></html>");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
+                    "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -223,7 +258,8 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (File.Exists(asfPath))
@@ -264,7 +300,8 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
@@ -374,7 +411,10 @@ namespace ASFManagerPRO
                     {
                         Accounts.Clear();
                         foreach (var acc in loaded)
+                        {
+                            acc.PropertyChanged += Account_PropertyChanged;
                             Accounts.Add(acc);
+                        }
                     }
                 }
             }
@@ -402,6 +442,7 @@ namespace ASFManagerPRO
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            isClosing = true;
             SaveAccounts();
             Thread.Sleep(100);
         }
@@ -409,22 +450,39 @@ namespace ASFManagerPRO
 
     public class Account : INotifyPropertyChanged
     {
-        public string Id { get; set; } = "";
-        public string Login { get; set; } = "";
-        public string Password { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string EmailPass { get; set; } = "";
-        public string Proxy { get; set; } = "";
-        public string Pin { get; set; } = "";
-        public string MaFile { get; set; } = "";
-        public string Notes { get; set; } = "";
-        public string Status { get; set; } = "Offline";
-        public string Balance { get; set; } = "0 ₽";
-        public string SteamId { get; set; } = "";
-        public string CreatedAt { get; set; } = "";
-        public string LastLogin { get; set; } = "";
-        public int CardsRemaining { get; set; } = 0;
-        public int GamesCount { get; set; } = 0;
+        private string _id = "";
+        private string _login = "";
+        private string _password = "";
+        private string _email = "";
+        private string _emailPass = "";
+        private string _proxy = "";
+        private string _pin = "";
+        private string _maFile = "";
+        private string _notes = "";
+        private string _status = "Offline";
+        private string _balance = "0 ₽";
+        private string _steamId = "";
+        private string _createdAt = "";
+        private string _lastLogin = "";
+        private int _cardsRemaining = 0;
+        private int _gamesCount = 0;
+
+        public string Id { get => _id; set { _id = value; OnPropertyChanged(); } }
+        public string Login { get => _login; set { _login = value; OnPropertyChanged(); } }
+        public string Password { get => _password; set { _password = value; OnPropertyChanged(); } }
+        public string Email { get => _email; set { _email = value; OnPropertyChanged(); } }
+        public string EmailPass { get => _emailPass; set { _emailPass = value; OnPropertyChanged(); } }
+        public string Proxy { get => _proxy; set { _proxy = value; OnPropertyChanged(); } }
+        public string Pin { get => _pin; set { _pin = value; OnPropertyChanged(); } }
+        public string MaFile { get => _maFile; set { _maFile = value; OnPropertyChanged(); } }
+        public string Notes { get => _notes; set { _notes = value; OnPropertyChanged(); } }
+        public string Status { get => _status; set { _status = value; OnPropertyChanged(); } }
+        public string Balance { get => _balance; set { _balance = value; OnPropertyChanged(); } }
+        public string SteamId { get => _steamId; set { _steamId = value; OnPropertyChanged(); } }
+        public string CreatedAt { get => string.IsNullOrEmpty(_createdAt) ? DateTime.Now.ToString("o") : _createdAt; set { _createdAt = value; OnPropertyChanged(); } }
+        public string LastLogin { get => _lastLogin; set { _lastLogin = value; OnPropertyChanged(); } }
+        public int CardsRemaining { get => _cardsRemaining; set { _cardsRemaining = value; OnPropertyChanged(); } }
+        public int GamesCount { get => _gamesCount; set { _gamesCount = value; OnPropertyChanged(); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = "") => 
