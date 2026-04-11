@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -20,7 +19,6 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
-        private string exeFolder;
         private bool isClosing = false;
 
         public MainWindow()
@@ -30,26 +28,10 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing!;
             this.PreviewKeyDown += Window_PreviewKeyDown!;
             
-            // Получаем реальную папку, где находится EXE файл
-            string executablePath = Assembly.GetExecutingAssembly().Location;
-            exeFolder = Path.GetDirectoryName(executablePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            // ПРОСТО - папка рядом с EXE (теперь работает, т.к. SingleFile отключён)
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             
-            // Дополнительная проверка: если путь содержит временную папку .NET single-file
-            if (exeFolder.Contains(".exe") && (exeFolder.Contains("temp", StringComparison.OrdinalIgnoreCase) || 
-                exeFolder.Contains("Temporary", StringComparison.OrdinalIgnoreCase)))
-            {
-                string? mainModulePath = Process.GetCurrentProcess().MainModule?.FileName;
-                if (!string.IsNullOrEmpty(mainModulePath) && File.Exists(mainModulePath))
-                {
-                    exeFolder = Path.GetDirectoryName(mainModulePath)!;
-                }
-                else
-                {
-                    exeFolder = Environment.CurrentDirectory;
-                }
-            }
-            
-            // Папка для данных - РЯДОМ С EXE
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             
             if (!Directory.Exists(appDataFolder))
@@ -57,39 +39,15 @@ namespace ASFManagerPRO
             
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
-            // Создаём резервную копию если файл существует
-            CreateBackupIfNeeded();
+            // Показываем путь для отладки
+            MessageBox.Show($"Данные сохраняются в:\n{dataPath}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Information);
             
-            // Загружаем аккаунты
             LoadAccounts();
             
-            // Подписываемся на изменения
             Accounts.CollectionChanged += (s, e) => { if (!isClosing) SaveAccounts(); };
             Accounts.CollectionChanged += OnAccountsCollectionChanged!;
             
             InitializeWebView();
-        }
-
-        private void CreateBackupIfNeeded()
-        {
-            try
-            {
-                if (File.Exists(dataPath))
-                {
-                    string backupPath = Path.Combine(appDataFolder, $"accounts_backup_{DateTime.Now:yyyyMMdd_HHmmss}.json");
-                    File.Copy(dataPath, backupPath, overwrite: true);
-                    
-                    var backupFiles = Directory.GetFiles(appDataFolder, "accounts_backup_*.json");
-                    foreach (var file in backupFiles)
-                    {
-                        if (File.GetCreationTime(file) < DateTime.Now.AddDays(-7))
-                        {
-                            try { File.Delete(file); } catch { }
-                        }
-                    }
-                }
-            }
-            catch { }
         }
 
         private void OnAccountsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -167,45 +125,40 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    string fallbackHtml = GetFallbackHtml();
-                    webView.NavigateToString(fallbackHtml);
+                    webView.NavigateToString(GetFallbackHtml());
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
-                    "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка WebView2: {ex.Message}", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private string FindIndexHtml()
         {
-            string[] possiblePaths = {
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            
+            string[] paths = {
                 Path.Combine(exeFolder, "index.html"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html"),
                 Path.Combine(Environment.CurrentDirectory, "index.html"),
-                Path.Combine(appDataFolder, "index.html"),
-                Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "index.html")
+                Path.Combine(appDataFolder, "index.html")
             };
             
-            foreach (var path in possiblePaths)
+            foreach (var path in paths)
             {
                 if (File.Exists(path))
                 {
-                    try
-                    {
-                        return File.ReadAllText(path);
-                    }
-                    catch { }
+                    try { return File.ReadAllText(path); } catch { }
                 }
             }
-            
             return "";
         }
 
         private string GetFallbackHtml()
         {
-            return @"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>ASF Manager PRO</title><style>body{background:#0a0a0f;color:white;font-family:sans-serif;text-align:center;padding:50px;}</style></head><body><h1>ASF Manager PRO v3.3</h1><p>Не удалось загрузить index.html</p><p>Пожалуйста, убедитесь, что файл index.html находится в папке с программой.</p></body></html>";
+            return @"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>ASF Manager PRO</title><style>body{background:#0a0a0f;color:white;font-family:sans-serif;text-align:center;padding:50px;}</style></head><body><h1>ASF Manager PRO v3.3</h1><p>index.html не найден</p></body></html>";
         }
 
         private async void WebView_WebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
@@ -342,7 +295,7 @@ namespace ASFManagerPRO
             }
             catch
             {
-                SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный или неверный AppID.");
+                SendToJS("inventoryError", "Не удалось загрузить инвентарь.");
             }
         }
 
@@ -350,6 +303,8 @@ namespace ASFManagerPRO
         {
             try
             {
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (File.Exists(asfPath))
@@ -378,7 +333,7 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    SendToJS("asfError", $"ASF.exe не найден. Поместите ASF в папку: {exeFolder}");
+                    SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 }
             }
             catch (Exception ex)
@@ -390,11 +345,13 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
             {
-                SendToJS("asfError", $"ASF.exe не найден в папке: {exeFolder}");
+                SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 return;
             }
             
@@ -508,7 +465,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка загрузки: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -516,21 +473,15 @@ namespace ASFManagerPRO
         {
             try
             {
-                // Создаём бэкап перед сохранением
-                if (File.Exists(dataPath))
-                {
-                    string backupPath = Path.Combine(appDataFolder, $"accounts_backup_{DateTime.Now:yyyyMMdd_HHmmss}.json");
-                    File.Copy(dataPath, backupPath, overwrite: true);
-                }
+                if (!Directory.Exists(appDataFolder))
+                    Directory.CreateDirectory(appDataFolder);
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
-                
-                Debug.WriteLine($"[{DateTime.Now:HH:mm:ss}] Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         
@@ -538,7 +489,6 @@ namespace ASFManagerPRO
         {
             isClosing = true;
             SaveAccounts();
-            System.Threading.Thread.Sleep(100);
         }
     }
 
