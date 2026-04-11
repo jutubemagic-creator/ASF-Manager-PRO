@@ -7,17 +7,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
+    <!-- ОТКЛЮЧАЕМ SingleFile - это КЛЮЧЕВОЕ изменение! -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
-    <PublishTrimmed>false</PublishTrimmed>
     
-    <!-- Важно: не вырезать файлы при публикации -->
-    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    
-    <WebView2LoaderPreference>Static</WebView2LoaderPreference>
-    <Version>3.2.0</Version>
+    <Version>3.3.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -31,7 +26,6 @@
 
   <ItemGroup>
     <None Update="index.html" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="accounts.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('accounts.json')" />
   </ItemGroup>
 
 </Project>
