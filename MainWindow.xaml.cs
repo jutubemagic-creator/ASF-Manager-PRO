@@ -90,23 +90,26 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
+                // Обработка saveAccounts - обновляем данные и сохраняем
                 if (msg?.Action == "saveAccounts" && !string.IsNullOrWhiteSpace(msg.Data))
                 {
                     var list = JsonSerializer.Deserialize<List<Account>>(msg.Data, JsonOptions);
                     if (list != null)
                     {
                         Accounts.Clear();
-                        foreach (var acc in list) Accounts.Add(acc);
-                    }
-                }
-
-                switch (msg?.Action)
-                {
-                    case "saveAccounts":
+                        foreach (var acc in list) 
+                            Accounts.Add(acc);
+                        
+                        // Сохраняем один раз после обновления
                         SaveAccounts();
                         SendToJS("accounts", Accounts);
-                        break;
+                    }
+                    return;
+                }
 
+                // Остальные действия
+                switch (msg?.Action)
+                {
                     case "getAccounts":
                         SendToJS("accounts", Accounts);
                         break;
@@ -150,14 +153,19 @@ namespace ASFManagerPRO
                         break;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in WebView_WebMessageReceived: {ex.Message}");
+            }
         }
 
         private void LoadAccounts()
         {
             try
             {
-                if (!Directory.Exists(appDataFolder)) Directory.CreateDirectory(appDataFolder);
+                if (!Directory.Exists(appDataFolder)) 
+                    Directory.CreateDirectory(appDataFolder);
+                    
                 if (File.Exists(dataPath))
                 {
                     string json = File.ReadAllText(dataPath);
@@ -165,25 +173,47 @@ namespace ASFManagerPRO
                     if (list != null)
                     {
                         Accounts.Clear();
-                        foreach (var acc in list) Accounts.Add(acc);
+                        foreach (var acc in list) 
+                            Accounts.Add(acc);
+                        
+                        Debug.WriteLine($"Загружено {Accounts.Count} аккаунтов из {dataPath}");
                     }
                 }
+                else
+                {
+                    Debug.WriteLine($"Файл не существует: {dataPath}");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
+            }
         }
 
         public void SaveAccounts()
         {
             try
             {
-                if (!Directory.Exists(appDataFolder)) Directory.CreateDirectory(appDataFolder);
+                if (!Directory.Exists(appDataFolder)) 
+                    Directory.CreateDirectory(appDataFolder);
+                
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
+                
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
+                Debug.WriteLine($"Размер файла: {new FileInfo(dataPath).Length} байт");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка сохранения: {ex.Message}");
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}");
+            }
         }
 
-        private void Window_Closing(object sender, CancelEventArgs e) => SaveAccounts();
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            SaveAccounts();
+        }
 
         private void SendToJS(string type, object data)
         {
@@ -196,7 +226,6 @@ namespace ASFManagerPRO
             catch { }
         }
 
-        // ==================== Все остальные методы ====================
         private void MassUpdateAccounts(string data)
         {
             try
