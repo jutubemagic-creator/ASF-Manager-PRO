@@ -21,7 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="index.html" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
