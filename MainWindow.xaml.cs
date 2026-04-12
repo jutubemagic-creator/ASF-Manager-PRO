@@ -18,6 +18,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
         private string appDataFolder = "";
+        private bool webViewReady = false;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -73,17 +74,19 @@ namespace ASFManagerPRO
                 if (File.Exists(htmlPath))
                 {
                     string html = File.ReadAllText(htmlPath);
-                    webView.NavigateToString(html);
+                    await webView.EnsureCoreWebView2Async(env);
+                    webView.CoreWebView2.NavigateToString(html);
                 }
                 else
                 {
-                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;padding:20px'><h1>index.html not found</h1><p>Path: " + htmlPath + "</p></body></html>");
+                    webView.CoreWebView2.NavigateToString("<html><body style='background:#0a0a0f;color:white;padding:20px'><h1>index.html not found</h1><p>Path: " + htmlPath + "</p></body></html>");
                 }
                 
-                // ВАЖНО: Ждём загрузки страницы и отправляем аккаунты
-                webView.CoreWebView2.DOMContentLoaded += (sender, e) =>
+                // Ждём полной загрузки страницы
+                webView.CoreWebView2.NavigationCompleted += (sender, e) =>
                 {
-                    // Отправляем аккаунты в JS после загрузки страницы
+                    webViewReady = true;
+                    // ОТПРАВЛЯЕМ АККАУНТЫ ПОСЛЕ ЗАГРУЗКИ СТРАНИЦЫ
                     SendToJS("accounts", Accounts);
                 };
             }
@@ -176,9 +179,15 @@ namespace ASFManagerPRO
                         foreach (var acc in list)
                             Accounts.Add(acc);
                         
-                        // Отладка
                         Debug.WriteLine($"Загружено {Accounts.Count} аккаунтов");
                     }
+                }
+                else
+                {
+                    // Создаём тестовый аккаунт если файла нет
+                    Accounts.Add(new Account { Login = "test_account", Password = "test123", Balance = "100 ₽" });
+                    SaveAccounts();
+                    Debug.WriteLine("Создан тестовый аккаунт");
                 }
             }
             catch (Exception ex)
@@ -193,7 +202,7 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
-                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов");
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
@@ -208,12 +217,18 @@ namespace ASFManagerPRO
 
         private void SendToJS(string type, object data)
         {
-            if (webView?.CoreWebView2 == null) return;
+            if (webView?.CoreWebView2 == null)
+            {
+                Debug.WriteLine("WebView не инициализирован");
+                return;
+            }
+            
             try
             {
                 string json = JsonSerializer.Serialize(new { type, data }, JsonOptions);
-                webView.CoreWebView2.PostWebMessageAsJson(json);
-                Debug.WriteLine($"Отправлено в JS: {type}");
+                string script = $"window.receiveFromCSharp({json});";
+                webView.CoreWebView2.ExecuteScriptAsync(script);
+                Debug.WriteLine($"Отправлено в JS: {type}, данных: {data}");
             }
             catch (Exception ex)
             {
