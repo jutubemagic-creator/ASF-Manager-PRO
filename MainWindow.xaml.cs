@@ -18,6 +18,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
+        private string exeRealPath;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -31,9 +32,15 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            // ПАПКА ДЛЯ ДАННЫХ - СОЗДАЕТСЯ РЯДОМ С EXE
-            string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
-            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
+            // ПОЛУЧАЕМ РЕАЛЬНЫЙ ПУТЬ К EXE (НЕ ВРЕМЕННУЮ ПАПКУ!)
+            string? processPath = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(processPath))
+                processPath = Assembly.GetExecutingAssembly().Location;
+            
+            exeRealPath = Path.GetDirectoryName(processPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            
+            // ВСЁ СОЗДАЁМ РЯДОМ С РЕАЛЬНЫМ EXE
+            appDataFolder = Path.Combine(exeRealPath, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
 
             try
@@ -60,8 +67,7 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
-                string webViewDataPath = Path.Combine(exeFolder, "ASF_Data", "WebView2Data");
+                string webViewDataPath = Path.Combine(exeRealPath, "ASF_Data", "WebView2Data");
                 
                 if (!Directory.Exists(webViewDataPath)) 
                     Directory.CreateDirectory(webViewDataPath);
@@ -73,8 +79,8 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                // ИЩЕМ index.html РЯДОМ С EXE
-                string htmlPath = Path.Combine(exeFolder, "index.html");
+                // ИЩЕМ index.html РЯДОМ С РЕАЛЬНЫМ EXE
+                string htmlPath = Path.Combine(exeRealPath, "index.html");
                 
                 if (File.Exists(htmlPath))
                 {
@@ -83,8 +89,8 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    // Если нет index.html - показываем ошибку
-                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial'><h1>Ошибка: index.html не найден!</h1><p>Файл должен быть в папке с программой</p></body></html>");
+                    // ПОКАЗЫВАЕМ ГДЕ ИЩЕМ
+                    webView.NavigateToString($"<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;flex-direction:column'><h1>Ошибка: index.html не найден!</h1><p>Ищу по пути: {htmlPath}</p><p>Файл должен быть в папке с программой</p><p>Текущая папка: {exeRealPath}</p></body></html>");
                 }
             }
             catch (Exception ex)
@@ -276,8 +282,7 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
-                string asfPath = Path.Combine(exeFolder, "ASF.exe");
+                string asfPath = Path.Combine(exeRealPath, "ASF.exe");
                 
                 if (!File.Exists(asfPath))
                 {
@@ -314,8 +319,7 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
-            string asfPath = Path.Combine(exeFolder, "ASF.exe");
+            string asfPath = Path.Combine(exeRealPath, "ASF.exe");
             
             if (!File.Exists(asfPath))
             {
@@ -397,7 +401,7 @@ namespace ASFManagerPRO
         }
     }
 
-    // Модели данных
+    // Модели данных (оставляем как есть)
     public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
