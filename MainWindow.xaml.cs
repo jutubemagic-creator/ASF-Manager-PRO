@@ -18,6 +18,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
+        private string htmlPath;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -31,10 +32,14 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            // Сохраняем в Documents, чтобы не терять данные
+            // Данные сохраняем в Documents (постоянное место)
             string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             appDataFolder = Path.Combine(documentsPath, "ASF_Manager_PRO_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
+
+            // HTML ищем рядом с EXE
+            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+            htmlPath = Path.Combine(exeFolder, "index.html");
 
             try
             {
@@ -70,9 +75,16 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                // Встроенный HTML с оригинальным дизайном
-                string html = GetOriginalHtml();
-                webView.NavigateToString(html);
+                // Загружаем HTML из файла
+                if (File.Exists(htmlPath))
+                {
+                    string html = File.ReadAllText(htmlPath);
+                    webView.NavigateToString(html);
+                }
+                else
+                {
+                    MessageBox.Show($"index.html не найден по пути:\n{htmlPath}\n\nПрограмма будет работать некорректно!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             catch (Exception ex)
             {
@@ -381,17 +393,6 @@ namespace ASFManagerPRO
         {
             foreach (var acc in Accounts) if (acc.Id == id) return acc;
             return null;
-        }
-
-        private string GetOriginalHtml()
-        {
-            // ВСТАВЬТЕ СЮДА ВЕСЬ ВАШ ОРИГИНАЛЬНЫЙ index.html
-            // Я не могу вставить его целиком из-за ограничения длины сообщения
-            
-            // Для начала скопируйте сюда содержимое вашего index.html
-            // Временно используем упрощенную версию, но вы замените на свою
-            
-            return File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html"));
         }
     }
 
