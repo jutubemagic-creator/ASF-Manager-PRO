@@ -18,17 +18,27 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Restore dependencies
+        run: dotnet restore ASFManagerPRO.csproj
+
       - name: Publish single-file EXE
-        run: dotnet publish ASFManagerPRO.csproj -c Release -p:PublishSingleFile=true -p:SelfContained=true -p:RuntimeIdentifier=win-x64 -o publish
+        run: |
+          dotnet publish ASFManagerPRO.csproj -c Release `
+            -p:PublishSingleFile=true `
+            -p:SelfContained=true `
+            -p:RuntimeIdentifier=win-x64 `
+            -p:PublishTrimmed=false `
+            -o publish
 
       - name: Copy index.html to publish folder
         run: copy index.html publish\
 
-      - name: Create ASF_Data folder in publish
-        run: mkdir publish\ASF_Data
+      - name: Create ASF_Data folder
+        run: mkdir -Force publish\ASF_Data
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ASF-Manager-PRO
           path: publish/
+          retention-days: 30
