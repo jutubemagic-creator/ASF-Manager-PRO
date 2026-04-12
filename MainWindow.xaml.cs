@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -18,6 +17,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
+        private string htmlPath;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -31,19 +31,19 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            string exeFolder = GetRealExeFolder();
-            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
+            // ПРАВИЛЬНЫЙ путь к папке с данными - рядом с EXE файлом
+            string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            appDataFolder = Path.Combine(exeDirectory, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
-
+            htmlPath = Path.Combine(exeDirectory, "index.html");
+            
+            // Создаем папку если нет
+            if (!Directory.Exists(appDataFolder))
+                Directory.CreateDirectory(appDataFolder);
+            
             LoadAccounts();
             Accounts.CollectionChanged += (s, e) => SaveAccounts();
             InitializeWebView();
-        }
-
-        private string GetRealExeFolder()
-        {
-            string? exePath = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
-            return Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -59,7 +59,8 @@ namespace ASFManagerPRO
             try
             {
                 string webViewDataPath = Path.Combine(appDataFolder, "WebView2Data");
-                if (!Directory.Exists(webViewDataPath)) Directory.CreateDirectory(webViewDataPath);
+                if (!Directory.Exists(webViewDataPath)) 
+                    Directory.CreateDirectory(webViewDataPath);
 
                 var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
@@ -68,18 +69,21 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                string exeFolder = GetRealExeFolder();
-                string htmlPath = Path.Combine(exeFolder, "index.html");
-
+                // Проверяем существование HTML файла
                 if (File.Exists(htmlPath))
                 {
                     string html = File.ReadAllText(htmlPath);
                     webView.NavigateToString(html);
+                    MessageBox.Show($"HTML загружен из: {htmlPath}", "Debug");
+                }
+                else
+                {
+                    MessageBox.Show($"HTML не найден по пути: {htmlPath}\n\nEXE находится в: {AppDomain.CurrentDomain.BaseDirectory}", "Ошибка");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"WebView2 Error: {ex.Message}");
+                MessageBox.Show($"WebView2 Error: {ex.Message}\n\nПуть: {htmlPath}");
             }
         }
 
@@ -90,7 +94,7 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                // Обработка saveAccounts - обновляем данные и сохраняем
+                // Обработка saveAccounts
                 if (msg?.Action == "saveAccounts" && !string.IsNullOrWhiteSpace(msg.Data))
                 {
                     var list = JsonSerializer.Deserialize<List<Account>>(msg.Data, JsonOptions);
@@ -100,14 +104,12 @@ namespace ASFManagerPRO
                         foreach (var acc in list) 
                             Accounts.Add(acc);
                         
-                        // Сохраняем один раз после обновления
                         SaveAccounts();
                         SendToJS("accounts", Accounts);
                     }
                     return;
                 }
 
-                // Остальные действия
                 switch (msg?.Action)
                 {
                     case "getAccounts":
@@ -155,7 +157,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error in WebView_WebMessageReceived: {ex.Message}");
+                Debug.WriteLine($"Error: {ex.Message}");
             }
         }
 
@@ -163,9 +165,6 @@ namespace ASFManagerPRO
         {
             try
             {
-                if (!Directory.Exists(appDataFolder)) 
-                    Directory.CreateDirectory(appDataFolder);
-                    
                 if (File.Exists(dataPath))
                 {
                     string json = File.ReadAllText(dataPath);
@@ -176,17 +175,17 @@ namespace ASFManagerPRO
                         foreach (var acc in list) 
                             Accounts.Add(acc);
                         
-                        Debug.WriteLine($"Загружено {Accounts.Count} аккаунтов из {dataPath}");
+                        MessageBox.Show($"Загружено {Accounts.Count} аккаунтов из {dataPath}", "Debug");
                     }
                 }
                 else
                 {
-                    Debug.WriteLine($"Файл не существует: {dataPath}");
+                    MessageBox.Show($"Файл не существует: {dataPath}\nБудет создан при сохранении.", "Debug");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
+                MessageBox.Show($"Ошибка загрузки: {ex.Message}\n{dataPath}");
             }
         }
 
@@ -200,12 +199,10 @@ namespace ASFManagerPRO
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
                 
-                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
-                Debug.WriteLine($"Размер файла: {new FileInfo(dataPath).Length} байт");
+                MessageBox.Show($"Сохранено {Accounts.Count} аккаунтов в {dataPath}\nРазмер: {json.Length} байт", "Debug");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка сохранения: {ex.Message}");
                 MessageBox.Show($"Ошибка сохранения: {ex.Message}");
             }
         }
@@ -282,9 +279,13 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = GetRealExeFolder();
-                string asfPath = Path.Combine(exeFolder, "ASF.exe");
-                if (!File.Exists(asfPath)) return;
+                string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string asfPath = Path.Combine(exeDirectory, "ASF.exe");
+                if (!File.Exists(asfPath))
+                {
+                    MessageBox.Show($"ASF.exe не найден по пути: {asfPath}");
+                    return;
+                }
 
                 var process = new Process
                 {
@@ -309,15 +310,22 @@ namespace ASFManagerPRO
                     SendToJS("accounts", Accounts);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска ASF: {ex.Message}");
+            }
         }
 
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exeFolder = GetRealExeFolder();
-            string asfPath = Path.Combine(exeFolder, "ASF.exe");
-            if (!File.Exists(asfPath)) return;
+            string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string asfPath = Path.Combine(exeDirectory, "ASF.exe");
+            if (!File.Exists(asfPath))
+            {
+                MessageBox.Show($"ASF.exe не найден по пути: {asfPath}");
+                return;
+            }
 
             foreach (var account in Accounts)
             {
@@ -393,7 +401,7 @@ namespace ASFManagerPRO
         }
     }
 
-    // ====================== МОДЕЛИ ======================
+    // Модели данных
     public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -419,7 +427,6 @@ namespace ASFManagerPRO
 
     public class WebMessage { public string Action { get; set; } = ""; public string Data { get; set; } = ""; }
     public class MassUpdateData { public string[] AccountIds { get; set; } = Array.Empty<string>(); public Dictionary<string, string> Fields { get; set; } = new(); }
-
     public class SteamInventory { public bool success { get; set; } public SteamInventoryItem[]? assets { get; set; } public SteamInventoryDescription[]? descriptions { get; set; } public int total_inventory_count { get; set; } }
     public class SteamInventoryItem { public string assetid { get; set; } = ""; public string classid { get; set; } = ""; public int amount { get; set; } }
     public class SteamInventoryDescription { public string classid { get; set; } = ""; public string name { get; set; } = ""; public string market_hash_name { get; set; } = ""; public string icon_url { get; set; } = ""; public string type { get; set; } = ""; public string rarity { get; set; } = ""; }
