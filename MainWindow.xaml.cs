@@ -51,14 +51,10 @@ namespace ASFManagerPRO
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control)
-                SendToJS("hotkey", "new");
-            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control)
-                SendToJS("hotkey", "save");
-            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
-                SendToJS("hotkey", "search");
-            else if (e.Key == Key.Delete)
-                SendToJS("hotkey", "delete");
+            if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "new");
+            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "save");
+            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "search");
+            else if (e.Key == Key.Delete) SendToJS("hotkey", "delete");
         }
 
         private async void InitializeWebView()
@@ -91,7 +87,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime", "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -117,10 +113,7 @@ namespace ASFManagerPRO
                                         Accounts.Add(acc);
                                 }
                             }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Ошибка при сохранении аккаунтов:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
+                            catch { }
                             SaveAccounts();
                             SendToJS("accounts", Accounts);
                         }
@@ -148,7 +141,6 @@ namespace ASFManagerPRO
 
                     case "copyToClipboard":
                         Clipboard.SetText(msg.Data);
-                        SendToJS("copyResult", new { success = true });
                         break;
 
                     case "deleteAllAccounts":
@@ -170,10 +162,7 @@ namespace ASFManagerPRO
                         break;
                 }
             }
-            catch (Exception ex)
-            {
-                SendToJS("error", ex.Message);
-            }
+            catch { }
         }
 
         private void MassUpdateAccounts(string data)
@@ -204,10 +193,7 @@ namespace ASFManagerPRO
                     SendToJS("massUpdateComplete", new { count = updateData.AccountIds.Length });
                 }
             }
-            catch (Exception ex)
-            {
-                SendToJS("error", ex.Message);
-            }
+            catch { }
         }
 
         private async Task GetInventory(string parameters)
@@ -220,11 +206,10 @@ namespace ASFManagerPRO
 
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
-                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
 
                 string url = $"https://steamcommunity.com/inventory/{steamId}/{appId}/2?l=russian&count=200";
                 string response = await client.GetStringAsync(url);
-
                 var inventory = JsonSerializer.Deserialize<SteamInventory>(response);
                 SendToJS("inventoryData", new { appId, data = inventory });
             }
@@ -266,15 +251,8 @@ namespace ASFManagerPRO
                         SendToJS("accounts", Accounts);
                     }
                 }
-                else
-                {
-                    SendToJS("asfError", $"ASF.exe не найден!");
-                }
             }
-            catch (Exception ex)
-            {
-                SendToJS("asfError", ex.Message);
-            }
+            catch { }
         }
 
         private void RunASFForAll()
@@ -283,11 +261,7 @@ namespace ASFManagerPRO
             string exeFolder = GetRealExeFolder();
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
 
-            if (!File.Exists(asfPath))
-            {
-                SendToJS("asfError", $"ASF.exe не найден!");
-                return;
-            }
+            if (!File.Exists(asfPath)) return;
 
             foreach (var account in Accounts)
             {
@@ -331,12 +305,10 @@ namespace ASFManagerPRO
         {
             var parts = data.Split('|');
             if (parts.Length < 2) return;
-            string accountId = parts[0];
-            string newBalance = parts[1];
-            var account = GetAccountById(accountId);
+            var account = GetAccountById(parts[0]);
             if (account != null)
             {
-                account.Balance = newBalance;
+                account.Balance = parts[1];
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
             }
@@ -387,7 +359,6 @@ namespace ASFManagerPRO
                 {
                     string json = File.ReadAllText(dataPath);
                     var list = JsonSerializer.Deserialize<List<Account>>(json, JsonOptions);
-
                     if (list != null)
                     {
                         Accounts.Clear();
@@ -396,10 +367,7 @@ namespace ASFManagerPRO
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            catch { }
         }
 
         public void SaveAccounts()
@@ -412,10 +380,7 @@ namespace ASFManagerPRO
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}\nПуть: {dataPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch { }
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
