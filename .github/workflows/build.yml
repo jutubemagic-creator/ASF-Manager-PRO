@@ -21,8 +21,14 @@ jobs:
       - name: Publish single-file EXE
         run: dotnet publish ASFManagerPRO.csproj -c Release -p:PublishSingleFile=true -p:SelfContained=true -p:RuntimeIdentifier=win-x64 -o publish
 
-      - name: Upload EXE artifact
+      - name: Copy index.html to publish folder
+        run: copy index.html publish\
+
+      - name: Create ASF_Data folder in publish
+        run: mkdir publish\ASF_Data
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ASF-Manager-PRO
-          path: publish/ASFManagerPRO.exe
+          path: publish/
