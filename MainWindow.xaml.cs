@@ -4,12 +4,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Web.WebView2.Wpf;
+using Microsoft.Web.WebView2.Core;
 
 namespace ASFManagerPRO
 {
@@ -18,7 +18,6 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
-        private string exeRealPath;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -32,55 +31,38 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            // ПОЛУЧАЕМ РЕАЛЬНЫЙ ПУТЬ К EXE (НЕ ВРЕМЕННУЮ ПАПКУ!)
-            string? processPath = Environment.ProcessPath;
-            if (string.IsNullOrEmpty(processPath))
-                processPath = Assembly.GetExecutingAssembly().Location;
-            
-            exeRealPath = Path.GetDirectoryName(processPath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            
-            // ВСЁ СОЗДАЁМ РЯДОМ С РЕАЛЬНЫМ EXE
-            appDataFolder = Path.Combine(exeRealPath, "ASF_Data");
+            string exePath = Process.GetCurrentProcess().MainModule.FileName;
+            string exeFolder = Path.GetDirectoryName(exePath);
+            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
 
-            try
-            {
-                if (!Directory.Exists(appDataFolder))
-                    Directory.CreateDirectory(appDataFolder);
-            }
-            catch { }
+            if (!Directory.Exists(appDataFolder))
+                Directory.CreateDirectory(appDataFolder);
 
             LoadAccounts();
-            Accounts.CollectionChanged += (s, e) => SaveAccounts();
             InitializeWebView();
-        }
-
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "new");
-            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "save");
-            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "search");
-            else if (e.Key == Key.Delete) SendToJS("hotkey", "delete");
         }
 
         private async void InitializeWebView()
         {
             try
             {
-                string webViewDataPath = Path.Combine(exeRealPath, "ASF_Data", "WebView2Data");
-                
-                if (!Directory.Exists(webViewDataPath)) 
+                string webViewDataPath = Path.Combine(appDataFolder, "WebView2Data");
+                if (!Directory.Exists(webViewDataPath))
                     Directory.CreateDirectory(webViewDataPath);
 
-                var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, webViewDataPath);
+                var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
-
+                
+                // ВАЖНО: Подписываемся на событие ПОСЛЕ инициализации
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
-                webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
+                webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
+                
+                // Открываем консоль для отладки (F12)
+                webView.CoreWebView2.OpenDevToolsWindow();
 
-                // ИЩЕМ index.html РЯДОМ С РЕАЛЬНЫМ EXE
-                string htmlPath = Path.Combine(exeRealPath, "index.html");
+                string htmlPath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "index.html");
                 
                 if (File.Exists(htmlPath))
                 {
@@ -89,23 +71,28 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    // ПОКАЗЫВАЕМ ГДЕ ИЩЕМ
-                    webView.NavigateToString($"<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;flex-direction:column'><h1>Ошибка: index.html не найден!</h1><p>Ищу по пути: {htmlPath}</p><p>Файл должен быть в папке с программой</p><p>Текущая папка: {exeRealPath}</p></body></html>");
+                    webView.NavigateToString("<html><body><h1>index.html not found</h1></body></html>");
                 }
+                
+                // Ждём загрузки страницы и отправляем аккаунты
+                webView.CoreWebView2.DOMContentLoaded += (sender, e) =>
+                {
+                    SendToJS("accounts", Accounts);
+                };
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"WebView2 Error: {ex.Message}");
+                MessageBox.Show($"Error: {ex.Message}");
             }
         }
 
-        private async void WebView_WebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
+        private void WebView_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
                 string json = e.TryGetWebMessageAsString();
-                var msg = JsonSerializer.Deserialize<WebMessage>(json);
-
+                var msg = JsonSerializer.Deserialize<WebMessage>(json, JsonOptions);
+                
                 if (msg?.Action == "saveAccounts" && !string.IsNullOrWhiteSpace(msg.Data))
                 {
                     var list = JsonSerializer.Deserialize<List<Account>>(msg.Data, JsonOptions);
@@ -114,61 +101,48 @@ namespace ASFManagerPRO
                         Accounts.Clear();
                         foreach (var acc in list)
                             Accounts.Add(acc);
-
                         SaveAccounts();
                         SendToJS("accounts", Accounts);
                     }
-                    return;
                 }
-
-                switch (msg?.Action)
+                else if (msg?.Action == "getAccounts")
                 {
-                    case "getAccounts":
-                        SendToJS("accounts", Accounts);
-                        break;
-
-                    case "getInventory":
-                        await GetInventory(msg.Data);
-                        break;
-
-                    case "runASF":
-                        RunASF(msg.Data);
-                        break;
-
-                    case "runASFForAll":
-                        RunASFForAll();
-                        break;
-
-                    case "updateLastLogin":
-                        UpdateLastLogin(msg.Data);
-                        break;
-
-                    case "copyToClipboard":
-                        Clipboard.SetText(msg.Data);
-                        break;
-
-                    case "deleteAllAccounts":
-                        Accounts.Clear();
-                        SaveAccounts();
-                        SendToJS("accounts", Accounts);
-                        break;
-
-                    case "deleteAccount":
-                        DeleteAccount(msg.Data);
-                        break;
-
-                    case "updateBalance":
-                        UpdateBalance(msg.Data);
-                        break;
-
-                    case "massUpdate":
-                        MassUpdateAccounts(msg.Data);
-                        break;
+                    SendToJS("accounts", Accounts);
+                }
+                else if (msg?.Action == "getInventory")
+                {
+                    _ = GetInventory(msg.Data);
+                }
+                else if (msg?.Action == "runASF")
+                {
+                    RunASF(msg.Data);
+                }
+                else if (msg?.Action == "runASFForAll")
+                {
+                    RunASFForAll();
+                }
+                else if (msg?.Action == "copyToClipboard")
+                {
+                    Clipboard.SetText(msg.Data);
+                }
+                else if (msg?.Action == "deleteAllAccounts")
+                {
+                    Accounts.Clear();
+                    SaveAccounts();
+                    SendToJS("accounts", Accounts);
+                }
+                else if (msg?.Action == "deleteAccount")
+                {
+                    DeleteAccount(msg.Data);
+                }
+                else if (msg?.Action == "massUpdate")
+                {
+                    MassUpdateAccounts(msg.Data);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error: {ex.Message}");
+                MessageBox.Show($"WebMessage Error: {ex.Message}\n{json}");
             }
         }
 
@@ -190,7 +164,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки: {ex.Message}");
+                MessageBox.Show($"Load Error: {ex.Message}");
             }
         }
 
@@ -198,15 +172,13 @@ namespace ASFManagerPRO
         {
             try
             {
-                if (!Directory.Exists(appDataFolder))
-                    Directory.CreateDirectory(appDataFolder);
-
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
+                MessageBox.Show($"Сохранено! Путь: {dataPath}\nАккаунтов: {Accounts.Count}", "Сохранение");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}");
+                MessageBox.Show($"Save Error: {ex.Message}");
             }
         }
 
@@ -221,39 +193,12 @@ namespace ASFManagerPRO
             try
             {
                 string json = JsonSerializer.Serialize(new { type, data }, JsonOptions);
-                webView.CoreWebView2.ExecuteScriptAsync($"window.receiveFromCSharp({json});");
+                webView.CoreWebView2.PostWebMessageAsJson(json);
             }
-            catch { }
-        }
-
-        private void MassUpdateAccounts(string data)
-        {
-            try
+            catch (Exception ex)
             {
-                var updateData = JsonSerializer.Deserialize<MassUpdateData>(data, JsonOptions);
-                if (updateData == null) return;
-
-                foreach (var accountId in updateData.AccountIds)
-                {
-                    var account = GetAccountById(accountId);
-                    if (account != null)
-                    {
-                        foreach (var field in updateData.Fields)
-                        {
-                            switch (field.Key)
-                            {
-                                case "Proxy": account.Proxy = field.Value; break;
-                                case "Notes": account.Notes = field.Value; break;
-                                case "Status": account.Status = field.Value; break;
-                            }
-                        }
-                    }
-                }
-                SaveAccounts();
-                SendToJS("accounts", Accounts);
-                SendToJS("massUpdateComplete", new { count = updateData.AccountIds.Length });
+                Debug.WriteLine($"SendToJS Error: {ex.Message}");
             }
-            catch { }
         }
 
         private async Task GetInventory(string parameters)
@@ -282,11 +227,12 @@ namespace ASFManagerPRO
         {
             try
             {
-                string asfPath = Path.Combine(exeRealPath, "ASF.exe");
+                string exeFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (!File.Exists(asfPath))
                 {
-                    SendToJS("asfError", "ASF.exe не найден в папке с программой");
+                    SendToJS("asfError", "ASF.exe не найден");
                     return;
                 }
 
@@ -319,11 +265,12 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string asfPath = Path.Combine(exeRealPath, "ASF.exe");
+            string exeFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
             {
-                SendToJS("asfError", "ASF.exe не найден в папке с программой");
+                SendToJS("asfError", "ASF.exe не найден");
                 return;
             }
 
@@ -364,6 +311,36 @@ namespace ASFManagerPRO
             }
         }
 
+        private void MassUpdateAccounts(string data)
+        {
+            try
+            {
+                var updateData = JsonSerializer.Deserialize<MassUpdateData>(data, JsonOptions);
+                if (updateData == null) return;
+
+                foreach (var accountId in updateData.AccountIds)
+                {
+                    var account = GetAccountById(accountId);
+                    if (account != null)
+                    {
+                        foreach (var field in updateData.Fields)
+                        {
+                            switch (field.Key)
+                            {
+                                case "Proxy": account.Proxy = field.Value; break;
+                                case "Notes": account.Notes = field.Value; break;
+                                case "Status": account.Status = field.Value; break;
+                            }
+                        }
+                    }
+                }
+                SaveAccounts();
+                SendToJS("accounts", Accounts);
+                SendToJS("massUpdateComplete", new { count = updateData.AccountIds.Length });
+            }
+            catch { }
+        }
+
         private void UpdateBalance(string data)
         {
             var parts = data.Split('|');
@@ -377,12 +354,6 @@ namespace ASFManagerPRO
             }
         }
 
-        private Account? GetAccountByLogin(string login)
-        {
-            foreach (var acc in Accounts) if (acc.Login == login) return acc;
-            return null;
-        }
-
         private void UpdateLastLogin(string accountId)
         {
             var account = GetAccountById(accountId);
@@ -394,6 +365,12 @@ namespace ASFManagerPRO
             }
         }
 
+        private Account? GetAccountByLogin(string login)
+        {
+            foreach (var acc in Accounts) if (acc.Login == login) return acc;
+            return null;
+        }
+
         private Account? GetAccountById(string id)
         {
             foreach (var acc in Accounts) if (acc.Id == id) return acc;
@@ -401,7 +378,7 @@ namespace ASFManagerPRO
         }
     }
 
-    // Модели данных (оставляем как есть)
+    // Модели данных
     public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
