@@ -729,7 +729,6 @@ function clearEditForm() {
     document.getElementById('editNotes').value = '';
 }
 
-// ====================== ИСПРАВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ======================
 function saveEditedAccount() {
     const data = {
         Id: currentEditId || 'acc-' + Date.now(),
@@ -762,7 +761,6 @@ function saveEditedAccount() {
         accounts.unshift(data);
     }
     
-    // Отправляем в C# для сохранения
     window.chrome.webview.postMessage(JSON.stringify({ 
         action: "saveAccounts", 
         data: JSON.stringify(accounts) 
@@ -978,7 +976,9 @@ function renderInventoryResult(data) {
     document.getElementById('inventoryResult').innerHTML = html;
 }
 
+// ============= ГЛАВНОЕ - ЗАГРУЗКА ПРИ СТАРТЕ =============
 window.onload = () => {
+    // Запрашиваем аккаунты при загрузке
     window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
     switchTab('accounts');
 };
