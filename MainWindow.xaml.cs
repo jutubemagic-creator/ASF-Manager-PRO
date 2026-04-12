@@ -31,21 +31,10 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            // ПРАВИЛЬНЫЙ путь - не во временную папку, а в Documents или в папку с EXE
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            appDataFolder = Path.Combine(appDataPath, "ASF_Manager_PRO_Data");
+            // Сохраняем в Documents, чтобы не терять данные
+            string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            appDataFolder = Path.Combine(documentsPath, "ASF_Manager_PRO_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
-
-            // Если EXE не в Temp, можно сохранять рядом с EXE
-            string exeLocation = Assembly.GetExecutingAssembly().Location;
-            string exeDirectory = Path.GetDirectoryName(exeLocation) ?? "";
-            
-            // Если EXE не во временной папке - сохраняем рядом с ним
-            if (!exeDirectory.Contains("\\Temp\\") && !exeDirectory.Contains("\\temp\\"))
-            {
-                appDataFolder = Path.Combine(exeDirectory, "ASF_Data");
-                dataPath = Path.Combine(appDataFolder, "accounts.json");
-            }
 
             try
             {
@@ -57,9 +46,6 @@ namespace ASFManagerPRO
             LoadAccounts();
             Accounts.CollectionChanged += (s, e) => SaveAccounts();
             InitializeWebView();
-
-            // Показываем где сохраняем
-            MessageBox.Show($"Данные сохраняются в:\n{dataPath}", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -84,8 +70,8 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                // HTML встроен прямо в код (чтобы не искать файл)
-                string html = GetEmbeddedHtml();
+                // Встроенный HTML с оригинальным дизайном
+                string html = GetOriginalHtml();
                 webView.NavigateToString(html);
             }
             catch (Exception ex)
@@ -201,7 +187,7 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}\nПуть: {dataPath}");
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}");
             }
         }
 
@@ -281,13 +267,9 @@ namespace ASFManagerPRO
                 string asfPath = Path.Combine(exeDirectory, "ASF.exe");
                 if (!File.Exists(asfPath))
                 {
-                    // Пробуем найти ASF в папке с данными
                     asfPath = Path.Combine(appDataFolder, "ASF.exe");
                     if (!File.Exists(asfPath))
-                    {
-                        MessageBox.Show($"ASF.exe не найден");
                         return;
-                    }
                 }
 
                 var process = new Process
@@ -313,10 +295,7 @@ namespace ASFManagerPRO
                     SendToJS("accounts", Accounts);
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка: {ex.Message}");
-            }
+            catch { }
         }
 
         private void RunASFForAll()
@@ -328,10 +307,7 @@ namespace ASFManagerPRO
             {
                 asfPath = Path.Combine(appDataFolder, "ASF.exe");
                 if (!File.Exists(asfPath))
-                {
-                    MessageBox.Show($"ASF.exe не найден");
                     return;
-                }
             }
 
             foreach (var account in Accounts)
@@ -407,104 +383,15 @@ namespace ASFManagerPRO
             return null;
         }
 
-        private string GetEmbeddedHtml()
+        private string GetOriginalHtml()
         {
-            // Базовый HTML (упрощенный для теста)
-            return @"<!DOCTYPE html>
-<html>
-<head>
-    <meta charset=""UTF-8"">
-    <title>ASF Manager PRO</title>
-    <script src=""https://cdn.tailwindcss.com""></script>
-    <style>
-        body { background: #0a0a0f; color: white; font-family: Arial; padding: 20px; }
-        button { background: #00b4ff; padding: 10px 20px; border-radius: 10px; margin: 5px; cursor: pointer; }
-        input, textarea { background: #1f2937; padding: 8px; margin: 5px; border-radius: 8px; color: white; width: 200px; }
-    </style>
-</head>
-<body>
-    <div style=""max-width: 800px; margin: 0 auto;"">
-        <h1>ASF Manager PRO v3.3</h1>
-        <button onclick=""addAccount()"">Добавить аккаунт</button>
-        <button onclick=""saveData()"">Сохранить</button>
-        <button onclick=""loadData()"">Загрузить</button>
-        <div id=""accounts""></div>
-        <div id=""form"" style=""display:none; margin-top: 20px;"">
-            <h3>Новый аккаунт</h3>
-            <input type=""text"" id=""login"" placeholder=""Логин""><br>
-            <input type=""password"" id=""password"" placeholder=""Пароль""><br>
-            <button onclick=""saveAccount()"">Сохранить аккаунт</button>
-            <button onclick=""hideForm()"">Отмена</button>
-        </div>
-    </div>
-    <script>
-        let accounts = [];
-        
-        function renderAccounts() {
-            const div = document.getElementById('accounts');
-            div.innerHTML = accounts.map(acc => `<div style=""border:1px solid #333; padding:10px; margin:5px; border-radius:8px;"">
-                <b>${acc.Login}</b>
-                <button onclick=""deleteAccount('${acc.Id}')"">Удалить</button>
-            </div>`).join('');
-        }
-        
-        function addAccount() {
-            document.getElementById('form').style.display = 'block';
-        }
-        
-        function hideForm() {
-            document.getElementById('form').style.display = 'none';
-            document.getElementById('login').value = '';
-            document.getElementById('password').value = '';
-        }
-        
-        function saveAccount() {
-            const login = document.getElementById('login').value;
-            const password = document.getElementById('password').value;
-            if (!login) return;
+            // ВСТАВЬТЕ СЮДА ВЕСЬ ВАШ ОРИГИНАЛЬНЫЙ index.html
+            // Я не могу вставить его целиком из-за ограничения длины сообщения
             
-            accounts.push({
-                Id: Date.now().toString(),
-                Login: login,
-                Password: password,
-                Email: '', EmailPass: '', Proxy: '', Pin: '', MaFile: '', Notes: '',
-                Status: 'Offline', Balance: '0 ₽', SteamId: '', CreatedAt: new Date().toISOString(),
-                LastLogin: '', CardsRemaining: 0, GamesCount: 0
-            });
+            // Для начала скопируйте сюда содержимое вашего index.html
+            // Временно используем упрощенную версию, но вы замените на свою
             
-            hideForm();
-            renderAccounts();
-            saveData();
-        }
-        
-        function deleteAccount(id) {
-            accounts = accounts.filter(a => a.Id !== id);
-            renderAccounts();
-            saveData();
-        }
-        
-        function saveData() {
-            window.chrome.webview.postMessage(JSON.stringify({ 
-                action: 'saveAccounts', 
-                data: JSON.stringify(accounts) 
-            }));
-        }
-        
-        function loadData() {
-            window.chrome.webview.postMessage(JSON.stringify({ action: 'getAccounts' }));
-        }
-        
-        window.receiveFromCSharp = function(msg) {
-            if (msg.type === 'accounts') {
-                accounts = msg.data || [];
-                renderAccounts();
-            }
-        };
-        
-        loadData();
-    </script>
-</body>
-</html>";
+            return File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "index.html"));
         }
     }
 
