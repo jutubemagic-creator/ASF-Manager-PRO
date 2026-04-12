@@ -663,7 +663,6 @@ function importData() {
                 const imported = JSON.parse(ev.target.result);
                 if (Array.isArray(imported)) {
                     accounts = imported;
-                    // ИСПРАВЛЕНИЕ
                     window.chrome.webview.postMessage(JSON.stringify({ 
                         action: "saveAccounts", 
                         data: JSON.stringify(accounts) 
@@ -730,6 +729,7 @@ function clearEditForm() {
     document.getElementById('editNotes').value = '';
 }
 
+// ====================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ======================
 function saveEditedAccount() {
     const data = {
         Id: currentEditId || 'acc-' + Date.now(),
@@ -760,7 +760,7 @@ function saveEditedAccount() {
         accounts.unshift(data);
     }
     
-    // ИСПРАВЛЕНИЕ — главное место
+    // ИСПРАВЛЕНИЕ
     window.chrome.webview.postMessage(JSON.stringify({ 
         action: "saveAccounts", 
         data: JSON.stringify(accounts) 
@@ -887,7 +887,9 @@ function applyMassEdit() {
 
 function receiveHotkey(action) {
     switch(action) {
-        case 'new': addNewAccount(); break;
+        case 'new':
+            addNewAccount();
+            break;
         case 'save':
             const saveBtn = document.querySelector('#editModal:not(.hidden) button:first-child');
             if (saveBtn && saveBtn.onclick) saveBtn.click();
