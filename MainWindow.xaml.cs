@@ -16,8 +16,8 @@ namespace ASFManagerPRO
     public partial class MainWindow : Window
     {
         public ObservableCollection<Account> Accounts { get; set; } = new();
-        private string dataPath;
-        private string appDataFolder;
+        private string dataPath = "";
+        private string appDataFolder = "";
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -31,8 +31,8 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
 
-            string exePath = Process.GetCurrentProcess().MainModule.FileName;
-            string exeFolder = Path.GetDirectoryName(exePath);
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
 
@@ -41,6 +41,14 @@ namespace ASFManagerPRO
 
             LoadAccounts();
             InitializeWebView();
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "new");
+            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "save");
+            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "search");
+            else if (e.Key == Key.Delete) SendToJS("hotkey", "delete");
         }
 
         private async void InitializeWebView()
@@ -54,15 +62,13 @@ namespace ASFManagerPRO
                 var env = await CoreWebView2Environment.CreateAsync(null, webViewDataPath);
                 await webView.EnsureCoreWebView2Async(env);
                 
-                // ВАЖНО: Подписываемся на событие ПОСЛЕ инициализации
                 webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
                 webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
-                
-                // Открываем консоль для отладки (F12)
-                webView.CoreWebView2.OpenDevToolsWindow();
 
-                string htmlPath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "index.html");
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string htmlPath = Path.Combine(exeFolder, "index.html");
                 
                 if (File.Exists(htmlPath))
                 {
@@ -71,10 +77,9 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    webView.NavigateToString("<html><body><h1>index.html not found</h1></body></html>");
+                    webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;padding:20px'><h1>index.html not found</h1><p>Path: " + htmlPath + "</p></body></html>");
                 }
                 
-                // Ждём загрузки страницы и отправляем аккаунты
                 webView.CoreWebView2.DOMContentLoaded += (sender, e) =>
                 {
                     SendToJS("accounts", Accounts);
@@ -123,7 +128,7 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "copyToClipboard")
                 {
-                    Clipboard.SetText(msg.Data);
+                    Clipboard.SetText(msg.Data ?? "");
                 }
                 else if (msg?.Action == "deleteAllAccounts")
                 {
@@ -133,16 +138,24 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "deleteAccount")
                 {
-                    DeleteAccount(msg.Data);
+                    DeleteAccount(msg.Data ?? "");
                 }
                 else if (msg?.Action == "massUpdate")
                 {
-                    MassUpdateAccounts(msg.Data);
+                    MassUpdateAccounts(msg.Data ?? "");
+                }
+                else if (msg?.Action == "updateBalance")
+                {
+                    UpdateBalance(msg.Data ?? "");
+                }
+                else if (msg?.Action == "updateLastLogin")
+                {
+                    UpdateLastLogin(msg.Data ?? "");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"WebMessage Error: {ex.Message}\n{json}");
+                Debug.WriteLine($"WebMessage Error: {ex.Message}");
             }
         }
 
@@ -174,7 +187,6 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
-                MessageBox.Show($"Сохранено! Путь: {dataPath}\nАккаунтов: {Accounts.Count}", "Сохранение");
             }
             catch (Exception ex)
             {
@@ -182,7 +194,7 @@ namespace ASFManagerPRO
             }
         }
 
-        private void Window_Closing(object sender, CancelEventArgs e)
+        private void Window_Closing(object? sender, CancelEventArgs e)
         {
             SaveAccounts();
         }
@@ -227,7 +239,8 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exeFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (!File.Exists(asfPath))
@@ -265,7 +278,8 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exeFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
@@ -402,9 +416,40 @@ namespace ASFManagerPRO
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class WebMessage { public string Action { get; set; } = ""; public string Data { get; set; } = ""; }
-    public class MassUpdateData { public string[] AccountIds { get; set; } = Array.Empty<string>(); public Dictionary<string, string> Fields { get; set; } = new(); }
-    public class SteamInventory { public bool success { get; set; } public SteamInventoryItem[]? assets { get; set; } public SteamInventoryDescription[]? descriptions { get; set; } public int total_inventory_count { get; set; } }
-    public class SteamInventoryItem { public string assetid { get; set; } = ""; public string classid { get; set; } = ""; public int amount { get; set; } }
-    public class SteamInventoryDescription { public string classid { get; set; } = ""; public string name { get; set; } = ""; public string market_hash_name { get; set; } = ""; public string icon_url { get; set; } = ""; public string type { get; set; } = ""; public string rarity { get; set; } = ""; }
+    public class WebMessage 
+    { 
+        public string Action { get; set; } = ""; 
+        public string Data { get; set; } = ""; 
+    }
+    
+    public class MassUpdateData 
+    { 
+        public string[] AccountIds { get; set; } = Array.Empty<string>(); 
+        public Dictionary<string, string> Fields { get; set; } = new(); 
+    }
+    
+    public class SteamInventory 
+    { 
+        public bool success { get; set; } 
+        public SteamInventoryItem[]? assets { get; set; } 
+        public SteamInventoryDescription[]? descriptions { get; set; } 
+        public int total_inventory_count { get; set; } 
+    }
+    
+    public class SteamInventoryItem 
+    { 
+        public string assetid { get; set; } = ""; 
+        public string classid { get; set; } = ""; 
+        public int amount { get; set; } 
+    }
+    
+    public class SteamInventoryDescription 
+    { 
+        public string classid { get; set; } = ""; 
+        public string name { get; set; } = ""; 
+        public string market_hash_name { get; set; } = ""; 
+        public string icon_url { get; set; } = ""; 
+        public string type { get; set; } = ""; 
+        public string rarity { get; set; } = ""; 
+    }
 }
