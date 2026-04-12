@@ -18,7 +18,6 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
-        private bool isClosing = false; // Флаг для предотвращения повторного сохранения
 
         public MainWindow()
         {
@@ -27,14 +26,18 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // ПРОСТО - берём папку где находится EXE
-            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
-            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
+            // Используем папку %APPDATA% для надежного хранения
+            string appDataRoaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            appDataFolder = Path.Combine(appDataRoaming, "ASFManagerPRO", "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
-            LoadAccounts();
+            // СОЗДАЕМ ПАПКУ ПРИ ЗАПУСКЕ (если её нет)
+            if (!Directory.Exists(appDataFolder))
+            {
+                Directory.CreateDirectory(appDataFolder);
+            }
             
-            // ВАЖНО: Подписываемся на изменения коллекции ПОСЛЕ загрузки
+            LoadAccounts();
             Accounts.CollectionChanged += OnAccountsCollectionChanged;
             
             InitializeWebView();
@@ -42,7 +45,6 @@ namespace ASFManagerPRO
 
         private void OnAccountsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Сохраняем при любом изменении коллекции
             SaveAccounts();
         }
 
@@ -114,7 +116,7 @@ namespace ASFManagerPRO
                                 foreach (var acc in newAccounts)
                                     Accounts.Add(acc);
                             }
-                            SaveAccounts(); // Дополнительное сохранение
+                            SaveAccounts();
                             SendToJS("accounts", Accounts);
                         }
                         break;
@@ -374,8 +376,11 @@ namespace ASFManagerPRO
         {
             try
             {
+                // Убеждаемся что папка существует
                 if (!Directory.Exists(appDataFolder))
+                {
                     Directory.CreateDirectory(appDataFolder);
+                }
                 
                 if (File.Exists(dataPath))
                 {
@@ -391,7 +396,8 @@ namespace ASFManagerPRO
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка загрузки: {ex.Message}\n\nПуть: {dataPath}", 
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -399,42 +405,39 @@ namespace ASFManagerPRO
         {
             try
             {
-                if (isClosing) return; // Предотвращаем повторное сохранение
-                
+                // Убеждаемся что папка существует перед сохранением
                 if (!Directory.Exists(appDataFolder))
+                {
                     Directory.CreateDirectory(appDataFolder);
+                }
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
-                
-                // Для отладки - показываем где сохранили (можно убрать)
-                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка сохранения: {ex.Message}\n\nПуть: {dataPath}", 
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            isClosing = true;
-            
-            // Принудительное синхронное сохранение перед закрытием
+            // Финальное сохранение перед закрытием
             try
             {
                 if (!Directory.Exists(appDataFolder))
+                {
                     Directory.CreateDirectory(appDataFolder);
+                }
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
-                
-                // Небольшая задержка для гарантии записи на диск
-                System.Threading.Thread.Sleep(50);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при закрытии: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                // Логируем ошибку, но не показываем MessageBox при закрытии
+                Debug.WriteLine($"Ошибка при закрытии: {ex.Message}");
             }
         }
     }
