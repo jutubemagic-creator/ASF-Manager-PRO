@@ -80,8 +80,10 @@ namespace ASFManagerPRO
                     webView.NavigateToString("<html><body style='background:#0a0a0f;color:white;padding:20px'><h1>index.html not found</h1><p>Path: " + htmlPath + "</p></body></html>");
                 }
                 
+                // ВАЖНО: Ждём загрузки страницы и отправляем аккаунты
                 webView.CoreWebView2.DOMContentLoaded += (sender, e) =>
                 {
+                    // Отправляем аккаунты в JS после загрузки страницы
                     SendToJS("accounts", Accounts);
                 };
             }
@@ -112,6 +114,7 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "getAccounts")
                 {
+                    // Когда JS запрашивает аккаунты - отправляем
                     SendToJS("accounts", Accounts);
                 }
                 else if (msg?.Action == "getInventory")
@@ -172,6 +175,9 @@ namespace ASFManagerPRO
                         Accounts.Clear();
                         foreach (var acc in list)
                             Accounts.Add(acc);
+                        
+                        // Отладка
+                        Debug.WriteLine($"Загружено {Accounts.Count} аккаунтов");
                     }
                 }
             }
@@ -187,6 +193,7 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов");
             }
             catch (Exception ex)
             {
@@ -206,6 +213,7 @@ namespace ASFManagerPRO
             {
                 string json = JsonSerializer.Serialize(new { type, data }, JsonOptions);
                 webView.CoreWebView2.PostWebMessageAsJson(json);
+                Debug.WriteLine($"Отправлено в JS: {type}");
             }
             catch (Exception ex)
             {
