@@ -29,13 +29,11 @@ namespace ASFManagerPRO
         {
             InitializeComponent();
             this.Closing += Window_Closing;
-            this.PreviewKeyDown += Window_PreviewKeyDown;
+            this.PreviewKeyDown += Window_PreviewKeyDown;   // ← теперь метод существует
 
             string exeFolder = GetRealExeFolder();
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
-
-            MessageBox.Show($"Программа запущена\nПуть к файлу:\n{dataPath}", "DEBUG - Start");
 
             LoadAccounts();
             Accounts.CollectionChanged += (s, e) => SaveAccounts();
@@ -46,6 +44,14 @@ namespace ASFManagerPRO
         {
             string? exePath = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
             return Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "new");
+            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "save");
+            else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) SendToJS("hotkey", "search");
+            else if (e.Key == Key.Delete) SendToJS("hotkey", "delete");
         }
 
         private async void InitializeWebView()
@@ -67,12 +73,13 @@ namespace ASFManagerPRO
 
                 if (File.Exists(htmlPath))
                 {
-                    webView.NavigateToString(File.ReadAllText(htmlPath));
+                    string html = File.ReadAllText(htmlPath);
+                    webView.NavigateToString(html);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("WebView Error: " + ex.Message);
+                MessageBox.Show("WebView2 Error: " + ex.Message);
             }
         }
 
@@ -83,19 +90,14 @@ namespace ASFManagerPRO
                 string json = e.TryGetWebMessageAsString();
                 var msg = JsonSerializer.Deserialize<WebMessage>(json);
 
-                if (msg?.Action == "saveAccounts")
+                if (msg?.Action == "saveAccounts" && !string.IsNullOrWhiteSpace(msg.Data))
                 {
-                    MessageBox.Show($"Получен saveAccounts от JS\nДлина данных: {msg.Data?.Length ?? 0}", "DEBUG - Save Received");
-
-                    if (!string.IsNullOrWhiteSpace(msg.Data))
+                    var list = JsonSerializer.Deserialize<List<Account>>(msg.Data, JsonOptions);
+                    if (list != null)
                     {
-                        var list = JsonSerializer.Deserialize<List<Account>>(msg.Data, JsonOptions);
-                        if (list != null)
-                        {
-                            Accounts.Clear();
-                            foreach (var acc in list) Accounts.Add(acc);
-                            MessageBox.Show($"Успешно добавлено {list.Count} аккаунтов в память", "DEBUG - Loaded to Memory");
-                        }
+                        Accounts.Clear();
+                        foreach (var acc in list)
+                            Accounts.Add(acc);
                     }
                 }
 
@@ -118,10 +120,7 @@ namespace ASFManagerPRO
                     case "copyToClipboard": Clipboard.SetText(msg.Data); break;
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("WebMessage Error: " + ex.Message);
-            }
+            catch { }
         }
 
         private void LoadAccounts()
@@ -131,29 +130,15 @@ namespace ASFManagerPRO
                 if (File.Exists(dataPath))
                 {
                     string json = File.ReadAllText(dataPath);
-                    MessageBox.Show($"Файл найден ({new FileInfo(dataPath).Length} байт)", "DEBUG - Load");
-
                     var list = JsonSerializer.Deserialize<List<Account>>(json, JsonOptions);
-                    if (list != null && list.Count > 0)
+                    if (list != null)
                     {
                         Accounts.Clear();
                         foreach (var acc in list) Accounts.Add(acc);
-                        MessageBox.Show($"Загружено {list.Count} аккаунтов из файла", "DEBUG - Load Success");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Файл существует, но аккаунтов в нём 0", "DEBUG - Load Empty");
                     }
                 }
-                else
-                {
-                    MessageBox.Show("Файл accounts.json ещё не создан", "DEBUG - Load");
-                }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Load Error: " + ex.Message);
-            }
+            catch { }
         }
 
         public void SaveAccounts()
@@ -165,13 +150,8 @@ namespace ASFManagerPRO
 
                 string json = JsonSerializer.Serialize(Accounts, JsonOptions);
                 File.WriteAllText(dataPath, json);
-
-                MessageBox.Show($"Сохранено {Accounts.Count} аккаунтов в файл\nПуть: {dataPath}", "DEBUG - Save Success");
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Save Error: " + ex.Message);
-            }
+            catch { }
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -190,18 +170,19 @@ namespace ASFManagerPRO
             catch { }
         }
 
-        // ==================== Остальные методы ====================
+        // Пустые заглушки, чтобы не было ошибок компиляции
         private void MassUpdateAccounts(string data) { }
         private async Task GetInventory(string parameters) { }
         private void RunASF(string login) { }
         private void RunASFForAll() { }
         private void DeleteAccount(string accountId) { }
         private void UpdateBalance(string data) { }
-        private Account? GetAccountByLogin(string login) { return null; }
+        private Account? GetAccountByLogin(string login) => null;
         private void UpdateLastLogin(string accountId) { }
-        private Account? GetAccountById(string id) { return null; }
+        private Account? GetAccountById(string id) => null;
     }
 
+    // ====================== МОДЕЛИ ======================
     public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -227,6 +208,7 @@ namespace ASFManagerPRO
 
     public class WebMessage { public string Action { get; set; } = ""; public string Data { get; set; } = ""; }
     public class MassUpdateData { public string[] AccountIds { get; set; } = Array.Empty<string>(); public Dictionary<string, string> Fields { get; set; } = new(); }
+
     public class SteamInventory { public bool success { get; set; } public SteamInventoryItem[]? assets { get; set; } public SteamInventoryDescription[]? descriptions { get; set; } public int total_inventory_count { get; set; } }
     public class SteamInventoryItem { public string assetid { get; set; } = ""; public string classid { get; set; } = ""; public int amount { get; set; } }
     public class SteamInventoryDescription { public string classid { get; set; } = ""; public string name { get; set; } = ""; public string market_hash_name { get; set; } = ""; public string icon_url { get; set; } = ""; public string type { get; set; } = ""; public string rarity { get; set; } = ""; }
