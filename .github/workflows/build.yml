@@ -28,13 +28,12 @@ jobs:
             -p:SelfContained=true `
             -p:RuntimeIdentifier=win-x64 `
             -p:PublishTrimmed=false `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
             -o publish
 
       - name: Copy index.html to publish folder
         run: copy index.html publish\
-
-      - name: Create ASF_Data folder
-        run: mkdir -Force publish\ASF_Data
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
