@@ -26,20 +26,13 @@ namespace ASFManagerPRO
             this.Closing += Window_Closing;
             this.PreviewKeyDown += Window_PreviewKeyDown;
             
-            // ========== ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ ==========
-            // Сохраняем в LOCALAPPDATA вместо папки с EXE
-            // Это гарантирует, что данные не потеряются при SingleFile публикации
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            appDataFolder = Path.Combine(localAppData, "ASF_Manager_PRO");
-            
-            if (!Directory.Exists(appDataFolder))
-                Directory.CreateDirectory(appDataFolder);
-            
+            // ПРОСТО - берём папку где находится EXE
+            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+            appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
             LoadAccounts();
-            
-            Accounts.CollectionChanged += (s, e) => { SaveAccounts(); };
+            Accounts.CollectionChanged += (s, e) => SaveAccounts();
             
             InitializeWebView();
         }
@@ -71,8 +64,8 @@ namespace ASFManagerPRO
                 webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
                 webView.CoreWebView2.Settings.IsScriptEnabled = true;
 
-                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                // Ищем index.html в папке с EXE
+                string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
                 string htmlPath = Path.Combine(exeFolder, "index.html");
                 
                 if (File.Exists(htmlPath))
@@ -82,12 +75,13 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    MessageBox.Show($"index.html не найден по пути: {htmlPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"index.html не найден! Поместите его в папку с программой.\nПуть: {htmlPath}", 
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
+                MessageBox.Show($"Ошибка WebView2: {ex.Message}\n\nУстановите WebView2 Runtime:\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703", 
                     "ASF Manager PRO", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -220,7 +214,7 @@ namespace ASFManagerPRO
             }
             catch
             {
-                SendToJS("inventoryError", "Не удалось загрузить инвентарь. Возможно, профиль приватный или неверный AppID.");
+                SendToJS("inventoryError", "Не удалось загрузить инвентарь.");
             }
         }
 
@@ -228,8 +222,7 @@ namespace ASFManagerPRO
         {
             try
             {
-                string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-                string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
                 string asfPath = Path.Combine(exeFolder, "ASF.exe");
                 
                 if (File.Exists(asfPath))
@@ -258,7 +251,7 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    SendToJS("asfError", $"ASF.exe не найден. Поместите ASF в папку: {exeFolder}");
+                    SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 }
             }
             catch (Exception ex)
@@ -270,13 +263,12 @@ namespace ASFManagerPRO
         private void RunASFForAll()
         {
             int successCount = 0;
-            string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            string exeFolder = AppDomain.CurrentDomain.BaseDirectory;
             string asfPath = Path.Combine(exeFolder, "ASF.exe");
             
             if (!File.Exists(asfPath))
             {
-                SendToJS("asfError", $"ASF.exe не найден в папке: {exeFolder}");
+                SendToJS("asfError", $"ASF.exe не найден в {exeFolder}");
                 return;
             }
             
@@ -373,11 +365,14 @@ namespace ASFManagerPRO
         {
             try
             {
+                if (!Directory.Exists(appDataFolder))
+                    Directory.CreateDirectory(appDataFolder);
+                
                 if (File.Exists(dataPath))
                 {
                     string json = File.ReadAllText(dataPath);
                     var loaded = JsonSerializer.Deserialize<ObservableCollection<Account>>(json);
-                    if (loaded != null && loaded.Count > 0)
+                    if (loaded != null)
                     {
                         Accounts.Clear();
                         foreach (var acc in loaded)
