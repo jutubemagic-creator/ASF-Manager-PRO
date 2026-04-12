@@ -729,7 +729,7 @@ function clearEditForm() {
     document.getElementById('editNotes').value = '';
 }
 
-// ====================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ======================
+// ====================== ИСПРАВЛЕННАЯ ФУНКЦИЯ СОХРАНЕНИЯ ======================
 function saveEditedAccount() {
     const data = {
         Id: currentEditId || 'acc-' + Date.now(),
@@ -749,10 +749,12 @@ function saveEditedAccount() {
         CardsRemaining: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CardsRemaining || 0) : 0,
         GamesCount: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.GamesCount || 0) : 0
     };
+    
     if (!data.Login) {
         showToast('Логин обязателен для заполнения');
         return;
     }
+    
     if (currentEditId) {
         const index = accounts.findIndex(a => a.Id === currentEditId);
         if (index > -1) accounts[index] = data;
@@ -760,12 +762,12 @@ function saveEditedAccount() {
         accounts.unshift(data);
     }
     
-    // ИСПРАВЛЕНИЕ
+    // Отправляем в C# для сохранения
     window.chrome.webview.postMessage(JSON.stringify({ 
         action: "saveAccounts", 
         data: JSON.stringify(accounts) 
     }));
-
+    
     closeEditModal();
     renderAccounts();
     showToast('Аккаунт сохранён');
