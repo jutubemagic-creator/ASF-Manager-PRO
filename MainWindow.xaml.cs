@@ -18,6 +18,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath;
         private string appDataFolder;
+        private bool isClosing = false; // Флаг для предотвращения повторного сохранения
 
         public MainWindow()
         {
@@ -32,9 +33,17 @@ namespace ASFManagerPRO
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             
             LoadAccounts();
-            Accounts.CollectionChanged += (s, e) => SaveAccounts();
+            
+            // ВАЖНО: Подписываемся на изменения коллекции ПОСЛЕ загрузки
+            Accounts.CollectionChanged += OnAccountsCollectionChanged;
             
             InitializeWebView();
+        }
+
+        private void OnAccountsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            // Сохраняем при любом изменении коллекции
+            SaveAccounts();
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -105,7 +114,7 @@ namespace ASFManagerPRO
                                 foreach (var acc in newAccounts)
                                     Accounts.Add(acc);
                             }
-                            SaveAccounts();
+                            SaveAccounts(); // Дополнительное сохранение
                             SendToJS("accounts", Accounts);
                         }
                         break;
@@ -390,11 +399,16 @@ namespace ASFManagerPRO
         {
             try
             {
+                if (isClosing) return; // Предотвращаем повторное сохранение
+                
                 if (!Directory.Exists(appDataFolder))
                     Directory.CreateDirectory(appDataFolder);
                 
                 string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dataPath, json);
+                
+                // Для отладки - показываем где сохранили (можно убрать)
+                Debug.WriteLine($"Сохранено {Accounts.Count} аккаунтов в {dataPath}");
             }
             catch (Exception ex)
             {
@@ -404,7 +418,24 @@ namespace ASFManagerPRO
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            SaveAccounts();
+            isClosing = true;
+            
+            // Принудительное синхронное сохранение перед закрытием
+            try
+            {
+                if (!Directory.Exists(appDataFolder))
+                    Directory.CreateDirectory(appDataFolder);
+                
+                string json = JsonSerializer.Serialize(Accounts, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(dataPath, json);
+                
+                // Небольшая задержка для гарантии записи на диск
+                System.Threading.Thread.Sleep(50);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при закрытии: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
     }
 
