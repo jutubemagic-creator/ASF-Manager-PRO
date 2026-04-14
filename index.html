@@ -28,11 +28,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        
         /* Сайдбар */
         .sidebar {
             background: rgba(8, 8, 12, 0.9);
@@ -269,40 +264,42 @@
             cursor: pointer;
         }
         
-        /* Поиск и фильтры */
+        /* Поиск и фильтры - ИСПРАВЛЕНО */
         .search-input {
-            background: rgba(31, 41, 55, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 20px 12px 45px;
             transition: all 0.2s;
-            color: white;
+            color: white !important;
             font-size: 14px;
         }
         
         .search-input::placeholder {
-            color: #6b7280;
+            color: #9ca3af;
         }
         
         .search-input:focus {
             outline: none;
             border-color: #00b4ff;
-            background: rgba(31, 41, 55, 0.9);
+            background: rgba(31, 41, 55, 0.95);
             box-shadow: 0 0 0 3px rgba(0, 180, 255, 0.1);
         }
         
+        /* SELECT - ИСПРАВЛЕНО */
         select {
-            background: rgba(31, 41, 55, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 16px;
-            color: white;
+            color: white !important;
             cursor: pointer;
             font-size: 14px;
         }
         
         select option {
             background: #1f2937;
+            color: white;
         }
         
         select:focus {
@@ -330,6 +327,7 @@
         .danger-btn {
             background: rgba(239, 68, 68, 0.2);
             border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
         }
         
         .danger-btn:hover {
@@ -368,7 +366,7 @@
             border-radius: 10px;
         }
         
-        /* Модальные окна */
+        /* Модальные окна - ИСПРАВЛЕНО */
         .modal-content {
             background: rgba(18, 20, 26, 0.98);
             backdrop-filter: blur(20px);
@@ -377,18 +375,22 @@
         }
         
         input, textarea {
-            background: rgba(31, 41, 55, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
             padding: 12px 16px;
-            color: white;
+            color: white !important;
             transition: all 0.2s;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #6b7280;
         }
         
         input:focus, textarea:focus {
             outline: none;
             border-color: #00b4ff;
-            background: rgba(31, 41, 55, 0.9);
+            background: rgba(31, 41, 55, 0.95);
             box-shadow: 0 0 0 2px rgba(0, 180, 255, 0.1);
         }
         
@@ -486,6 +488,7 @@
         .btn-primary {
             background: linear-gradient(135deg, #00b4ff, #0088cc);
             transition: all 0.2s;
+            color: white;
         }
         
         .btn-primary:hover {
@@ -510,6 +513,23 @@
             background-clip: text;
             color: transparent;
         }
+        
+        /* Дополнительно для селектов в модалках */
+        .modal-content select {
+            background: rgba(31, 41, 55, 0.8);
+            color: white !important;
+            width: 100%;
+        }
+        
+        .modal-content select option {
+            background: #1f2937;
+            color: white;
+        }
+        
+        /* Инпут для баланса и других полей */
+        input[type="text"], input[type="password"], input[type="email"], textarea {
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -526,7 +546,7 @@
             </div>
         </div>
         
-        <button onclick="addNewAccount()" class="btn-primary w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-3 shadow-lg text-white">
+        <button onclick="addNewAccount()" class="btn-primary w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-3 shadow-lg">
             <i class="fas fa-plus"></i> Добавить аккаунт
         </button>
         
@@ -559,7 +579,7 @@
     <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальное окно детального просмотра -->
+<!-- Модальные окна -->
 <div id="detailModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[900px] max-h-[85vh] overflow-auto p-6">
         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
@@ -576,21 +596,20 @@
     </div>
 </div>
 
-<!-- Модальное окно редактирования -->
 <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[800px] max-h-[85vh] overflow-auto p-6">
         <h2 id="editTitle" class="text-2xl font-bold mb-5 text-white">Редактирование</h2>
         <div class="grid grid-cols-2 gap-4">
-            <div><label>Логин Steam *</label><input id="editLogin" class="w-full"></div>
-            <div><label>Пароль Steam</label><input id="editPassword" type="password" class="w-full"></div>
+            <div><label>Логин Steam *</label><input id="editLogin" class="w-full" placeholder="Введите логин"></div>
+            <div><label>Пароль Steam</label><input id="editPassword" type="password" class="w-full" placeholder="Введите пароль"></div>
             <div><label>Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
             <div><label>Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
-            <div><label>Почта</label><input id="editEmail" class="w-full"></div>
-            <div><label>Пароль почты</label><input id="editEmailPass" type="password" class="w-full"></div>
+            <div><label>Почта</label><input id="editEmail" class="w-full" placeholder="email@example.com"></div>
+            <div><label>Пароль почты</label><input id="editEmailPass" type="password" class="w-full" placeholder="Пароль от почты"></div>
             <div><label>Прокси (ip:port)</label><input id="editProxy" class="w-full" placeholder="127.0.0.1:8080"></div>
-            <div><label>PIN-код</label><input id="editPin" class="w-full"></div>
-            <div class="col-span-2"><label>MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs"></textarea></div>
-            <div class="col-span-2"><label>Заметки</label><textarea id="editNotes" rows="2" class="w-full"></textarea></div>
+            <div><label>PIN-код</label><input id="editPin" class="w-full" placeholder="PIN-код"></div>
+            <div class="col-span-2"><label>MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs" placeholder='{"shared_secret":"..."}'></textarea></div>
+            <div class="col-span-2"><label>Заметки</label><textarea id="editNotes" rows="2" class="w-full" placeholder="Дополнительная информация..."></textarea></div>
         </div>
         <div class="flex gap-3 mt-6">
             <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl transition hover:scale-105">Сохранить</button>
@@ -599,7 +618,6 @@
     </div>
 </div>
 
-<!-- Модальное окно массового редактирования -->
 <div id="massEditModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[500px] p-6">
         <h2 class="text-2xl font-bold mb-5 text-white">Массовое редактирование</h2>
@@ -639,7 +657,7 @@ const games = [
     { name: "Team Fortress 2", appId: "440" },
     { name: "Rust", appId: "252490" },
     { name: "Grand Theft Auto V", appId: "271590" },
-    { name: "PUBG: BATTLEGROUNDS", appId: "578080" },
+    name: "PUBG: BATTLEGROUNDS", appId: "578080" },
     { name: "Apex Legends", appId: "1172470" },
     { name: "Destiny 2", appId: "1085660" },
     { name: "Warframe", appId: "230410" },
@@ -788,7 +806,7 @@ function renderAccounts() {
             <div class="empty-state">
                 <i class="fas fa-inbox text-5xl text-gray-600 mb-4 block"></i>
                 <p class="text-gray-400 text-lg">Нет аккаунтов</p>
-                <button onclick="addNewAccount()" class="mt-4 px-6 py-2 bg-[#00b4ff] rounded-xl font-semibold transition hover:scale-105">➕ Добавить первый аккаунт</button>
+                <button onclick="addNewAccount()" class="mt-4 px-6 py-2 bg-[#00b4ff] rounded-xl font-semibold transition hover:scale-105 text-black">➕ Добавить первый аккаунт</button>
             </div>
         </div>` : '';
     html += `</div>`;
@@ -828,8 +846,8 @@ function renderStats() {
                 <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-chart-line text-[#00b4ff]"></i> Средний баланс</div><div class="text-4xl font-bold text-cyan-400">${avgBalance} ₽</div></div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита аккаунтов</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span><span class="font-bold text-white">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span><span class="font-bold text-white">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span></div></div></div>
-                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-id-card text-[#00b4ff] mr-2"></i> Осталось карточек:</span><span class="font-bold text-emerald-400">${totalCards}</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-gamepad text-[#00b4ff] mr-2"></i> Всего игр:</span><span class="font-bold text-blue-400">${totalGames}</span></div></div></div>
+                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита аккаунтов</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span><span class="font-bold text-white">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span><span class="font-bold text-white">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span></div></div></div>
+                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-id-card text-[#00b4ff] mr-2"></i> Осталось карточек:</span><span class="font-bold text-emerald-400">${totalCards}</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-gamepad text-[#00b4ff] mr-2"></i> Всего игр:</span><span class="font-bold text-blue-400">${totalGames}</span></div></div></div>
                 <div class="stat-card md:col-span-2"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-history text-[#00b4ff]"></i> Недавняя активность</h3><div class="space-y-2 max-h-64 overflow-auto">${accounts.filter(a => a.LastLogin).sort((a,b) => new Date(b.LastLogin) - new Date(a.LastLogin)).slice(0,10).map(acc => `<div class="flex justify-between items-center text-sm py-2 px-3 rounded-lg hover:bg-white/5 transition"><span class="font-semibold text-white flex items-center gap-2"><div class="w-6 h-6 rounded bg-gradient-to-r from-[#00b4ff] to-cyan-400 flex items-center justify-center text-xs font-bold text-black">${acc.Login[0]}</div>${escapeHtml(acc.Login)}</span><span class="text-gray-400 text-xs">${new Date(acc.LastLogin).toLocaleString('ru-RU')}</span></div>`).join('')}${accounts.filter(a => a.LastLogin).length === 0 ? '<div class="text-center text-gray-500 py-8"><i class="fas fa-calendar-day text-3xl mb-2 block"></i>Нет данных о входах</div>' : ''}</div></div>
             </div>
         </div>`;
@@ -840,7 +858,7 @@ function renderInventory() {
     document.getElementById('mainContent').innerHTML = `
         <div class="max-w-6xl mx-auto">
             <div class="stat-card p-6 mb-6"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
-            <div class="flex gap-4 flex-wrap"><div class="flex-1 min-w-[200px]"><label class="text-gray-400 text-sm mb-2 block">Steam ID или логин</label><input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full"></div><div class="min-w-[180px]"><label class="text-gray-400 text-sm mb-2 block">Выберите игру</label><select id="inventoryAppId" class="w-full">${gameOptions}</select></div><div class="flex items-end"><button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white shadow-lg"><i class="fas fa-search"></i> Загрузить</button></div></div>
+            <div class="flex gap-4 flex-wrap"><div class="flex-1 min-w-[200px]"><label class="text-gray-400 text-sm mb-2 block">Steam ID или логин</label><input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full"></div><div class="min-w-[180px]"><label class="text-gray-400 text-sm mb-2 block">Выберите игру</label><select id="inventoryAppId" class="w-full">${gameOptions}</select></div><div class="flex items-end"><button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-xl font-bold shadow-lg"><i class="fas fa-search"></i> Загрузить</button></div></div>
             <div class="mt-4 p-3 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300"><i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие</div></div>
             <div id="inventoryResult" class="stat-card p-6"><div class="text-center text-gray-500 py-16"><i class="fas fa-steam text-5xl mb-4 block text-[#00b4ff]"></i><p class="text-lg">Введите Steam ID для просмотра инвентаря</p></div></div>
         </div>`;
@@ -863,7 +881,7 @@ function viewInventory(steamId) {
 function renderSettings() {
     document.getElementById('mainContent').innerHTML = `
         <div class="max-w-3xl mx-auto space-y-6">
-            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-6 text-gradient"><i class="fas fa-database"></i> Управление данными</h2><div class="space-y-3"><button onclick="exportData()" class="btn-success w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button><button onclick="importData()" class="btn-primary w-full py-4 rounded-xl font-bold text-white shadow-lg"><i class="fas fa-upload"></i> Импорт аккаунтов</button></div></div>
+            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-6 text-gradient"><i class="fas fa-database"></i> Управление данными</h2><div class="space-y-3"><button onclick="exportData()" class="btn-success w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button><button onclick="importData()" class="btn-primary w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-upload"></i> Импорт аккаунтов</button></div></div>
             <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-info-circle"></i> О программе</h2><p class="text-xl font-bold text-[#00b4ff]">ASF Manager PRO v3.3</p><div class="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-300"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Статистика и мониторинг</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Поиск, фильтрация, сортировка</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Безопасное хранение паролей</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Горячие клавиши (Ctrl+N, Ctrl+S, Ctrl+F, Del)</div></div><div class="mt-6 p-4 bg-black/30 rounded-xl"><p class="text-xs text-gray-400"><i class="fas fa-folder-open"></i> Данные хранятся в папке:</p><p class="text-xs font-mono text-gray-300 break-all">ASF_Data\\accounts.json (рядом с EXE)</p></div></div>
         </div>`;
 }
@@ -885,8 +903,8 @@ function showAccountDetail(id) {
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-plus w-4 text-[#00b4ff] mr-2"></i> Дата создания:</div><div class="detail-value">${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-check w-4 text-[#00b4ff] mr-2"></i> Последний вход:</div><div class="detail-value">${acc.LastLogin ? new Date(acc.LastLogin).toLocaleString('ru-RU') : '—'}</div></div>
     `;
-    if (acc.MaFile) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/30 p-3 rounded-lg text-xs overflow-auto max-h-32">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
-    if (acc.Notes) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap">${escapeHtml(acc.Notes)}</div></div>`;
+    if (acc.MaFile) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/30 p-3 rounded-lg text-xs overflow-auto max-h-32 text-white">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
+    if (acc.Notes) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap text-white">${escapeHtml(acc.Notes)}</div></div>`;
     document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff]"></i> ${escapeHtml(acc.Login)}`;
     document.getElementById('detailContent').innerHTML = html;
     document.getElementById('detailModal').classList.remove('hidden');
@@ -912,7 +930,7 @@ function closeDetailModal() { document.getElementById('detailModal').classList.a
 function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); currentEditId = null; }
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 function toggleMassSelect(id) { if (selectedAccountsForMass.has(id)) selectedAccountsForMass.delete(id); else selectedAccountsForMass.add(id); updateMassSelectUI(); renderAccounts(); }
-function updateMassSelectUI() { document.getElementById('selectedCount').innerText = selectedAccountsForMass.size; const btn = document.getElementById('massSelectBtn'); if (btn && selectedAccountsForMass.size > 0) btn.classList.add('bg-[#00b4ff]', 'text-black'); else if (btn) btn.classList.remove('bg-[#00b4ff]', 'text-black'); }
+function updateMassSelectUI() { document.getElementById('selectedCount').innerText = selectedAccountsForMass.size; }
 function showMassEditModal() { if (!selectedAccountsForMass.size) { showToast('Сначала выберите аккаунты'); return; } document.getElementById('massEditModal').classList.remove('hidden'); }
 function closeMassEditModal() { document.getElementById('massEditModal').classList.add('hidden'); document.getElementById('massEditValue').value = ''; }
 function applyMassEdit() { const field = document.getElementById('massEditField').value; const value = document.getElementById('massEditValue').value; if (!value) { showToast('Введите значение для изменения'); return; } const ids = Array.from(selectedAccountsForMass); window.chrome.webview.postMessage(JSON.stringify({ action: "massUpdate", data: JSON.stringify({ AccountIds: ids, Fields: { [field]: value } }) })); closeMassEditModal(); selectedAccountsForMass.clear(); updateMassSelectUI(); showToast(`Обновлено ${ids.length} аккаунтов`); }
