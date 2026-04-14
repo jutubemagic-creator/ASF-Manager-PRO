@@ -19,7 +19,7 @@
         
         /* Анимации */
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
@@ -28,16 +28,42 @@
             to { transform: translateX(0); opacity: 1; }
         }
         
-        @keyframes glowPulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(0, 180, 255, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(0, 180, 255, 0.6); }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
         }
         
-        /* Карточка - НОВАЯ СТРУКТУРА */
+        /* Сайдбар */
+        .sidebar {
+            background: rgba(8, 8, 12, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .sidebar-btn {
+            transition: all 0.25s;
+            border-radius: 14px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        .sidebar-btn:hover {
+            background: rgba(0, 180, 255, 0.12);
+            color: white;
+            transform: translateX(4px);
+        }
+        
+        .sidebar-btn.active {
+            background: linear-gradient(135deg, rgba(0, 180, 255, 0.2), rgba(0, 136, 204, 0.1));
+            color: #00b4ff;
+            border-left: 2px solid #00b4ff;
+        }
+        
+        /* Карточка аккаунта */
         .account-card {
-            background: linear-gradient(135deg, rgba(25, 28, 35, 0.95) 0%, rgba(18, 20, 26, 0.98) 100%);
+            background: linear-gradient(135deg, rgba(22, 25, 35, 0.95) 0%, rgba(16, 18, 25, 0.98) 100%);
             border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             cursor: pointer;
             position: relative;
@@ -64,7 +90,7 @@
         .account-card:hover {
             transform: translateY(-6px);
             border-color: rgba(0, 180, 255, 0.3);
-            box-shadow: 0 20px 35px -15px rgba(0, 180, 255, 0.25);
+            box-shadow: 0 25px 40px -18px rgba(0, 180, 255, 0.3);
         }
         
         /* Аватар */
@@ -89,26 +115,25 @@
         /* Статус бейдж */
         .status-badge {
             padding: 5px 12px;
-            border-radius: 30px;
+            border-radius: 40px;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.3px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            backdrop-filter: blur(4px);
         }
         
         .status-online {
             background: linear-gradient(135deg, #00ff88, #00b4ff);
             color: #0a0a0f;
-            box-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 2px 10px rgba(0, 255, 136, 0.25);
         }
         
         .status-offline {
-            background: rgba(55, 65, 81, 0.6);
+            background: rgba(55, 65, 81, 0.5);
             color: #9ca3af;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         /* Информационные блоки */
@@ -131,7 +156,7 @@
         }
         
         .info-item i {
-            width: 20px;
+            width: 18px;
             font-size: 12px;
             color: #00b4ff;
         }
@@ -156,10 +181,10 @@
         
         .account-card:hover .info-item {
             background: rgba(0, 180, 255, 0.08);
-            border-color: rgba(0, 180, 255, 0.15);
+            border-color: rgba(0, 180, 255, 0.12);
         }
         
-        /* КНОПКИ НА КАРТОЧКЕ - НОВЫЙ ДИЗАЙН */
+        /* Кнопки на карточке */
         .card-actions {
             display: flex;
             gap: 8px;
@@ -210,7 +235,7 @@
             background: rgba(255, 255, 255, 0.08);
             color: #d1d5db;
             flex: none;
-            width: 38px;
+            width: 40px;
         }
         
         .card-btn-edit:hover {
@@ -223,7 +248,7 @@
             background: rgba(239, 68, 68, 0.15);
             color: #f87171;
             flex: none;
-            width: 38px;
+            width: 40px;
         }
         
         .card-btn-delete:hover {
@@ -244,39 +269,15 @@
             cursor: pointer;
         }
         
-        /* Сайдбар */
-        .sidebar {
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .sidebar-btn {
-            transition: all 0.2s;
-            border-radius: 14px;
-            color: #d1d5db;
-        }
-        
-        .sidebar-btn:hover {
-            background: rgba(0, 180, 255, 0.1);
-            transform: translateX(4px);
-            color: white;
-        }
-        
-        .sidebar-btn.active {
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.2), rgba(0, 136, 204, 0.1));
-            color: #00b4ff;
-            border-left: 2px solid #00b4ff;
-        }
-        
-        /* Поиск и селекты */
+        /* Поиск и фильтры */
         .search-input {
-            background: rgba(31, 41, 55, 0.6);
+            background: rgba(31, 41, 55, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             padding: 12px 20px 12px 45px;
             transition: all 0.2s;
             color: white;
+            font-size: 14px;
         }
         
         .search-input::placeholder {
@@ -291,12 +292,13 @@
         }
         
         select {
-            background: rgba(31, 41, 55, 0.6);
+            background: rgba(31, 41, 55, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             padding: 12px 16px;
             color: white;
             cursor: pointer;
+            font-size: 14px;
         }
         
         select option {
@@ -306,6 +308,33 @@
         select:focus {
             outline: none;
             border-color: #00b4ff;
+        }
+        
+        /* Кнопки действий */
+        .action-btn {
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #00b4ff;
+            color: black;
+            transform: translateY(-2px);
+        }
+        
+        .danger-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .danger-btn:hover {
+            background: #ef4444;
+            color: white;
         }
         
         /* Toast */
@@ -326,6 +355,7 @@
         /* Скролл */
         ::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
         
         ::-webkit-scrollbar-track {
@@ -347,7 +377,7 @@
         }
         
         input, textarea {
-            background: rgba(31, 41, 55, 0.6);
+            background: rgba(31, 41, 55, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 14px;
             padding: 12px 16px;
@@ -359,13 +389,24 @@
             outline: none;
             border-color: #00b4ff;
             background: rgba(31, 41, 55, 0.9);
+            box-shadow: 0 0 0 2px rgba(0, 180, 255, 0.1);
         }
         
+        label {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        /* Детальный просмотр */
         .detail-row {
             display: flex;
             padding: 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             align-items: flex-start;
+            transition: all 0.2s;
         }
         
         .detail-row:hover {
@@ -379,6 +420,12 @@
             color: #9ca3af;
         }
         
+        .detail-value {
+            flex: 1;
+            color: white;
+            word-break: break-word;
+        }
+        
         .copy-btn {
             cursor: pointer;
             padding: 4px 10px;
@@ -390,17 +437,21 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            color: #00b4ff;
         }
         
         .copy-btn:hover {
             background: rgba(0, 180, 255, 0.3);
+            color: white;
         }
         
+        /* Инвентарь */
         .inventory-item {
             transition: all 0.2s;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 16px;
             padding: 12px;
+            text-align: center;
         }
         
         .inventory-item:hover {
@@ -408,9 +459,10 @@
             background: rgba(0, 180, 255, 0.15);
         }
         
+        /* Статистика */
         .stat-card {
-            background: linear-gradient(135deg, rgba(25, 28, 35, 0.95), rgba(18, 20, 26, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(22, 25, 35, 0.95), rgba(16, 18, 25, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 20px;
             padding: 20px;
             transition: all 0.3s;
@@ -421,8 +473,42 @@
             border-color: rgba(0, 180, 255, 0.3);
         }
         
-        button {
-            cursor: pointer;
+        /* Пустое состояние */
+        .empty-state {
+            background: rgba(31, 41, 55, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Основные кнопки */
+        .btn-primary {
+            background: linear-gradient(135deg, #00b4ff, #0088cc);
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 180, 255, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #0a0a0f;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        /* Текст */
+        .text-gradient {
+            background: linear-gradient(135deg, #00b4ff, #00ff88);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
     </style>
 </head>
@@ -435,35 +521,35 @@
                 🎮
             </div>
             <div>
-                <h1 class="text-xl font-bold bg-gradient-to-r from-[#00b4ff] to-[#00ff88] bg-clip-text text-transparent">ASF PRO</h1>
+                <h1 class="text-xl font-bold text-gradient">ASF PRO</h1>
                 <p class="text-xs text-gray-500">Manager v3.3</p>
             </div>
         </div>
         
-        <button onclick="addNewAccount()" class="w-full py-3 bg-gradient-to-r from-[#00b4ff] to-[#00ff88] text-black font-bold rounded-2xl flex items-center justify-center gap-2 transition hover:scale-105 mb-3 shadow-lg">
+        <button onclick="addNewAccount()" class="btn-primary w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-3 shadow-lg text-white">
             <i class="fas fa-plus"></i> Добавить аккаунт
         </button>
         
-        <button onclick="runASFForAll()" class="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-6 shadow-lg">
+        <button onclick="runASFForAll()" class="btn-success w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-6 shadow-lg">
             <i class="fas fa-play"></i> Запустить всех
         </button>
         
         <div class="space-y-1">
-            <button onclick="switchTab('accounts')" id="tabAccounts" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition font-medium">
+            <button onclick="switchTab('accounts')" id="tabAccounts" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                 <i class="fas fa-users w-5"></i> Аккаунты
             </button>
-            <button onclick="switchTab('inventory')" id="tabInventory" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition font-medium">
+            <button onclick="switchTab('inventory')" id="tabInventory" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                 <i class="fas fa-box w-5"></i> Инвентарь
             </button>
-            <button onclick="switchTab('stats')" id="tabStats" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition font-medium">
+            <button onclick="switchTab('stats')" id="tabStats" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                 <i class="fas fa-chart-line w-5"></i> Статистика
             </button>
-            <button onclick="switchTab('settings')" id="tabSettings" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition font-medium">
+            <button onclick="switchTab('settings')" id="tabSettings" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                 <i class="fas fa-cog w-5"></i> Настройки
             </button>
         </div>
         
-        <div class="mt-auto pt-6 text-xs text-gray-500 border-t border-gray-800">
+        <div class="mt-auto pt-6 text-xs text-gray-500 border-t border-gray-800/50">
             <i class="fas fa-database"></i> Локальное хранение<br>
             <span id="accountCount" class="font-bold text-[#00b4ff]">0 аккаунтов</span>
         </div>
@@ -473,63 +559,65 @@
     <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальные окна -->
+<!-- Модальное окно детального просмотра -->
 <div id="detailModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[900px] max-h-[85vh] overflow-auto p-6">
         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
             <h2 id="detailTitle" class="text-2xl font-bold text-white"></h2>
-            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-3xl transition">&times;</button>
         </div>
         <div id="detailContent" class="mb-5"></div>
         <div class="flex gap-3 pt-3">
-            <button onclick="editFromDetail()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl">Редактировать</button>
-            <button onclick="runASFFromDetail()" class="flex-1 py-3 bg-green-600 font-bold rounded-xl">Запустить ASF</button>
-            <button onclick="deleteFromDetail()" class="flex-1 py-3 bg-red-600 font-bold rounded-xl">Удалить</button>
-            <button onclick="closeDetailModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl">Закрыть</button>
+            <button onclick="editFromDetail()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl transition hover:scale-105">Редактировать</button>
+            <button onclick="runASFFromDetail()" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl transition hover:scale-105">Запустить ASF</button>
+            <button onclick="deleteFromDetail()" class="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl transition hover:scale-105">Удалить</button>
+            <button onclick="closeDetailModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl transition hover:scale-105">Закрыть</button>
         </div>
     </div>
 </div>
 
+<!-- Модальное окно редактирования -->
 <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[800px] max-h-[85vh] overflow-auto p-6">
         <h2 id="editTitle" class="text-2xl font-bold mb-5 text-white">Редактирование</h2>
         <div class="grid grid-cols-2 gap-4">
-            <div><label class="text-gray-400 text-sm">Логин *</label><input id="editLogin" class="w-full"></div>
-            <div><label class="text-gray-400 text-sm">Пароль</label><input id="editPassword" type="password" class="w-full"></div>
-            <div><label class="text-gray-400 text-sm">Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
-            <div><label class="text-gray-400 text-sm">Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
-            <div><label class="text-gray-400 text-sm">Почта</label><input id="editEmail" class="w-full"></div>
-            <div><label class="text-gray-400 text-sm">Пароль почты</label><input id="editEmailPass" type="password" class="w-full"></div>
-            <div><label class="text-gray-400 text-sm">Прокси</label><input id="editProxy" class="w-full" placeholder="ip:port"></div>
-            <div><label class="text-gray-400 text-sm">PIN-код</label><input id="editPin" class="w-full"></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm">MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs"></textarea></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm">Заметки</label><textarea id="editNotes" rows="2" class="w-full"></textarea></div>
+            <div><label>Логин Steam *</label><input id="editLogin" class="w-full"></div>
+            <div><label>Пароль Steam</label><input id="editPassword" type="password" class="w-full"></div>
+            <div><label>Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
+            <div><label>Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
+            <div><label>Почта</label><input id="editEmail" class="w-full"></div>
+            <div><label>Пароль почты</label><input id="editEmailPass" type="password" class="w-full"></div>
+            <div><label>Прокси (ip:port)</label><input id="editProxy" class="w-full" placeholder="127.0.0.1:8080"></div>
+            <div><label>PIN-код</label><input id="editPin" class="w-full"></div>
+            <div class="col-span-2"><label>MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs"></textarea></div>
+            <div class="col-span-2"><label>Заметки</label><textarea id="editNotes" rows="2" class="w-full"></textarea></div>
         </div>
         <div class="flex gap-3 mt-6">
-            <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl">Сохранить</button>
-            <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl">Отмена</button>
+            <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl transition hover:scale-105">Сохранить</button>
+            <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl transition hover:scale-105">Отмена</button>
         </div>
     </div>
 </div>
 
+<!-- Модальное окно массового редактирования -->
 <div id="massEditModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[500px] p-6">
         <h2 class="text-2xl font-bold mb-5 text-white">Массовое редактирование</h2>
         <div class="mb-4">
-            <label class="text-gray-400 text-sm">Поле:</label>
+            <label>Поле для изменения:</label>
             <select id="massEditField" class="w-full mt-1">
-                <option value="Proxy">Прокси</option>
-                <option value="Notes">Заметки</option>
-                <option value="Status">Статус</option>
+                <option value="Proxy">🌐 Прокси</option>
+                <option value="Notes">📝 Заметки</option>
+                <option value="Status">🟢 Статус</option>
             </select>
         </div>
         <div class="mb-6">
-            <label class="text-gray-400 text-sm">Новое значение:</label>
+            <label>Новое значение:</label>
             <input type="text" id="massEditValue" class="w-full mt-1" placeholder="Введите значение...">
         </div>
         <div class="flex gap-3">
-            <button onclick="applyMassEdit()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl">Применить</button>
-            <button onclick="closeMassEditModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl">Отмена</button>
+            <button onclick="applyMassEdit()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl transition hover:scale-105">Применить</button>
+            <button onclick="closeMassEditModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl transition hover:scale-105">Отмена</button>
         </div>
     </div>
 </div>
@@ -551,8 +639,11 @@ const games = [
     { name: "Team Fortress 2", appId: "440" },
     { name: "Rust", appId: "252490" },
     { name: "Grand Theft Auto V", appId: "271590" },
-    { name: "PUBG", appId: "578080" },
-    { name: "Apex Legends", appId: "1172470" }
+    { name: "PUBG: BATTLEGROUNDS", appId: "578080" },
+    { name: "Apex Legends", appId: "1172470" },
+    { name: "Destiny 2", appId: "1085660" },
+    { name: "Warframe", appId: "230410" },
+    { name: "Path of Exile", appId: "238960" }
 ];
 
 function switchTab(tab) {
@@ -573,7 +664,8 @@ function getFilteredAndSortedAccounts() {
             acc.Login.toLowerCase().includes(searchLower) ||
             (acc.Email && acc.Email.toLowerCase().includes(searchLower)) ||
             (acc.SteamId && acc.SteamId.includes(searchLower)) ||
-            (acc.Notes && acc.Notes.toLowerCase().includes(searchLower))
+            (acc.Notes && acc.Notes.toLowerCase().includes(searchLower)) ||
+            (acc.Proxy && acc.Proxy.toLowerCase().includes(searchLower))
         );
     }
     switch(currentSort) {
@@ -595,26 +687,26 @@ function renderAccounts() {
             <div class="flex gap-3 flex-wrap">
                 <div class="flex-1 min-w-[250px] relative">
                     <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-                    <input type="text" id="searchInput" placeholder="Поиск аккаунтов..." class="search-input w-full pl-11" onkeyup="updateSearch()">
+                    <input type="text" id="searchInput" placeholder="Поиск по логину, email, Steam ID, заметкам, прокси..." class="search-input w-full pl-11" onkeyup="updateSearch()">
                 </div>
                 <select id="sortSelect" onchange="updateSort()">
-                    <option value="date-desc">📅 Новые</option>
-                    <option value="date-asc">📅 Старые</option>
-                    <option value="login-asc">🔤 А-Я</option>
-                    <option value="login-desc">🔤 Я-А</option>
+                    <option value="date-desc">📅 Сначала новые</option>
+                    <option value="date-asc">📅 Сначала старые</option>
+                    <option value="login-asc">🔤 Логин (А-Я)</option>
+                    <option value="login-desc">🔤 Логин (Я-А)</option>
                     <option value="status">🟢 По статусу</option>
                     <option value="balance">💰 По балансу</option>
                 </select>
-                <button onclick="showMassEditModal()" class="px-5 py-3 bg-gray-800 hover:bg-[#00b4ff] rounded-2xl transition font-medium text-white">
+                <button onclick="showMassEditModal()" class="action-btn">
                     <i class="fas fa-check-double"></i> Выбрано (<span id="selectedCount">0</span>)
                 </button>
-                <button onclick="deleteAllAccounts()" class="px-5 py-3 bg-red-600/50 hover:bg-red-600 rounded-2xl transition font-medium text-white">
+                <button onclick="deleteAllAccounts()" class="action-btn danger-btn">
                     <i class="fas fa-trash-alt"></i> Удалить все
                 </button>
             </div>
             <div class="flex justify-between mt-3 text-sm text-gray-500 px-2">
-                <span><i class="fas fa-filter"></i> Найдено: ${filtered.length} из ${accounts.length}</span>
-                ${currentFilter ? `<span>Запрос: "${currentFilter}" <button onclick="clearSearch()" class="text-[#00b4ff] ml-2">✖</button></span>` : ''}
+                <span><i class="fas fa-filter"></i> Найдено: <span class="text-white font-semibold">${filtered.length}</span> из <span class="text-white font-semibold">${accounts.length}</span></span>
+                ${currentFilter ? `<span>🔍 "${currentFilter}" <button onclick="clearSearch()" class="text-[#00b4ff] hover:underline ml-2">✖ Очистить</button></span>` : ''}
             </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -692,11 +784,11 @@ function renderAccounts() {
     });
     
     html += filtered.length === 0 ? `
-        <div class="col-span-full text-center py-20">
-            <div class="inline-block p-8 rounded-2xl bg-gray-800/30">
-                <i class="fas fa-inbox text-5xl text-gray-600 mb-3 block"></i>
-                <p class="text-gray-500">Нет аккаунтов</p>
-                <button onclick="addNewAccount()" class="mt-4 px-5 py-2 bg-[#00b4ff] rounded-xl font-semibold">➕ Добавить</button>
+        <div class="col-span-full">
+            <div class="empty-state">
+                <i class="fas fa-inbox text-5xl text-gray-600 mb-4 block"></i>
+                <p class="text-gray-400 text-lg">Нет аккаунтов</p>
+                <button onclick="addNewAccount()" class="mt-4 px-6 py-2 bg-[#00b4ff] rounded-xl font-semibold transition hover:scale-105">➕ Добавить первый аккаунт</button>
             </div>
         </div>` : '';
     html += `</div>`;
@@ -722,20 +814,23 @@ function renderStats() {
     const totalBalance = accounts.reduce((sum, acc) => { const n = parseFloat(acc.Balance.replace(/[^0-9.-]/g, '')); return sum + (isNaN(n) ? 0 : n); }, 0);
     const withProxy = accounts.filter(a => a.Proxy).length;
     const withMaFile = accounts.filter(a => a.MaFile).length;
+    const totalCards = accounts.reduce((sum, acc) => sum + (acc.CardsRemaining || 0), 0);
+    const totalGames = accounts.reduce((sum, acc) => sum + (acc.GamesCount || 0), 0);
     const avgBalance = accounts.length ? (totalBalance / accounts.length).toFixed(2) : 0;
     
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6 text-white">Статистика</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="stat-card"><div class="text-gray-400 text-sm">Всего</div><div class="text-3xl font-bold text-white">${accounts.length}</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm">Онлайн</div><div class="text-3xl font-bold text-green-400">${onlineCount}</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm">Общий баланс</div><div class="text-3xl font-bold text-emerald-400">${totalBalance.toFixed(2)} ₽</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm">Средний баланс</div><div class="text-3xl font-bold text-cyan-400">${avgBalance} ₽</div></div>
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-6 text-gradient">Статистика аккаунтов</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-users text-[#00b4ff]"></i> Всего аккаунтов</div><div class="text-4xl font-bold text-white">${accounts.length}</div></div>
+                <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-circle text-green-400"></i> Онлайн</div><div class="text-4xl font-bold text-green-400">${onlineCount}</div><div class="text-xs text-gray-500 mt-1">${accounts.length ? Math.round(onlineCount/accounts.length*100) : 0}% от всех</div></div>
+                <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-coins text-[#00b4ff]"></i> Общий баланс</div><div class="text-4xl font-bold text-emerald-400">${totalBalance.toFixed(2)} ₽</div></div>
+                <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-chart-line text-[#00b4ff]"></i> Средний баланс</div><div class="text-4xl font-bold text-cyan-400">${avgBalance} ₽</div></div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="stat-card"><h3 class="font-bold mb-3 text-white"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита</h3><div class="space-y-2 text-gray-300"><div>С прокси: ${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</div><div>С MaFile: ${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</div></div></div>
-                <div class="stat-card"><h3 class="font-bold mb-3 text-white"><i class="fas fa-history text-[#00b4ff]"></i> Активность</h3><div class="space-y-1 max-h-48 overflow-auto">${accounts.filter(a => a.LastLogin).slice(0,5).map(a => `<div class="text-sm py-1 text-gray-300">${a.Login}: ${new Date(a.LastLogin).toLocaleDateString()}</div>`).join('') || '<div class="text-gray-500">Нет данных</div>'}</div></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита аккаунтов</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span><span class="font-bold text-white">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span><span class="font-bold text-white">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span></div></div></div>
+                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-id-card text-[#00b4ff] mr-2"></i> Осталось карточек:</span><span class="font-bold text-emerald-400">${totalCards}</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span><i class="fas fa-gamepad text-[#00b4ff] mr-2"></i> Всего игр:</span><span class="font-bold text-blue-400">${totalGames}</span></div></div></div>
+                <div class="stat-card md:col-span-2"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-history text-[#00b4ff]"></i> Недавняя активность</h3><div class="space-y-2 max-h-64 overflow-auto">${accounts.filter(a => a.LastLogin).sort((a,b) => new Date(b.LastLogin) - new Date(a.LastLogin)).slice(0,10).map(acc => `<div class="flex justify-between items-center text-sm py-2 px-3 rounded-lg hover:bg-white/5 transition"><span class="font-semibold text-white flex items-center gap-2"><div class="w-6 h-6 rounded bg-gradient-to-r from-[#00b4ff] to-cyan-400 flex items-center justify-center text-xs font-bold text-black">${acc.Login[0]}</div>${escapeHtml(acc.Login)}</span><span class="text-gray-400 text-xs">${new Date(acc.LastLogin).toLocaleString('ru-RU')}</span></div>`).join('')}${accounts.filter(a => a.LastLogin).length === 0 ? '<div class="text-center text-gray-500 py-8"><i class="fas fa-calendar-day text-3xl mb-2 block"></i>Нет данных о входах</div>' : ''}</div></div>
             </div>
         </div>`;
 }
@@ -743,10 +838,11 @@ function renderStats() {
 function renderInventory() {
     let gameOptions = games.map(g => `<option value="${g.appId}">${g.name}</option>`).join('');
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-5xl mx-auto">
-            <div class="stat-card p-6 mb-5"><h2 class="text-2xl font-bold mb-4 text-white"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
-            <div class="flex gap-3 flex-wrap"><input type="text" id="inventorySteamId" placeholder="Steam ID" class="flex-1 min-w-[200px]"><select id="inventoryAppId" class="min-w-[150px]">${gameOptions}</select><button onclick="loadInventory()" class="px-6 py-3 bg-[#00b4ff] text-black font-bold rounded-xl">Загрузить</button></div></div>
-            <div id="inventoryResult" class="stat-card p-6"><div class="text-center py-10 text-gray-500"><i class="fas fa-steam text-4xl mb-3 block"></i>Введите Steam ID</div></div>
+        <div class="max-w-6xl mx-auto">
+            <div class="stat-card p-6 mb-6"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
+            <div class="flex gap-4 flex-wrap"><div class="flex-1 min-w-[200px]"><label class="text-gray-400 text-sm mb-2 block">Steam ID или логин</label><input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full"></div><div class="min-w-[180px]"><label class="text-gray-400 text-sm mb-2 block">Выберите игру</label><select id="inventoryAppId" class="w-full">${gameOptions}</select></div><div class="flex items-end"><button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-xl font-bold text-white shadow-lg"><i class="fas fa-search"></i> Загрузить</button></div></div>
+            <div class="mt-4 p-3 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300"><i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие</div></div>
+            <div id="inventoryResult" class="stat-card p-6"><div class="text-center text-gray-500 py-16"><i class="fas fa-steam text-5xl mb-4 block text-[#00b4ff]"></i><p class="text-lg">Введите Steam ID для просмотра инвентаря</p></div></div>
         </div>`;
 }
 
@@ -754,21 +850,21 @@ function loadInventory() {
     let steamId = document.getElementById('inventorySteamId').value;
     let appId = document.getElementById('inventoryAppId').value;
     if (!steamId) { showToast('Введите Steam ID'); return; }
-    document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2 text-gray-400">Загрузка...</p></div>';
+    document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16"><i class="fas fa-spinner fa-spin text-4xl text-[#00b4ff] mb-3 block"></i><p class="text-gray-400">Загрузка инвентаря...</p></div>';
     window.chrome.webview.postMessage(JSON.stringify({ action: "getInventory", data: `${steamId}|${appId}` }));
 }
 
 function viewInventory(steamId) {
-    if (!steamId || steamId === '—') { showToast('Укажите Steam ID'); return; }
+    if (!steamId || steamId === '—') { showToast('Укажите Steam ID в настройках аккаунта'); return; }
     switchTab('inventory');
     setTimeout(() => { const input = document.getElementById('inventorySteamId'); if (input) input.value = steamId; loadInventory(); }, 100);
 }
 
 function renderSettings() {
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-2xl mx-auto space-y-5">
-            <div class="stat-card p-6"><h2 class="text-2xl font-bold mb-4 text-white">Управление данными</h2><button onclick="exportData()" class="w-full py-3 bg-green-600 rounded-xl mb-3 font-semibold text-white">📥 Экспорт JSON</button><button onclick="importData()" class="w-full py-3 bg-blue-600 rounded-xl font-semibold text-white">📤 Импорт JSON</button></div>
-            <div class="stat-card p-6"><h2 class="text-2xl font-bold mb-2 text-white">ASF Manager PRO v3.3</h2><p class="text-gray-400 text-sm">✓ Управление аккаунтами<br>✓ Запуск ASF<br>✓ Инвентарь Steam<br>✓ Статистика<br>✓ Поиск и фильтры<br>✓ Массовые операции</p><div class="mt-4 p-3 bg-black/30 rounded-xl"><p class="text-xs text-gray-400">Данные: ASF_Data/accounts.json</p></div></div>
+        <div class="max-w-3xl mx-auto space-y-6">
+            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-6 text-gradient"><i class="fas fa-database"></i> Управление данными</h2><div class="space-y-3"><button onclick="exportData()" class="btn-success w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button><button onclick="importData()" class="btn-primary w-full py-4 rounded-xl font-bold text-white shadow-lg"><i class="fas fa-upload"></i> Импорт аккаунтов</button></div></div>
+            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-info-circle"></i> О программе</h2><p class="text-xl font-bold text-[#00b4ff]">ASF Manager PRO v3.3</p><div class="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-300"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Статистика и мониторинг</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Поиск, фильтрация, сортировка</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Безопасное хранение паролей</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Горячие клавиши (Ctrl+N, Ctrl+S, Ctrl+F, Del)</div></div><div class="mt-6 p-4 bg-black/30 rounded-xl"><p class="text-xs text-gray-400"><i class="fas fa-folder-open"></i> Данные хранятся в папке:</p><p class="text-xs font-mono text-gray-300 break-all">ASF_Data\\accounts.json (рядом с EXE)</p></div></div>
         </div>`;
 }
 
@@ -778,53 +874,58 @@ function showAccountDetail(id) {
     currentDetailAccount = acc;
     let isPassShowing = showPasswords[acc.Id];
     let html = `
-        <div class="detail-row"><div class="detail-label text-gray-400">Логин:</div><div class="detail-value text-white">${acc.Login} <span class="copy-btn" onclick="copyToClipboard('${acc.Login}')">Копировать</span></div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Пароль:</div><div class="detail-value text-white">${isPassShowing ? acc.Password : '••••••••'} <span class="copy-btn" onclick="copyToClipboard('${acc.Password}')">Копировать</span> <span class="copy-btn" onclick="togglePassword('${acc.Id}')">${isPassShowing ? 'Скрыть' : 'Показать'}</span></div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Почта:</div><div class="detail-value text-white">${acc.Email || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Прокси:</div><div class="detail-value text-white">${acc.Proxy || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Steam ID:</div><div class="detail-value text-white">${acc.SteamId || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Баланс:</div><div class="detail-value text-white"><span class="text-emerald-400 font-bold">${acc.Balance}</span></div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Статус:</div><div class="detail-value text-white">${acc.Status}</div></div>
-        <div class="detail-row"><div class="detail-label text-gray-400">Создан:</div><div class="detail-value text-white">${new Date(acc.CreatedAt).toLocaleString()}</div></div>
-        ${acc.Notes ? `<div class="detail-row"><div class="detail-label text-gray-400">Заметки:</div><div class="detail-value text-white">${acc.Notes}</div></div>` : ''}
-        ${acc.MaFile ? `<div class="detail-row"><div class="detail-label text-gray-400">MaFile:</div><div class="detail-value text-white"><pre class="bg-black/30 p-2 rounded text-xs overflow-auto max-h-32">${acc.MaFile.substring(0, 300)}...</pre></div></div>` : ''}
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-sign-in-alt w-4 text-[#00b4ff] mr-2"></i> Логин:</div><div class="detail-value">${escapeHtml(acc.Login)} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Login)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-lock w-4 text-[#00b4ff] mr-2"></i> Пароль:</div><div class="detail-value">${isPassShowing ? escapeHtml(acc.Password) : '••••••••'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Password)}')"><i class="fas fa-copy"></i> Копировать</span> <span class="copy-btn" onclick="togglePassword('${acc.Id}')"><i class="fas ${isPassShowing ? 'fa-eye-slash' : 'fa-eye'}"></i> ${isPassShowing ? 'Скрыть' : 'Показать'}</span></div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-envelope w-4 text-[#00b4ff] mr-2"></i> Почта:</div><div class="detail-value">${escapeHtml(acc.Email) || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-key w-4 text-[#00b4ff] mr-2"></i> Пароль почты:</div><div class="detail-value">${isPassShowing ? escapeHtml(acc.EmailPass) : '••••••••'}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-network-wired w-4 text-[#00b4ff] mr-2"></i> Прокси:</div><div class="detail-value">${escapeHtml(acc.Proxy) || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-digit w-4 text-[#00b4ff] mr-2"></i> PIN-код:</div><div class="detail-value">${escapeHtml(acc.Pin) || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fab fa-steam w-4 text-[#00b4ff] mr-2"></i> Steam ID:</div><div class="detail-value">${escapeHtml(acc.SteamId) || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-coins w-4 text-[#00b4ff] mr-2"></i> Баланс:</div><div class="detail-value"><span class="text-emerald-400 font-bold text-lg">${acc.Balance}</span></div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-plus w-4 text-[#00b4ff] mr-2"></i> Дата создания:</div><div class="detail-value">${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-check w-4 text-[#00b4ff] mr-2"></i> Последний вход:</div><div class="detail-value">${acc.LastLogin ? new Date(acc.LastLogin).toLocaleString('ru-RU') : '—'}</div></div>
     `;
-    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff]"></i> ${acc.Login}`;
+    if (acc.MaFile) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/30 p-3 rounded-lg text-xs overflow-auto max-h-32">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
+    if (acc.Notes) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap">${escapeHtml(acc.Notes)}</div></div>`;
+    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff]"></i> ${escapeHtml(acc.Login)}`;
     document.getElementById('detailContent').innerHTML = html;
     document.getElementById('detailModal').classList.remove('hidden');
 }
 
 function togglePassword(id) { showPasswords[id] = !showPasswords[id]; showAccountDetail(id); }
-function deleteFromDetail() { if (currentDetailAccount && confirm('Удалить?')) { deleteAccount(currentDetailAccount.Id); closeDetailModal(); } }
-function deleteAllAccounts() { if (confirm('Удалить ВСЕ аккаунты?')) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAllAccounts", data: "" })); accounts = []; renderAccounts(); showToast('Все удалены'); } }
-function runASFForAll() { if (!accounts.length) { showToast('Нет аккаунтов'); return; } if (confirm(`Запустить ASF для ${accounts.length} аккаунтов?`)) { window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" })); } }
-function exportData() { const blob = new Blob([JSON.stringify(accounts, null, 2)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `asf_backup_${Date.now()}.json`; a.click(); URL.revokeObjectURL(blob); showToast('Экспорт выполнен'); }
-function importData() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = ev => { try { const imported = JSON.parse(ev.target.result); if (Array.isArray(imported)) { accounts = imported; window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); renderAccounts(); showToast(`Импортировано ${accounts.length} аккаунтов`); } } catch { showToast('Ошибка'); } }; reader.readAsText(file); }; input.click(); }
+function deleteFromDetail() { if (currentDetailAccount && confirm(`Удалить аккаунт "${currentDetailAccount.Login}" навсегда?`)) { deleteAccount(currentDetailAccount.Id); closeDetailModal(); } }
+function deleteAllAccounts() { if (confirm("⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ аккаунты?")) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAllAccounts", data: "" })); accounts = []; renderAccounts(); showToast('Все аккаунты удалены'); } }
+function runASFForAll() { if (!accounts.length) { showToast('Нет аккаунтов для запуска'); return; } if (confirm(`Запустить ASF для всех ${accounts.length} аккаунтов?`)) { window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" })); } }
+function exportData() { const blob = new Blob([JSON.stringify(accounts, null, 2)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `asf_backup_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(blob); showToast('Экспорт выполнен'); }
+function importData() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = ev => { try { const imported = JSON.parse(ev.target.result); if (Array.isArray(imported)) { accounts = imported; window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); renderAccounts(); showToast(`Импортировано ${accounts.length} аккаунтов`); } } catch { showToast('Ошибка импорта'); } }; reader.readAsText(file); }; input.click(); }
 function editFromDetail() { if (currentDetailAccount) { closeDetailModal(); editAccount(currentDetailAccount.Id); } }
 function runASFFromDetail() { if (currentDetailAccount) { runASF(currentDetailAccount.Login); showToast(`Запуск ASF для ${currentDetailAccount.Login}`); } }
 function addNewAccount() { currentEditId = null; document.getElementById('editTitle').innerHTML = 'Новый аккаунт'; clearEditForm(); document.getElementById('editModal').classList.remove('hidden'); }
 function editAccount(id) { const acc = accounts.find(a => a.Id === id); if (!acc) return; currentEditId = id; document.getElementById('editTitle').innerHTML = `Редактирование: ${acc.Login}`; document.getElementById('editLogin').value = acc.Login || ''; document.getElementById('editPassword').value = acc.Password || ''; document.getElementById('editSteamId').value = acc.SteamId || ''; document.getElementById('editBalance').value = acc.Balance || '0 ₽'; document.getElementById('editEmail').value = acc.Email || ''; document.getElementById('editEmailPass').value = acc.EmailPass || ''; document.getElementById('editProxy').value = acc.Proxy || ''; document.getElementById('editPin').value = acc.Pin || ''; document.getElementById('editMaFile').value = acc.MaFile || ''; document.getElementById('editNotes').value = acc.Notes || ''; document.getElementById('editModal').classList.remove('hidden'); }
-function clearEditForm() { document.getElementById('editLogin').value = ''; document.getElementById('editPassword').value = ''; document.getElementById('editSteamId').value = ''; document.getElementById('editBalance').value = '0 ₽'; document.getElementById('editEmail').value = ''; document.getElementById('editEmailPass').value = ''; document.getElementById('editProxy').value = ''; document.getElementById('editPin').value = ''; document.getElementById('editMaFile').value = ''; document.getElementById('editNotes').value = ''; }
-function saveEditedAccount() { const data = { Id: currentEditId || Date.now().toString(), Login: document.getElementById('editLogin').value.trim(), Password: document.getElementById('editPassword').value, SteamId: document.getElementById('editSteamId').value, Email: document.getElementById('editEmail').value, EmailPass: document.getElementById('editEmailPass').value, Proxy: document.getElementById('editProxy').value, Pin: document.getElementById('editPin').value, MaFile: document.getElementById('editMaFile').value, Notes: document.getElementById('editNotes').value, Status: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.Status || "Offline") : "Offline", Balance: document.getElementById('editBalance').value || "0 ₽", CreatedAt: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(), LastLogin: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.LastLogin || "") : "", CardsRemaining: 0, GamesCount: 0 }; if (!data.Login) { showToast('Логин обязателен'); return; } if (currentEditId) { const index = accounts.findIndex(a => a.Id === currentEditId); if (index > -1) accounts[index] = data; } else { accounts.unshift(data); } window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); closeEditModal(); renderAccounts(); showToast('Сохранено'); }
-function deleteAccount(id) { if (confirm('Удалить аккаунт?')) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAccount", data: id })); accounts = accounts.filter(a => a.Id !== id); selectedAccountsForMass.delete(id); renderAccounts(); showToast('Удалён'); } }
+function clearEditForm() { document.getElementById('editLogin').value = `acc_${Date.now().toString().slice(-6)}`; document.getElementById('editPassword').value = ''; document.getElementById('editSteamId').value = ''; document.getElementById('editBalance').value = '0 ₽'; document.getElementById('editEmail').value = ''; document.getElementById('editEmailPass').value = ''; document.getElementById('editProxy').value = ''; document.getElementById('editPin').value = ''; document.getElementById('editMaFile').value = ''; document.getElementById('editNotes').value = ''; }
+function saveEditedAccount() { const data = { Id: currentEditId || Date.now().toString(), Login: document.getElementById('editLogin').value.trim(), Password: document.getElementById('editPassword').value, SteamId: document.getElementById('editSteamId').value, Email: document.getElementById('editEmail').value, EmailPass: document.getElementById('editEmailPass').value, Proxy: document.getElementById('editProxy').value, Pin: document.getElementById('editPin').value, MaFile: document.getElementById('editMaFile').value, Notes: document.getElementById('editNotes').value, Status: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.Status || "Offline") : "Offline", Balance: document.getElementById('editBalance').value || "0 ₽", CreatedAt: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(), LastLogin: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.LastLogin || "") : "", CardsRemaining: 0, GamesCount: 0 }; if (!data.Login) { showToast('Логин обязателен'); return; } if (currentEditId) { const index = accounts.findIndex(a => a.Id === currentEditId); if (index > -1) accounts[index] = data; } else { accounts.unshift(data); } window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); closeEditModal(); renderAccounts(); showToast('Аккаунт сохранён'); }
+function deleteAccount(id) { if (confirm('Удалить аккаунт навсегда?')) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAccount", data: id })); accounts = accounts.filter(a => a.Id !== id); selectedAccountsForMass.delete(id); renderAccounts(); showToast('Аккаунт удалён'); } }
 function runASF(login) { window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: login })); }
-function copyToClipboard(text) { if (!text) { showToast('Нет данных'); return; } window.chrome.webview.postMessage(JSON.stringify({ action: "copyToClipboard", data: text })); showToast('Скопировано!'); }
-function showToast(msg) { const toast = document.createElement('div'); toast.className = 'toast'; toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 2500); }
+function copyToClipboard(text) { if (!text || text === '—') { showToast('Нет данных для копирования'); return; } window.chrome.webview.postMessage(JSON.stringify({ action: "copyToClipboard", data: text })); showToast('Скопировано в буфер обмена!'); }
+function showToast(msg) { const toast = document.createElement('div'); toast.className = 'toast'; toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
 function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); currentDetailAccount = null; }
 function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); currentEditId = null; }
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 function toggleMassSelect(id) { if (selectedAccountsForMass.has(id)) selectedAccountsForMass.delete(id); else selectedAccountsForMass.add(id); updateMassSelectUI(); renderAccounts(); }
-function updateMassSelectUI() { document.getElementById('selectedCount').innerText = selectedAccountsForMass.size; }
-function showMassEditModal() { if (!selectedAccountsForMass.size) { showToast('Выберите аккаунты'); return; } document.getElementById('massEditModal').classList.remove('hidden'); }
+function updateMassSelectUI() { document.getElementById('selectedCount').innerText = selectedAccountsForMass.size; const btn = document.getElementById('massSelectBtn'); if (btn && selectedAccountsForMass.size > 0) btn.classList.add('bg-[#00b4ff]', 'text-black'); else if (btn) btn.classList.remove('bg-[#00b4ff]', 'text-black'); }
+function showMassEditModal() { if (!selectedAccountsForMass.size) { showToast('Сначала выберите аккаунты'); return; } document.getElementById('massEditModal').classList.remove('hidden'); }
 function closeMassEditModal() { document.getElementById('massEditModal').classList.add('hidden'); document.getElementById('massEditValue').value = ''; }
-function applyMassEdit() { const field = document.getElementById('massEditField').value; const value = document.getElementById('massEditValue').value; if (!value) { showToast('Введите значение'); return; } const ids = Array.from(selectedAccountsForMass); window.chrome.webview.postMessage(JSON.stringify({ action: "massUpdate", data: JSON.stringify({ AccountIds: ids, Fields: { [field]: value } }) })); closeMassEditModal(); selectedAccountsForMass.clear(); updateMassSelectUI(); showToast(`Обновлено ${ids.length} аккаунтов`); }
-function renderInventoryResult(data) { if (!data?.data?.success || !data.data.assets?.length) { document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-10 text-gray-500">Нет предметов</div>'; return; } const gameName = games.find(g => g.appId === data.appId)?.name || 'Игра'; let html = `<h3 class="text-xl font-bold mb-4 text-white">${gameName}</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-3">`; data.data.assets.forEach(item => { const desc = data.data.descriptions?.find(d => d.classid === item.classid); if (desc) html += `<div class="inventory-item text-center"><img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-16 h-16 mx-auto mb-2 rounded"><p class="text-xs text-white truncate">${desc.name.substring(0, 25)}</p><p class="text-xs text-emerald-400">x${item.amount}</p></div>`; }); html += `</div>`; document.getElementById('inventoryResult').innerHTML = html; }
+function applyMassEdit() { const field = document.getElementById('massEditField').value; const value = document.getElementById('massEditValue').value; if (!value) { showToast('Введите значение для изменения'); return; } const ids = Array.from(selectedAccountsForMass); window.chrome.webview.postMessage(JSON.stringify({ action: "massUpdate", data: JSON.stringify({ AccountIds: ids, Fields: { [field]: value } }) })); closeMassEditModal(); selectedAccountsForMass.clear(); updateMassSelectUI(); showToast(`Обновлено ${ids.length} аккаунтов`); }
+function renderInventoryResult(data) { if (!data?.data?.success || !data.data.assets?.length) { document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16 text-gray-500"><i class="fas fa-box-open text-5xl mb-3 block"></i>Нет предметов или профиль приватный</div>'; return; } const gameName = games.find(g => g.appId === data.appId)?.name || `Игра ${data.appId}`; let html = `<h3 class="text-xl font-bold mb-4 text-white"><i class="fab fa-steam text-[#00b4ff]"></i> ${gameName}</h3><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">`; data.data.assets.forEach(item => { const desc = data.data.descriptions?.find(d => d.classid === item.classid); if (desc) { html += `<div class="inventory-item"><img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-20 h-20 mx-auto mb-2 rounded"><p class="text-xs font-semibold text-white truncate">${escapeHtml(desc.name.substring(0, 30))}</p><p class="text-xs text-emerald-400 font-bold mt-1">x${item.amount}</p></div>`; } }); html += `</div>`; document.getElementById('inventoryResult').innerHTML = html; }
 
 window.receiveFromCSharp = function(msg) {
     if (msg.type === "accounts") { accounts = msg.data || []; if (currentTab === 'accounts') renderAccounts(); if (currentTab === 'stats') renderStats(); document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`; }
     else if (msg.type === "inventoryData") renderInventoryResult(msg.data);
-    else if (msg.type === "inventoryError") document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-10 text-red-400">${msg.data}</div>`;
-    else if (msg.type === "asfStarted") { showToast(msg.data); if (currentTab === 'accounts') renderAccounts(); }
-    else if (msg.type === "massUpdateComplete") { showToast(`Обновлено ${msg.data.count}`); renderAccounts(); }
+    else if (msg.type === "inventoryError") document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-16 text-red-400"><i class="fas fa-exclamation-triangle text-5xl mb-3 block"></i>${msg.data}</div>`;
+    else if (msg.type === "asfStarted") { showToast(msg.data); if (currentTab === 'accounts') renderAccounts(); if (currentTab === 'stats') renderStats(); }
+    else if (msg.type === "asfError") showToast(msg.data);
+    else if (msg.type === "hotkey") { if (msg.data === 'new') addNewAccount(); else if (msg.data === 'search') document.getElementById('searchInput')?.focus(); }
+    else if (msg.type === "massUpdateComplete") { showToast(`Обновлено ${msg.data.count} аккаунтов`); renderAccounts(); }
 };
 
 window.onload = () => { window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" })); switchTab('accounts'); };
