@@ -261,14 +261,14 @@
             cursor: pointer;
         }
         
-        /* Поиск и фильтры */
+        /* ========== ИСПРАВЛЕНИЯ ДЛЯ ВСЕХ ПОЛЕЙ ВВОДА ========== */
         .search-input {
             background: rgba(31, 41, 55, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 20px 12px 45px;
             transition: all 0.2s;
-            color: white;
+            color: white !important;
             font-size: 14px;
         }
         
@@ -283,19 +283,20 @@
             box-shadow: 0 0 0 3px rgba(0, 180, 255, 0.1);
         }
         
+        /* SELECT - выпадающие списки */
         select {
             background: rgba(31, 41, 55, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 16px;
-            color: white;
+            color: white !important;
             cursor: pointer;
             font-size: 14px;
         }
         
         select option {
             background: #1f2937;
-            color: white;
+            color: white !important;
         }
         
         select:focus {
@@ -303,6 +304,49 @@
             border-color: #00b4ff;
         }
         
+        /* Все поля ввода */
+        input, textarea {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: white !important;
+            transition: all 0.2s;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #9ca3af !important;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00b4ff;
+            background: rgba(31, 41, 55, 0.95);
+            box-shadow: 0 0 0 2px rgba(0, 180, 255, 0.1);
+        }
+        
+        /* Инпут в модалках */
+        .modal-content input,
+        .modal-content textarea,
+        .modal-content select {
+            background: rgba(31, 41, 55, 0.9);
+            color: white !important;
+        }
+        
+        .modal-content select option {
+            background: #1f2937;
+            color: white !important;
+        }
+        
+        label {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        /* Кнопки действий */
         .action-btn {
             background: rgba(31, 41, 55, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -366,33 +410,6 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 28px;
-        }
-        
-        input, textarea {
-            background: rgba(31, 41, 55, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 12px 16px;
-            color: white;
-            transition: all 0.2s;
-        }
-        
-        input::placeholder, textarea::placeholder {
-            color: #6b7280;
-        }
-        
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #00b4ff;
-            background: rgba(31, 41, 55, 0.95);
-        }
-        
-        label {
-            color: #9ca3af;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 6px;
-            display: block;
         }
         
         /* Детальный просмотр */
@@ -548,7 +565,7 @@
     <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальное окно детального просмотра -->
+<!-- Модальные окна -->
 <div id="detailModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[900px] max-h-[85vh] overflow-auto p-6">
         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
@@ -565,21 +582,20 @@
     </div>
 </div>
 
-<!-- Модальное окно редактирования -->
 <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[800px] max-h-[85vh] overflow-auto p-6">
         <h2 id="editTitle" class="text-2xl font-bold mb-5 text-white">Редактирование</h2>
         <div class="grid grid-cols-2 gap-4">
-            <div><label>Логин Steam *</label><input id="editLogin" class="w-full" placeholder="Введите логин"></div>
-            <div><label>Пароль Steam</label><input id="editPassword" type="password" class="w-full" placeholder="Введите пароль"></div>
-            <div><label>Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
-            <div><label>Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
-            <div><label>Почта</label><input id="editEmail" class="w-full" placeholder="email@example.com"></div>
-            <div><label>Пароль почты</label><input id="editEmailPass" type="password" class="w-full" placeholder="Пароль от почты"></div>
-            <div><label>Прокси (ip:port)</label><input id="editProxy" class="w-full" placeholder="127.0.0.1:8080"></div>
-            <div><label>PIN-код</label><input id="editPin" class="w-full" placeholder="PIN-код"></div>
-            <div class="col-span-2"><label>MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs" placeholder='{"shared_secret":"..."}'></textarea></div>
-            <div class="col-span-2"><label>Заметки</label><textarea id="editNotes" rows="2" class="w-full" placeholder="Дополнительная информация..."></textarea></div>
+            <div><label class="text-gray-400">Логин Steam *</label><input id="editLogin" class="w-full" placeholder="Введите логин"></div>
+            <div><label class="text-gray-400">Пароль Steam</label><input id="editPassword" type="password" class="w-full" placeholder="Введите пароль"></div>
+            <div><label class="text-gray-400">Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
+            <div><label class="text-gray-400">Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
+            <div><label class="text-gray-400">Почта</label><input id="editEmail" class="w-full" placeholder="email@example.com"></div>
+            <div><label class="text-gray-400">Пароль почты</label><input id="editEmailPass" type="password" class="w-full" placeholder="Пароль от почты"></div>
+            <div><label class="text-gray-400">Прокси (ip:port)</label><input id="editProxy" class="w-full" placeholder="127.0.0.1:8080"></div>
+            <div><label class="text-gray-400">PIN-код</label><input id="editPin" class="w-full" placeholder="PIN-код"></div>
+            <div class="col-span-2"><label class="text-gray-400">MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs" placeholder='{"shared_secret":"..."}'></textarea></div>
+            <div class="col-span-2"><label class="text-gray-400">Заметки</label><textarea id="editNotes" rows="2" class="w-full" placeholder="Дополнительная информация..."></textarea></div>
         </div>
         <div class="flex gap-3 mt-6">
             <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl transition hover:scale-105">Сохранить</button>
@@ -588,12 +604,11 @@
     </div>
 </div>
 
-<!-- Модальное окно массового редактирования -->
 <div id="massEditModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[500px] p-6">
         <h2 class="text-2xl font-bold mb-5 text-white">Массовое редактирование</h2>
         <div class="mb-4">
-            <label>Поле для изменения:</label>
+            <label class="text-gray-400">Поле для изменения:</label>
             <select id="massEditField" class="w-full mt-1">
                 <option value="Proxy">🌐 Прокси</option>
                 <option value="Notes">📝 Заметки</option>
@@ -601,7 +616,7 @@
             </select>
         </div>
         <div class="mb-6">
-            <label>Новое значение:</label>
+            <label class="text-gray-400">Новое значение:</label>
             <input type="text" id="massEditValue" class="w-full mt-1" placeholder="Введите значение...">
         </div>
         <div class="flex gap-3">
