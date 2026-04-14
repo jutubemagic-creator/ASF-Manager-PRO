@@ -6,45 +6,107 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        * { font-family: 'Inter', system-ui, sans-serif; }
-       
-        .glass {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-       
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 100%);
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(0,180,255,0.3); }
+            50% { box-shadow: 0 0 20px rgba(0,180,255,0.6); }
+        }
+        
+        .glass {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .glass-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .glass-hover:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(0,180,255,0.3);
+        }
+        
         .card {
+            animation: fadeIn 0.5s ease-out;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
             border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            overflow: hidden;
         }
-       
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,180,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card:hover::before {
+            left: 100%;
+        }
+        
         .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(0,180,255,0.3);
-            box-shadow: 0 20px 40px -12px rgba(0,180,255,0.2);
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(0,180,255,0.4);
+            box-shadow: 0 20px 40px -12px rgba(0,180,255,0.3);
         }
-       
+        
+        /* Стили для детального окна */
         .detail-row {
             display: flex;
-            padding: 14px;
+            padding: 16px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             align-items: flex-start;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            border-radius: 12px;
+            margin: 4px 0;
         }
-       
-        .detail-row:hover { background: rgba(255,255,255,0.03); }
-       
+        
+        .detail-row:hover {
+            background: rgba(0,180,255,0.08);
+            transform: translateX(5px);
+        }
+        
         .detail-label {
-            width: 160px;
+            width: 180px;
             font-weight: 600;
             color: #9ca3af;
             flex-shrink: 0;
+            font-size: 14px;
         }
-       
+        
         .detail-value {
             flex: 1;
             word-break: break-word;
@@ -52,228 +114,377 @@
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 13px;
         }
-       
+        
+        /* Кнопки копирования */
         .copy-btn, .view-btn {
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 6px 12px;
             background: rgba(0,180,255,0.15);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 11px;
-            margin-left: 8px;
-            transition: 0.2s;
+            margin-left: 10px;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            font-weight: 600;
         }
-       
-        .copy-btn:hover, .view-btn:hover { background: rgba(0,180,255,0.3); }
-       
+        
+        .copy-btn:hover, .view-btn:hover {
+            background: rgba(0,180,255,0.4);
+            transform: scale(1.05);
+        }
+        
+        /* Инвентарь */
         .inventory-item {
-            transition: 0.2s;
+            transition: all 0.2s;
             cursor: pointer;
             background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 12px;
         }
-       
+        
         .inventory-item:hover {
             transform: scale(1.05);
-            background: rgba(0,180,255,0.2);
+            background: rgba(0,180,255,0.15);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
         }
-       
-        .tab-active {
+        
+        /* Табы */
+        .tab-btn {
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
             background: #00b4ff;
-            color: black;
-            box-shadow: 0 4px 12px rgba(0,180,255,0.3);
+            transition: all 0.3s;
+            transform: translateX(-50%);
         }
-       
+        
+        .tab-btn:hover::after {
+            width: 80%;
+        }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #00b4ff 0%, #0099cc 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,180,255,0.4);
+        }
+        
+        .tab-active::after {
+            width: 80%;
+        }
+        
+        /* Toast уведомления */
         .toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #00b4ff;
-            color: black;
-            padding: 12px 24px;
-            border-radius: 30px;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #00b4ff 0%, #0099cc 100%);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
             z-index: 1000;
             animation: slideIn 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-weight: 700;
+            box-shadow: 0 10px 25px -5px rgba(0,180,255,0.5);
+            backdrop-filter: blur(10px);
         }
-       
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        
+        /* Поиск */
+        .search-input {
+            transition: all 0.3s;
+            background: rgba(31,41,55,0.8);
+            border: 1px solid rgba(55,65,81,0.8);
+            backdrop-filter: blur(5px);
         }
-       
-        .search-input, select, input, textarea {
-            transition: all 0.2s;
-            background: #1f2937;
-            border: 1px solid #374151;
-        }
-       
-        .search-input:focus, input:focus, select:focus, textarea:focus {
+        
+        .search-input:focus {
             outline: none;
             border-color: #00b4ff;
-            box-shadow: 0 0 0 2px rgba(0,180,255,0.2);
+            box-shadow: 0 0 0 3px rgba(0,180,255,0.2);
+            background: rgba(31,41,55,1);
         }
-       
-        .stat-card {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-       
-        .btn-primary {
-            background: linear-gradient(135deg, #00b4ff 0%, #0099cc 100%);
-            transition: all 0.2s;
-        }
-       
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,180,255,0.4);
-        }
-       
+        
+        /* Скроллбар */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-       
+        
         ::-webkit-scrollbar-track {
-            background: #1f2937;
-            border-radius: 4px;
+            background: rgba(31,41,55,0.5);
+            border-radius: 10px;
         }
-       
+        
         ::-webkit-scrollbar-thumb {
-            background: #00b4ff;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #00b4ff 0%, #0099cc 100%);
+            border-radius: 10px;
         }
-       
+        
         ::-webkit-scrollbar-thumb:hover {
-            background: #0099cc;
+            background: #00b4ff;
         }
-       
-        .password-field {
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
+        
+        /* Статистика */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(31,41,55,0.8) 0%, rgba(17,24,39,0.8) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
         }
-       
-        .account-card {
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0,180,255,0.3);
+        }
+        
+        /* Кнопки */
+        .btn-primary {
+            background: linear-gradient(135deg, #00b4ff 0%, #0099cc 100%);
             transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
-       
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,180,255,0.5);
+        }
+        
+        /* Чекбоксы */
         input[type="checkbox"] {
             cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #00b4ff;
+            transition: all 0.2s;
+        }
+        
+        /* Модальные окна */
+        .modal-content {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Аватарки */
+        .avatar {
+            transition: all 0.3s;
+        }
+        
+        .card:hover .avatar {
             transform: scale(1.1);
+        }
+        
+        /* Badge статуса */
+        .status-badge {
+            transition: all 0.3s;
+        }
+        
+        .card:hover .status-badge {
+            transform: scale(1.05);
         }
     </style>
 </head>
-<body class="bg-[#0a0a0f] text-gray-100">
+<body class="text-gray-100">
 <div class="flex h-screen">
-    <!-- Сайдбар -->
-    <div class="w-80 bg-[#0f1117] border-r border-gray-800 p-6 flex flex-col">
+    <!-- Сайдбар с анимацией -->
+    <div class="w-80 glass border-r border-gray-800/50 p-6 flex flex-col" style="animation: slideIn 0.5s ease;">
         <div class="flex items-center gap-3 mb-8">
-            <div class="w-12 h-12 bg-gradient-to-br from-[#00b4ff] to-cyan-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg">🎮</div>
+            <div class="w-14 h-14 bg-gradient-to-br from-[#00b4ff] to-cyan-400 rounded-2xl flex items-center justify-center text-4xl shadow-lg transform transition hover:scale-110">
+                🎮
+            </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tighter">ASF PRO</h1>
-                <p class="text-xs text-gray-500">Manager v3.3</p>
+                <h1 class="text-2xl font-black tracking-tighter bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+                    ASF PRO
+                </h1>
+                <p class="text-xs text-gray-500 font-semibold">Manager v3.3</p>
             </div>
         </div>
-        <button onclick="addNewAccount()" class="btn-primary w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition mb-3">
-            <i class="fas fa-plus"></i> Добавить аккаунт
+        
+        <button onclick="addNewAccount()" class="btn-primary w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition mb-3 shadow-lg">
+            <i class="fas fa-plus text-sm"></i> Добавить аккаунт
         </button>
-        <button onclick="runASFForAll()" class="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl font-semibold flex items-center justify-center gap-2 transition mb-6">
-            <i class="fas fa-play"></i> Запустить ASF для всех
+        
+        <button onclick="runASFForAll()" class="w-full py-3.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-bold flex items-center justify-center gap-2 transition mb-6 shadow-lg">
+            <i class="fas fa-play text-sm"></i> Запустить ASF для всех
         </button>
-        <div class="space-y-1">
-            <button onclick="switchTab('accounts')" id="tabAccounts" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition">
-                <i class="fas fa-users w-5"></i> Аккаунты
+        
+        <div class="space-y-2">
+            <button onclick="switchTab('accounts')" id="tabAccounts" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all font-semibold glass-hover">
+                <i class="fas fa-users w-5 text-[#00b4ff]"></i> Аккаунты
             </button>
-            <button onclick="switchTab('inventory')" id="tabInventory" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition">
-                <i class="fas fa-box w-5"></i> Инвентарь
+            <button onclick="switchTab('inventory')" id="tabInventory" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all font-semibold glass-hover">
+                <i class="fas fa-box w-5 text-[#00b4ff]"></i> Инвентарь
             </button>
-            <button onclick="switchTab('stats')" id="tabStats" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition">
-                <i class="fas fa-chart-line w-5"></i> Статистика
+            <button onclick="switchTab('stats')" id="tabStats" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all font-semibold glass-hover">
+                <i class="fas fa-chart-line w-5 text-[#00b4ff]"></i> Статистика
             </button>
-            <button onclick="switchTab('settings')" id="tabSettings" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition">
-                <i class="fas fa-cog w-5"></i> Настройки
+            <button onclick="switchTab('settings')" id="tabSettings" class="tab-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all font-semibold glass-hover">
+                <i class="fas fa-cog w-5 text-[#00b4ff]"></i> Настройки
             </button>
         </div>
-        <div class="mt-auto pt-6 text-xs text-gray-500 border-t border-gray-800">
+        
+        <div class="mt-auto pt-6 text-xs text-gray-500 border-t border-gray-800/50">
             <i class="fas fa-database"></i> Локальное хранение<br>
-            <span id="accountCount">0 аккаунтов</span>
+            <span id="accountCount" class="font-bold text-[#00b4ff]">0 аккаунтов</span>
         </div>
     </div>
+    
     <!-- Основная область -->
     <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальное окно детального просмотра -->
-<div id="detailModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-    <div class="glass w-[950px] rounded-2xl p-6 max-h-[85vh] overflow-auto">
+<!-- Модальное окно детального просмотра с улучшенным дизайном -->
+<div id="detailModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass w-[1000px] rounded-2xl p-6 max-h-[85vh] overflow-auto modal-content border border-[#00b4ff]/20">
         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
-            <h2 id="detailTitle" class="text-2xl font-bold flex items-center gap-2"></h2>
-            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            <h2 id="detailTitle" class="text-2xl font-bold flex items-center gap-2 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent"></h2>
+            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-3xl leading-none transition hover:rotate-90 duration-300">&times;</button>
         </div>
         <div id="detailContent" class="mb-5"></div>
         <div class="flex gap-3 pt-3 border-t border-gray-700">
-            <button onclick="editFromDetail()" class="flex-1 py-3 bg-[#00b4ff] text-black font-semibold rounded-xl hover:bg-cyan-400 transition">
+            <button onclick="editFromDetail()" class="flex-1 py-3 bg-gradient-to-r from-[#00b4ff] to-cyan-500 text-black font-bold rounded-xl transition hover:scale-105 shadow-lg">
                 <i class="fas fa-edit"></i> Редактировать
             </button>
-            <button onclick="runASFFromDetail()" class="flex-1 py-3 bg-green-600 font-semibold rounded-xl hover:bg-green-500 transition">
+            <button onclick="runASFFromDetail()" class="flex-1 py-3 bg-gradient-to-r from-green-600 to-emerald-600 font-bold rounded-xl transition hover:scale-105 shadow-lg">
                 <i class="fas fa-play"></i> Запустить ASF
             </button>
-            <button onclick="deleteFromDetail()" class="flex-1 py-3 bg-red-600 font-semibold rounded-xl hover:bg-red-500 transition">
+            <button onclick="deleteFromDetail()" class="flex-1 py-3 bg-gradient-to-r from-red-600 to-rose-600 font-bold rounded-xl transition hover:scale-105 shadow-lg">
                 <i class="fas fa-trash"></i> Удалить
             </button>
-            <button onclick="closeDetailModal()" class="flex-1 py-3 bg-gray-700 font-semibold rounded-xl hover:bg-gray-600 transition">
+            <button onclick="closeDetailModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl transition hover:scale-105 shadow-lg">
                 Закрыть
             </button>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно редактирования -->
-<div id="editModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-    <div class="glass w-[850px] rounded-2xl p-6 max-h-[85vh] overflow-auto">
-        <h2 id="editTitle" class="text-2xl font-bold mb-5">Редактирование</h2>
+<!-- Модальное окно редактирования с улучшенным дизайном -->
+<div id="editModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass w-[900px] rounded-2xl p-6 max-h-[85vh] overflow-auto modal-content border border-[#00b4ff]/20">
+        <h2 id="editTitle" class="text-2xl font-bold mb-5 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">Редактирование</h2>
         <div class="grid grid-cols-2 gap-4">
-            <div><label class="text-gray-400 text-sm block mb-1">Логин Steam *</label><input id="editLogin" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Пароль Steam</label><input id="editPassword" type="password" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Steam ID (для инвентаря)</label><input id="editSteamId" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5" placeholder="7656119..."></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Баланс</label><input id="editBalance" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5" placeholder="0 ₽"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Почта</label><input id="editEmail" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Пароль почты</label><input id="editEmailPass" type="password" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">Прокси (ip:port)</label><input id="editProxy" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5" placeholder="127.0.0.1:8080"></div>
-            <div><label class="text-gray-400 text-sm block mb-1">PIN-код</label><input id="editPin" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm block mb-1">MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5 font-mono text-xs"></textarea></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm block mb-1">Заметки</label><textarea id="editNotes" rows="2" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5"></textarea></div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-sign-in-alt text-[#00b4ff] mr-2"></i>Логин Steam *
+                </label>
+                <input id="editLogin" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-lock text-[#00b4ff] mr-2"></i>Пароль Steam
+                </label>
+                <input id="editPassword" type="password" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fab fa-steam text-[#00b4ff] mr-2"></i>Steam ID
+                </label>
+                <input id="editSteamId" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition" placeholder="7656119...">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-coins text-[#00b4ff] mr-2"></i>Баланс
+                </label>
+                <input id="editBalance" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition" placeholder="0 ₽">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-envelope text-[#00b4ff] mr-2"></i>Почта
+                </label>
+                <input id="editEmail" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-key text-[#00b4ff] mr-2"></i>Пароль почты
+                </label>
+                <input id="editEmailPass" type="password" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-network-wired text-[#00b4ff] mr-2"></i>Прокси
+                </label>
+                <input id="editProxy" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition" placeholder="ip:port">
+            </div>
+            <div>
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-digit text-[#00b4ff] mr-2"></i>PIN-код
+                </label>
+                <input id="editPin" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+            </div>
+            <div class="col-span-2">
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-file-code text-[#00b4ff] mr-2"></i>MaFile (JSON)
+                </label>
+                <textarea id="editMaFile" rows="3" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 font-mono text-xs border border-gray-700 focus:border-[#00b4ff] transition"></textarea>
+            </div>
+            <div class="col-span-2">
+                <label class="text-gray-400 text-sm block mb-2 font-semibold">
+                    <i class="fas fa-sticky-note text-[#00b4ff] mr-2"></i>Заметки
+                </label>
+                <textarea id="editNotes" rows="2" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition"></textarea>
+            </div>
         </div>
         <div class="flex gap-3 mt-6">
-            <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-[#00b4ff] text-black font-semibold rounded-xl hover:bg-cyan-400 transition">Сохранить</button>
-            <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-700 font-semibold rounded-xl hover:bg-gray-600 transition">Отмена</button>
+            <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-gradient-to-r from-[#00b4ff] to-cyan-500 text-black font-bold rounded-xl transition hover:scale-105 shadow-lg">
+                <i class="fas fa-save"></i> Сохранить
+            </button>
+            <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl transition hover:scale-105 shadow-lg">
+                Отмена
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Модальное окно массового редактирования -->
-<div id="massEditModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-    <div class="glass w-[500px] rounded-2xl p-6">
-        <h2 class="text-2xl font-bold mb-5"><i class="fas fa-check-double text-[#00b4ff]"></i> Массовое редактирование</h2>
+<div id="massEditModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass w-[550px] rounded-2xl p-6 modal-content border border-[#00b4ff]/20">
+        <h2 class="text-2xl font-bold mb-5 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+            <i class="fas fa-check-double text-[#00b4ff]"></i> Массовое редактирование
+        </h2>
         <div class="mb-4">
-            <label class="text-gray-400 text-sm block mb-2">Поле для изменения:</label>
-            <select id="massEditField" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5">
-                <option value="Proxy">Прокси</option>
-                <option value="Notes">Заметки</option>
-                <option value="Status">Статус</option>
+            <label class="text-gray-400 text-sm block mb-2 font-semibold">Поле для изменения:</label>
+            <select id="massEditField" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+                <option value="Proxy">🌐 Прокси</option>
+                <option value="Notes">📝 Заметки</option>
+                <option value="Status">🟢 Статус</option>
             </select>
         </div>
         <div class="mb-6">
-            <label class="text-gray-400 text-sm block mb-2">Новое значение:</label>
-            <input type="text" id="massEditValue" class="w-full bg-[#1f2937] rounded-xl px-4 py-2.5" placeholder="Введите значение...">
+            <label class="text-gray-400 text-sm block mb-2 font-semibold">Новое значение:</label>
+            <input type="text" id="massEditValue" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition" placeholder="Введите значение...">
         </div>
         <div class="flex gap-3">
-            <button onclick="applyMassEdit()" class="flex-1 py-3 bg-[#00b4ff] text-black font-semibold rounded-xl hover:bg-cyan-400 transition">
-                <i class="fas fa-save"></i> Применить ко всем выбранным
+            <button onclick="applyMassEdit()" class="flex-1 py-3 bg-gradient-to-r from-[#00b4ff] to-cyan-500 text-black font-bold rounded-xl transition hover:scale-105 shadow-lg">
+                <i class="fas fa-save"></i> Применить
             </button>
-            <button onclick="closeMassEditModal()" class="flex-1 py-3 bg-gray-700 font-semibold rounded-xl hover:bg-gray-600 transition">
+            <button onclick="closeMassEditModal()" class="flex-1 py-3 bg-gray-700 font-bold rounded-xl transition hover:scale-105 shadow-lg">
                 Отмена
             </button>
         </div>
@@ -289,18 +500,19 @@ let currentFilter = '';
 let currentSort = 'date-desc';
 let showPasswords = {};
 let selectedAccountsForMass = new Set();
+let searchTimeout = null;
 
 const games = [
-    { name: "Counter-Strike 2", appId: "730" },
-    { name: "Dota 2", appId: "570" },
-    { name: "Team Fortress 2", appId: "440" },
-    { name: "Rust", appId: "252490" },
-    { name: "Grand Theft Auto V", appId: "271590" },
-    { name: "PUBG: BATTLEGROUNDS", appId: "578080" },
-    { name: "Apex Legends", appId: "1172470" },
-    { name: "Destiny 2", appId: "1085660" },
-    { name: "Warframe", appId: "230410" },
-    { name: "Path of Exile", appId: "238960" }
+    { name: "Counter-Strike 2", appId: "730", icon: "csgo" },
+    { name: "Dota 2", appId: "570", icon: "dota2" },
+    { name: "Team Fortress 2", appId: "440", icon: "tf2" },
+    { name: "Rust", appId: "252490", icon: "rust" },
+    { name: "Grand Theft Auto V", appId: "271590", icon: "gta5" },
+    { name: "PUBG", appId: "578080", icon: "pubg" },
+    { name: "Apex Legends", appId: "1172470", icon: "apex" },
+    { name: "Destiny 2", appId: "1085660", icon: "destiny" },
+    { name: "Warframe", appId: "230410", icon: "warframe" },
+    { name: "Path of Exile", appId: "238960", icon: "poe" }
 ];
 
 function switchTab(tab) {
@@ -317,12 +529,14 @@ function switchTab(tab) {
 function getFilteredAndSortedAccounts() {
     let filtered = [...accounts];
    
-    if (currentFilter) {
+    if (currentFilter && currentFilter.trim()) {
         const searchLower = currentFilter.toLowerCase();
         filtered = filtered.filter(acc =>
             acc.Login.toLowerCase().includes(searchLower) ||
             (acc.Email && acc.Email.toLowerCase().includes(searchLower)) ||
-            (acc.SteamId && acc.SteamId.includes(searchLower))
+            (acc.SteamId && acc.SteamId.includes(searchLower)) ||
+            (acc.Notes && acc.Notes.toLowerCase().includes(searchLower)) ||
+            (acc.Proxy && acc.Proxy.toLowerCase().includes(searchLower))
         );
     }
    
@@ -342,96 +556,161 @@ function getFilteredAndSortedAccounts() {
         case 'status':
             filtered.sort((a,b) => (a.Status === 'Online' ? 0 : 1) - (b.Status === 'Online' ? 0 : 1));
             break;
+        case 'balance':
+            filtered.sort((a,b) => {
+                let balA = parseFloat(a.Balance.replace(/[^0-9.-]/g, '')) || 0;
+                let balB = parseFloat(b.Balance.replace(/[^0-9.-]/g, '')) || 0;
+                return balB - balA;
+            });
+            break;
     }
    
     return filtered;
+}
+
+function updateSearchDebounced() {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        currentFilter = document.getElementById('searchInput')?.value || '';
+        renderAccounts();
+    }, 300);
+}
+
+function updateSearch() {
+    updateSearchDebounced();
+}
+
+function updateSort() {
+    currentSort = document.getElementById('sortSelect')?.value || 'date-desc';
+    renderAccounts();
 }
 
 function renderAccounts() {
     const filtered = getFilteredAndSortedAccounts();
    
     let html = `
-        <div class="mb-6 flex gap-4 flex-wrap items-center">
-            <div class="flex-1 min-w-[250px]">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="searchInput" placeholder="Поиск по логину, email, Steam ID..."
-                           class="search-input w-full bg-[#1f2937] rounded-xl pl-10 pr-4 py-2.5"
-                           onkeyup="updateSearch()">
+        <div class="mb-6 space-y-4">
+            <!-- Улучшенная панель поиска -->
+            <div class="flex gap-4 flex-wrap items-center">
+                <div class="flex-1 min-w-[300px]">
+                    <div class="relative group">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#00b4ff] transition"></i>
+                        <input type="text" id="searchInput" placeholder="🔍 Поиск по логину, email, Steam ID, заметкам, прокси..."
+                               class="search-input w-full bg-[#1f2937]/80 rounded-xl pl-12 pr-4 py-3.5 border border-gray-700 focus:border-[#00b4ff] transition"
+                               onkeyup="updateSearch()">
+                    </div>
+                </div>
+                <select id="sortSelect" onchange="updateSort()" class="bg-[#1f2937] rounded-xl px-4 py-3.5 border border-gray-700 focus:border-[#00b4ff] transition cursor-pointer">
+                    <option value="date-desc">📅 Сначала новые</option>
+                    <option value="date-asc">📅 Сначала старые</option>
+                    <option value="login-asc">🔤 Логин (А-Я)</option>
+                    <option value="login-desc">🔤 Логин (Я-А)</option>
+                    <option value="status">🟢 По статусу</option>
+                    <option value="balance">💰 По балансу</option>
+                </select>
+                <button id="massSelectBtn" onclick="showMassEditModal()" class="px-5 py-3.5 bg-[#374151] hover:bg-gradient-to-r hover:from-[#00b4ff] hover:to-cyan-500 rounded-xl transition font-semibold">
+                    <i class="fas fa-check-double"></i> Выбрано (<span id="selectedCount">0</span>)
+                </button>
+                <button onclick="deleteAllAccounts()" class="px-5 py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-xl transition font-semibold shadow-lg">
+                    <i class="fas fa-trash-alt"></i> Удалить все
+                </button>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex justify-between items-center text-sm text-gray-400 px-2">
+                <div class="flex gap-4">
+                    <span><i class="fas fa-filter text-[#00b4ff]"></i> Найдено: <span class="font-bold text-white">${filtered.length}</span> из <span class="font-bold text-white">${accounts.length}</span></span>
+                    ${currentFilter ? `<span><i class="fas fa-search"></i> Запрос: "${currentFilter}" <button onclick="clearSearch()" class="text-[#00b4ff] hover:underline ml-2">Очистить</button></span>` : ''}
+                </div>
+                <div class="flex gap-2">
+                    <i class="fas fa-arrow-up"></i>
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Сортировка: ${sortNames[currentSort] || 'По дате'}</span>
                 </div>
             </div>
-            <select id="sortSelect" onchange="updateSort()" class="bg-[#1f2937] rounded-xl px-4 py-2.5">
-                <option value="date-desc">📅 Сначала новые</option>
-                <option value="date-asc">📅 Сначала старые</option>
-                <option value="login-asc">🔤 Логин (А-Я)</option>
-                <option value="login-desc">🔤 Логин (Я-А)</option>
-                <option value="status">🟢 По статусу</option>
-            </select>
-            <button id="massSelectBtn" onclick="showMassEditModal()" class="px-4 py-2.5 bg-[#374151] hover:bg-[#00b4ff] rounded-xl transition">
-                <i class="fas fa-check-double"></i> Массовое редактирование
-            </button>
-            <button onclick="deleteAllAccounts()" class="px-4 py-2.5 bg-red-600 hover:bg-red-500 rounded-xl transition">
-                <i class="fas fa-trash-alt"></i> Удалить все
-            </button>
-            <div class="text-sm text-gray-400 px-3">
-                <i class="fas fa-filter"></i> ${filtered.length} из ${accounts.length}
-            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     `;
    
     filtered.forEach(acc => {
-        let lastLoginText = acc.LastLogin ? new Date(acc.LastLogin).toLocaleDateString('ru-RU') : 'нет данных';
-        let avatarColor = `hsl(${Math.abs(acc.Login.split('').reduce((a,b)=>a+b.charCodeAt(0),0) % 360)}, 70%, 55%)`;
+        let lastLoginText = acc.LastLogin ? new Date(acc.LastLogin).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'нет данных';
+        let avatarColor = `hsl(${Math.abs(acc.Login.split('').reduce((a,b)=>a+b.charCodeAt(0),0) % 360)}, 70%, 60%)`;
         let isSelected = selectedAccountsForMass.has(acc.Id);
+        
+        // Подсветка поиска
+        let displayLogin = acc.Login;
+        let displayEmail = acc.Email || 'нет почты';
+        if (currentFilter) {
+            const regex = new RegExp(`(${currentFilter})`, 'gi');
+            displayLogin = acc.Login.replace(regex, '<mark class="bg-[#00b4ff]/30 text-white px-1 rounded">$1</mark>');
+            if (acc.Email) {
+                displayEmail = acc.Email.replace(regex, '<mark class="bg-[#00b4ff]/30 text-white px-1 rounded">$1</mark>');
+            }
+        }
        
         html += `
         <div class="card rounded-2xl p-5 account-card relative" data-id="${acc.Id}" onclick="showAccountDetail('${acc.Id}')">
             <div class="absolute top-3 left-3 z-10" onclick="event.stopPropagation()">
-                <input type="checkbox" class="w-5 h-5 rounded border-gray-600 bg-gray-700 accent-[#00b4ff]"
+                <input type="checkbox" class="w-5 h-5 rounded border-gray-600 bg-gray-700"
                        onchange="toggleMassSelect('${acc.Id}')" ${isSelected ? 'checked' : ''}>
             </div>
             <div class="flex justify-between items-start ml-7">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold text-white" style="background: ${avatarColor}">${acc.Login[0]?.toUpperCase() || '?'}</div>
+                    <div class="avatar w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg" style="background: linear-gradient(135deg, ${avatarColor}, ${avatarColor}dd)">
+                        ${acc.Login[0]?.toUpperCase() || '?'}
+                    </div>
                     <div>
-                        <h3 class="text-xl font-semibold">${escapeHtml(acc.Login)}</h3>
-                        <p class="text-gray-400 text-xs">${acc.Email || 'нет почты'}</p>
+                        <h3 class="text-xl font-bold">${displayLogin}</h3>
+                        <p class="text-gray-400 text-xs mt-1">${displayEmail}</p>
                     </div>
                 </div>
-                <span class="px-3 py-1 text-xs rounded-full ${acc.Status === 'Online' ? 'bg-green-500 text-white' : 'bg-gray-600 text-gray-300'}">
-                    ${acc.Status === 'Online' ? '<i class="fas fa-circle text-green-300 text-[8px] mr-1"></i> Онлайн' : '<i class="fas fa-circle text-gray-400 text-[8px] mr-1"></i> Оффлайн'}
+                <span class="status-badge px-3 py-1.5 text-xs rounded-full font-semibold ${acc.Status === 'Online' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' : 'bg-gray-600 text-gray-300'}">
+                    ${acc.Status === 'Online' ? '<i class="fas fa-circle text-green-300 text-[8px] mr-1 animate-pulse"></i> Онлайн' : '<i class="fas fa-circle text-gray-400 text-[8px] mr-1"></i> Оффлайн'}
                 </span>
             </div>
-            <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div class="flex items-center gap-1"><i class="fas fa-network-wired text-gray-500 w-4"></i> <span class="text-gray-500">Прокси:</span> ${acc.Proxy ? '✅' : '❌'}</div>
-                <div class="flex items-center gap-1"><i class="fas fa-file-code text-gray-500 w-4"></i> <span class="text-gray-500">MaFile:</span> ${acc.MaFile ? '✅' : '❌'}</div>
-                <div class="flex items-center gap-1"><i class="fas fa-coins text-gray-500 w-4"></i> <span class="text-gray-500">Баланс:</span> <span class="text-emerald-400">${acc.Balance}</span></div>
-                <div class="flex items-center gap-1"><i class="fas fa-calendar text-gray-500 w-4"></i> <span class="text-gray-500">Вход:</span> ${lastLoginText}</div>
+            <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-black/20"><i class="fas fa-network-wired text-[#00b4ff] w-4"></i> <span class="text-gray-400">Прокси:</span> <span class="font-semibold">${acc.Proxy ? '✅ ' + acc.Proxy.substring(0, 20) : '❌ Нет'}</span></div>
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-black/20"><i class="fas fa-file-code text-[#00b4ff] w-4"></i> <span class="text-gray-400">MaFile:</span> <span class="font-semibold">${acc.MaFile ? '✅ Есть' : '❌ Нет'}</span></div>
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-black/20"><i class="fas fa-coins text-[#00b4ff] w-4"></i> <span class="text-gray-400">Баланс:</span> <span class="font-bold text-emerald-400">${acc.Balance}</span></div>
+                <div class="flex items-center gap-2 p-2 rounded-lg bg-black/20"><i class="fas fa-calendar text-[#00b4ff] w-4"></i> <span class="text-gray-400">Вход:</span> <span class="font-semibold">${lastLoginText}</span></div>
             </div>
             <div class="mt-4 flex gap-2" onclick="event.stopPropagation()">
-                <button onclick="runASF('${acc.Login}')" class="flex-1 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm transition"><i class="fas fa-play"></i> ASF</button>
-                <button onclick="viewInventory('${acc.SteamId || acc.Login}')" class="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition"><i class="fas fa-box"></i> Инвентарь</button>
-                <button onclick="editAccount('${acc.Id}')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteAccount('${acc.Id}')" class="px-3 py-2 bg-red-600 hover:bg-red-500 rounded-lg transition"><i class="fas fa-trash"></i></button>
+                <button onclick="runASF('${acc.Login}')" class="flex-1 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-lg text-sm font-semibold transition shadow-md"><i class="fas fa-play"></i> ASF</button>
+                <button onclick="viewInventory('${acc.SteamId || acc.Login}')" class="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg text-sm font-semibold transition shadow-md"><i class="fas fa-box"></i> Инвентарь</button>
+                <button onclick="editAccount('${acc.Id}')" class="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteAccount('${acc.Id}')" class="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-lg transition"><i class="fas fa-trash"></i></button>
             </div>
         </div>`;
     });
    
-    html += filtered.length === 0 ? `<div class="col-span-full text-center py-20 text-gray-500">Нет аккаунтов. Нажмите "Добавить аккаунт"</div>` : '';
+    html += filtered.length === 0 ? `
+        <div class="col-span-full text-center py-20">
+            <div class="glass inline-block p-8 rounded-2xl">
+                <i class="fas fa-inbox text-6xl text-gray-600 mb-4 block"></i>
+                <p class="text-gray-500 text-lg">Нет аккаунтов</p>
+                <button onclick="addNewAccount()" class="mt-4 px-6 py-2 bg-[#00b4ff] rounded-xl font-semibold hover:scale-105 transition">➕ Добавить первый аккаунт</button>
+            </div>
+        </div>` : '';
     html += `</div>`;
     document.getElementById('mainContent').innerHTML = html;
-    document.getElementById('accountCount').innerText = `${accounts.length} аккаунтов`;
+    document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`;
+    document.getElementById('selectedCount').innerText = selectedAccountsForMass.size;
     updateMassSelectUI();
 }
 
-function updateSearch() {
-    currentFilter = document.getElementById('searchInput')?.value || '';
-    renderAccounts();
-}
+const sortNames = {
+    'date-desc': 'сначала новые',
+    'date-asc': 'сначала старые',
+    'login-asc': 'логин А-Я',
+    'login-desc': 'логин Я-А',
+    'status': 'по статусу',
+    'balance': 'по балансу'
+};
 
-function updateSort() {
-    currentSort = document.getElementById('sortSelect')?.value || 'date-desc';
+function clearSearch() {
+    currentFilter = '';
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
     renderAccounts();
 }
 
@@ -445,52 +724,72 @@ function renderStats() {
     const withMaFile = accounts.filter(a => a.MaFile).length;
     const totalCards = accounts.reduce((sum, acc) => sum + (acc.CardsRemaining || 0), 0);
     const totalGames = accounts.reduce((sum, acc) => sum + (acc.GamesCount || 0), 0);
+    const avgBalance = accounts.length > 0 ? (totalBalance / accounts.length).toFixed(2) : 0;
    
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-chart-line"></i> Статистика аккаунтов</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="stat-card rounded-2xl p-5">
-                    <div class="text-gray-400 text-sm"><i class="fas fa-users"></i> Всего аккаунтов</div>
-                    <div class="text-3xl font-bold mt-2">${accounts.length}</div>
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-6 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+                <i class="fas fa-chart-line"></i> Статистика аккаунтов
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <div class="stat-card rounded-2xl p-6 transform hover:scale-105 transition">
+                    <div class="text-gray-400 text-sm mb-2"><i class="fas fa-users text-[#00b4ff]"></i> Всего аккаунтов</div>
+                    <div class="text-4xl font-black text-white">${accounts.length}</div>
                 </div>
-                <div class="stat-card rounded-2xl p-5">
-                    <div class="text-gray-400 text-sm"><i class="fas fa-circle text-green-400"></i> Онлайн</div>
-                    <div class="text-3xl font-bold mt-2 text-green-400">${onlineCount}</div>
+                <div class="stat-card rounded-2xl p-6 transform hover:scale-105 transition">
+                    <div class="text-gray-400 text-sm mb-2"><i class="fas fa-circle text-green-400"></i> Онлайн</div>
+                    <div class="text-4xl font-black text-green-400">${onlineCount}</div>
+                    <div class="text-xs text-gray-500 mt-1">${accounts.length > 0 ? Math.round(onlineCount/accounts.length*100) : 0}% от всех</div>
                 </div>
-                <div class="stat-card rounded-2xl p-5">
-                    <div class="text-gray-400 text-sm"><i class="fas fa-coins"></i> Общий баланс</div>
-                    <div class="text-3xl font-bold mt-2 text-emerald-400">${totalBalance.toFixed(2)} ₽</div>
+                <div class="stat-card rounded-2xl p-6 transform hover:scale-105 transition">
+                    <div class="text-gray-400 text-sm mb-2"><i class="fas fa-coins text-[#00b4ff]"></i> Общий баланс</div>
+                    <div class="text-4xl font-black text-emerald-400">${totalBalance.toFixed(2)} ₽</div>
                 </div>
-                <div class="stat-card rounded-2xl p-5">
-                    <div class="text-gray-400 text-sm"><i class="fas fa-shield-alt"></i> Прокси / MaFile</div>
-                    <div class="text-2xl font-bold mt-2">${withProxy} / ${withMaFile}</div>
+                <div class="stat-card rounded-2xl p-6 transform hover:scale-105 transition">
+                    <div class="text-gray-400 text-sm mb-2"><i class="fas fa-chart-line text-[#00b4ff]"></i> Средний баланс</div>
+                    <div class="text-4xl font-black text-cyan-400">${avgBalance} ₽</div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass rounded-2xl p-6">
-                    <h3 class="text-xl font-semibold mb-4"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3>
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита аккаунтов</h3>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span>Осталось карточек:</span>
-                            <span class="font-bold text-emerald-400">${totalCards}</span>
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-black/20">
+                            <span><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span>
+                            <span class="font-bold text-white">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span>Всего игр:</span>
-                            <span class="font-bold text-blue-400">${totalGames}</span>
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-black/20">
+                            <span><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span>
+                            <span class="font-bold text-white">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span>
                         </div>
                     </div>
                 </div>
                 <div class="glass rounded-2xl p-6">
-                    <h3 class="text-xl font-semibold mb-4"><i class="fas fa-history"></i> Недавняя активность</h3>
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-black/20">
+                            <span><i class="fas fa-id-card text-[#00b4ff] mr-2"></i> Осталось карточек:</span>
+                            <span class="font-bold text-emerald-400">${totalCards}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-lg bg-black/20">
+                            <span><i class="fas fa-gamepad text-[#00b4ff] mr-2"></i> Всего игр:</span>
+                            <span class="font-bold text-blue-400">${totalGames}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass rounded-2xl p-6 md:col-span-2">
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-history text-[#00b4ff]"></i> Недавняя активность</h3>
                     <div class="space-y-2 max-h-64 overflow-auto">
-                        ${accounts.filter(a => a.LastLogin).sort((a,b) => new Date(b.LastLogin) - new Date(a.LastLogin)).slice(0,5).map(acc => `
-                            <div class="flex justify-between items-center text-sm py-2 border-b border-gray-700">
-                                <span class="font-medium">${escapeHtml(acc.Login)}</span>
+                        ${accounts.filter(a => a.LastLogin).sort((a,b) => new Date(b.LastLogin) - new Date(a.LastLogin)).slice(0,10).map(acc => `
+                            <div class="flex justify-between items-center text-sm py-3 px-3 rounded-lg hover:bg-white/5 transition">
+                                <span class="font-semibold flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded bg-gradient-to-r from-[#00b4ff] to-cyan-400 flex items-center justify-center text-xs font-bold">${acc.Login[0]}</div>
+                                    ${escapeHtml(acc.Login)}
+                                </span>
                                 <span class="text-gray-400 text-xs">${new Date(acc.LastLogin).toLocaleString('ru-RU')}</span>
                             </div>
                         `).join('')}
-                        ${accounts.filter(a => a.LastLogin).length === 0 ? '<div class="text-gray-400 text-center py-4">Нет данных о входах</div>' : ''}
+                        ${accounts.filter(a => a.LastLogin).length === 0 ? '<div class="text-center text-gray-400 py-8"><i class="fas fa-calendar-day text-3xl mb-2 block"></i>Нет данных о входах</div>' : ''}
                     </div>
                 </div>
             </div>
@@ -505,26 +804,37 @@ function renderInventory() {
     });
    
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-5xl mx-auto">
+        <div class="max-w-6xl mx-auto">
             <div class="glass rounded-2xl p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
-                <div class="flex gap-3 flex-wrap">
-                    <input type="text" id="inventorySteamId" placeholder="Steam ID или логин" class="flex-1 min-w-[200px] bg-[#1f2937] rounded-xl px-4 py-3">
-                    <select id="inventoryAppId" class="bg-[#1f2937] rounded-xl px-4 py-3">
-                        ${gameOptions}
-                    </select>
-                    <button onclick="loadInventory()" class="px-6 bg-[#00b4ff] text-black rounded-xl font-semibold hover:bg-cyan-400 transition">
-                        <i class="fas fa-search"></i> Загрузить
-                    </button>
+                <h2 class="text-3xl font-bold mb-4 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+                    <i class="fas fa-box text-purple-400"></i> Инвентарь Steam
+                </h2>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex-1 min-w-[250px]">
+                        <label class="text-gray-400 text-sm block mb-2">Steam ID или логин</label>
+                        <input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+                    </div>
+                    <div class="min-w-[200px]">
+                        <label class="text-gray-400 text-sm block mb-2">Выберите игру</label>
+                        <select id="inventoryAppId" class="w-full bg-[#1f2937] rounded-xl px-4 py-3 border border-gray-700 focus:border-[#00b4ff] transition">
+                            ${gameOptions}
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="loadInventory()" class="px-8 py-3 bg-gradient-to-r from-[#00b4ff] to-cyan-500 text-black font-bold rounded-xl hover:scale-105 transition shadow-lg">
+                            <i class="fas fa-search"></i> Загрузить
+                        </button>
+                    </div>
                 </div>
-                <div class="mt-3 text-xs text-gray-500">
-                    <i class="fas fa-info-circle"></i> Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие
+                <div class="mt-4 p-3 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300">
+                    <i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>
+                    Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие
                 </div>
             </div>
             <div id="inventoryResult" class="glass rounded-2xl p-6">
-                <div class="text-center text-gray-400 py-10">
-                    <i class="fas fa-steam text-4xl mb-3 block"></i>
-                    Введите Steam ID для просмотра инвентаря
+                <div class="text-center text-gray-400 py-16">
+                    <i class="fas fa-steam text-5xl mb-4 block text-[#00b4ff]"></i>
+                    <p class="text-lg">Введите Steam ID для просмотра инвентаря</p>
                 </div>
             </div>
         </div>`;
@@ -534,12 +844,12 @@ function loadInventory() {
     let steamId = document.getElementById('inventorySteamId').value;
     let appId = document.getElementById('inventoryAppId').value;
     if (!steamId) { showToast('Введите Steam ID'); return; }
-    document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-3">Загрузка инвентаря...</p></div>';
+    document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16"><i class="fas fa-spinner fa-spin text-4xl text-[#00b4ff] mb-3 block"></i><p class="text-gray-400">Загрузка инвентаря...</p></div>';
     window.chrome.webview.postMessage(JSON.stringify({ action: "getInventory", data: `${steamId}|${appId}` }));
 }
 
 function viewInventory(steamId) {
-    if (!steamId) { showToast('Укажите Steam ID в настройках аккаунта'); return; }
+    if (!steamId || steamId === '—') { showToast('Укажите Steam ID в настройках аккаунта'); return; }
     switchTab('inventory');
     setTimeout(() => {
         const input = document.getElementById('inventorySteamId');
@@ -550,17 +860,36 @@ function viewInventory(steamId) {
 
 function renderSettings() {
     document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-2xl mx-auto">
-            <div class="glass rounded-2xl p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4"><i class="fas fa-database"></i> Управление данными</h2>
-                <button onclick="exportData()" class="w-full mb-3 py-3 bg-green-600 hover:bg-green-500 rounded-xl transition"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button>
-                <button onclick="importData()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl transition"><i class="fas fa-upload"></i> Импорт аккаунтов</button>
+        <div class="max-w-3xl mx-auto space-y-6">
+            <div class="glass rounded-2xl p-8">
+                <h2 class="text-3xl font-bold mb-6 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+                    <i class="fas fa-database"></i> Управление данными
+                </h2>
+                <div class="space-y-3">
+                    <button onclick="exportData()" class="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-bold transition shadow-lg">
+                        <i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)
+                    </button>
+                    <button onclick="importData()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl font-bold transition shadow-lg">
+                        <i class="fas fa-upload"></i> Импорт аккаунтов
+                    </button>
+                </div>
             </div>
-            <div class="glass rounded-2xl p-6">
-                <h2 class="text-2xl font-bold mb-4"><i class="fas fa-info-circle"></i> О программе</h2>
-                <p><strong class="text-[#00b4ff]">ASF Manager PRO v3.3</strong></p>
-                <p class="text-gray-400 text-sm mt-2">✓ Управление аккаунтами Steam<br>✓ Запуск ASF<br>✓ Просмотр инвентаря из 10+ игр<br>✓ Статистика и мониторинг<br>✓ Поиск, фильтрация, сортировка<br>✓ Массовые операции<br>✓ Безопасное хранение паролей<br>✓ Горячие клавиши (Ctrl+N, Ctrl+S, Ctrl+F, Del)</p>
-                <div class="mt-4 p-3 bg-gray-800/50 rounded-xl">
+            <div class="glass rounded-2xl p-8">
+                <h2 class="text-3xl font-bold mb-4 bg-gradient-to-r from-[#00b4ff] to-cyan-400 bg-clip-text text-transparent">
+                    <i class="fas fa-info-circle"></i> О программе
+                </h2>
+                <p><strong class="text-[#00b4ff] text-xl">ASF Manager PRO v3.3</strong></p>
+                <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Статистика и мониторинг</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Поиск, фильтрация, сортировка</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Безопасное хранение паролей</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Горячие клавиши</div>
+                </div>
+                <div class="mt-6 p-4 bg-black/30 rounded-xl">
                     <p class="text-xs text-gray-400"><i class="fas fa-folder-open"></i> Данные хранятся в папке:</p>
                     <p class="text-xs font-mono text-gray-300 break-all">ASF_Data\\accounts.json (рядом с EXE)</p>
                 </div>
@@ -568,12 +897,15 @@ function renderSettings() {
         </div>`;
 }
 
+// Остальные функции (showAccountDetail, editAccount, deleteAccount и т.д.) остаются теми же
+// ... (продолжение следует)
+
 function showAccountDetail(id) {
     const acc = accounts.find(a => a.Id === id);
     if (!acc) return;
     currentDetailAccount = acc;
    
-    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff] text-3xl"></i> ${escapeHtml(acc.Login)}`;
+    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-3xl"></i> ${escapeHtml(acc.Login)}`;
    
     let passwordDisplay = acc.Password ? '••••••••' : '—';
     let emailPassDisplay = acc.EmailPass ? '••••••••' : '—';
@@ -591,7 +923,7 @@ function showAccountDetail(id) {
         <div class="detail-row"><div class="detail-label"><i class="fas fa-network-wired w-5 text-[#00b4ff]"></i> Прокси:</div><div class="detail-value">${escapeHtml(acc.Proxy) || '—'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Proxy)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-digit w-5 text-[#00b4ff]"></i> PIN-код:</div><div class="detail-value">${acc.Pin || '—'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Pin)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
         <div class="detail-row"><div class="detail-label"><i class="fab fa-steam w-5 text-[#00b4ff]"></i> Steam ID:</div><div class="detail-value">${acc.SteamId || '—'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.SteamId)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-coins w-5 text-[#00b4ff]"></i> Баланс:</div><div class="detail-value"><span class="text-emerald-400 font-bold">${acc.Balance}</span> <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Balance)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
+        <div class="detail-row"><div class="detail-label"><i class="fas fa-coins w-5 text-[#00b4ff]"></i> Баланс:</div><div class="detail-value"><span class="text-emerald-400 font-bold text-lg">${acc.Balance}</span> <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Balance)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-plus w-5 text-[#00b4ff]"></i> Дата создания:</div><div class="detail-value">${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-check w-5 text-[#00b4ff]"></i> Последний вход:</div><div class="detail-value">${acc.LastLogin ? new Date(acc.LastLogin).toLocaleString('ru-RU') : '—'}</div></div>
     `;
@@ -693,7 +1025,7 @@ function runASFFromDetail() {
 
 function addNewAccount() {
     currentEditId = null;
-    document.getElementById('editTitle').textContent = '➕ Новый аккаунт';
+    document.getElementById('editTitle').innerHTML = '➕ Новый аккаунт';
     clearEditForm();
     document.getElementById('editModal').classList.remove('hidden');
 }
@@ -702,7 +1034,7 @@ function editAccount(id) {
     const acc = accounts.find(a => a.Id === id);
     if (!acc) return;
     currentEditId = id;
-    document.getElementById('editTitle').textContent = `✏️ Редактирование: ${acc.Login}`;
+    document.getElementById('editTitle').innerHTML = `✏️ Редактирование: ${acc.Login}`;
     document.getElementById('editLogin').value = acc.Login || '';
     document.getElementById('editPassword').value = acc.Password || '';
     document.getElementById('editSteamId').value = acc.SteamId || '';
@@ -786,7 +1118,7 @@ function runASF(login) {
 }
 
 function copyToClipboard(text) {
-    if (!text) { showToast('Нет данных для копирования'); return; }
+    if (!text || text === '—') { showToast('Нет данных для копирования'); return; }
     window.chrome.webview.postMessage(JSON.stringify({ action: "copyToClipboard", data: text }));
     showToast('Скопировано в буфер обмена!');
 }
@@ -796,7 +1128,7 @@ function showToast(message) {
     toast.className = 'toast';
     toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 function closeDetailModal() {
@@ -826,24 +1158,23 @@ function toggleMassSelect(accountId) {
         selectedAccountsForMass.add(accountId);
     }
     updateMassSelectUI();
+    renderAccounts(); // Обновляем для отображения чекбоксов
 }
 
 function updateMassSelectUI() {
+    const count = selectedAccountsForMass.size;
     const selectBtn = document.getElementById('massSelectBtn');
+    const selectedSpan = document.getElementById('selectedCount');
+    if (selectedSpan) selectedSpan.innerText = count;
     if (selectBtn) {
-        const count = selectedAccountsForMass.size;
-        selectBtn.innerHTML = `<i class="fas fa-check-double"></i> Выбрано (${count})`;
-        selectBtn.style.background = count > 0 ? '#00b4ff' : '#374151';
-    }
-   
-    document.querySelectorAll('.account-card').forEach(card => {
-        const id = card.getAttribute('data-id');
-        if (id && selectedAccountsForMass.has(id)) {
-            card.classList.add('border-2', 'border-[#00b4ff]', 'shadow-lg');
-        } else if (card) {
-            card.classList.remove('border-2', 'border-[#00b4ff]', 'shadow-lg');
+        if (count > 0) {
+            selectBtn.classList.add('bg-gradient-to-r', 'from-[#00b4ff]', 'to-cyan-500');
+            selectBtn.classList.remove('bg-[#374151]');
+        } else {
+            selectBtn.classList.remove('bg-gradient-to-r', 'from-[#00b4ff]', 'to-cyan-500');
+            selectBtn.classList.add('bg-[#374151]');
         }
-    });
+    }
 }
 
 function showMassEditModal() {
@@ -908,16 +1239,59 @@ function receiveHotkey(action) {
     }
 }
 
+function renderInventoryResult(data) {
+    if (!data || !data.data || !data.data.success || !data.data.assets || data.data.assets.length === 0) {
+        document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16"><i class="fas fa-box-open text-5xl text-gray-600 mb-3 block"></i><p class="text-gray-400">Нет предметов или профиль приватный</p></div>';
+        return;
+    }
+   
+    const inventory = data.data;
+    const appId = data.appId;
+    const gameName = games.find(g => g.appId === appId)?.name || `Игра ${appId}`;
+    let items = inventory.assets || [];
+    let descriptions = inventory.descriptions || [];
+   
+    let html = `<div class="mb-6 pb-4 border-b border-gray-700"><h3 class="text-2xl font-bold"><i class="fab fa-steam text-[#00b4ff]"></i> ${gameName}</h3><p class="text-gray-400 text-sm mt-2">Всего предметов: ${inventory.total_inventory_count || items.length}</p></div>`;
+    html += `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5">`;
+   
+    items.forEach(item => {
+        let desc = descriptions.find(d => d.classid === item.classid);
+        if (desc) {
+            let rarityColor = '';
+            if (desc.rarity === 'Consumer grade') rarityColor = 'text-gray-400';
+            else if (desc.rarity === 'Industrial grade') rarityColor = 'text-blue-400';
+            else if (desc.rarity === 'Mil-spec') rarityColor = 'text-blue-300';
+            else if (desc.rarity === 'Restricted') rarityColor = 'text-purple-400';
+            else if (desc.rarity === 'Classified') rarityColor = 'text-pink-400';
+            else if (desc.rarity === 'Covert') rarityColor = 'text-red-400';
+            else if (desc.rarity === 'Contraband') rarityColor = 'text-orange-400';
+           
+            html += `
+            <div class="inventory-item rounded-xl p-4 text-center transition">
+                <img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-24 h-24 mx-auto mb-3 rounded-lg shadow-lg" onerror="this.src='https://steamcommunity.com/images/favicon.png'">
+                <p class="text-sm font-bold truncate" title="${escapeHtml(desc.name)}">${escapeHtml(desc.name.substring(0, 35))}</p>
+                <p class="text-xs ${rarityColor || 'text-gray-400'} mt-1">${desc.type || ''}</p>
+                <p class="text-sm text-emerald-400 mt-2 font-bold">x${item.amount}</p>
+            </div>`;
+        }
+    });
+   
+    html += `</div>`;
+    if (items.length === 0) html = '<div class="text-center py-16"><i class="fas fa-box-open text-5xl text-gray-600 mb-3 block"></i><p class="text-gray-400">Нет предметов</p></div>';
+    document.getElementById('inventoryResult').innerHTML = html;
+}
+
 window.receiveFromCSharp = function(msg) {
+    console.log("Получено из C#:", msg);
     if (msg.type === "accounts") {
         accounts = msg.data || [];
         if (currentTab === 'accounts') renderAccounts();
         if (currentTab === 'stats') renderStats();
-        document.getElementById('accountCount').innerText = `${accounts.length} аккаунтов`;
+        document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`;
     } else if (msg.type === "inventoryData") {
         renderInventoryResult(msg.data);
     } else if (msg.type === "inventoryError") {
-        document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-10 text-red-400"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i>${msg.data}</div>`;
+        document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-16 text-red-400"><i class="fas fa-exclamation-triangle text-5xl mb-3 block"></i><p class="text-lg">${msg.data}</p></div>`;
     } else if (msg.type === "asfStarted") {
         showToast(msg.data);
         if (currentTab === 'accounts') renderAccounts();
@@ -934,51 +1308,7 @@ window.receiveFromCSharp = function(msg) {
     }
 };
 
-function renderInventoryResult(data) {
-    if (!data || !data.data || !data.data.success || !data.data.assets || data.data.assets.length === 0) {
-        document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-10 text-gray-400"><i class="fas fa-box-open text-3xl mb-3 block"></i>Нет предметов или профиль приватный</div>';
-        return;
-    }
-   
-    const inventory = data.data;
-    const appId = data.appId;
-    const gameName = games.find(g => g.appId === appId)?.name || `Игра ${appId}`;
-    let items = inventory.assets || [];
-    let descriptions = inventory.descriptions || [];
-   
-    let html = `<div class="mb-5 pb-3 border-b border-gray-700"><h3 class="text-xl font-semibold"><i class="fab fa-steam text-[#00b4ff]"></i> ${gameName}</h3><p class="text-gray-400 text-sm mt-1">Всего предметов: ${inventory.total_inventory_count || items.length}</p></div>`;
-    html += `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">`;
-   
-    items.forEach(item => {
-        let desc = descriptions.find(d => d.classid === item.classid);
-        if (desc) {
-            let rarityColor = '';
-            if (desc.rarity === 'Consumer grade') rarityColor = 'text-gray-400';
-            else if (desc.rarity === 'Industrial grade') rarityColor = 'text-blue-400';
-            else if (desc.rarity === 'Mil-spec') rarityColor = 'text-blue-300';
-            else if (desc.rarity === 'Restricted') rarityColor = 'text-purple-400';
-            else if (desc.rarity === 'Classified') rarityColor = 'text-pink-400';
-            else if (desc.rarity === 'Covert') rarityColor = 'text-red-400';
-            else if (desc.rarity === 'Contraband') rarityColor = 'text-orange-400';
-           
-            html += `
-            <div class="inventory-item rounded-xl p-3 text-center">
-                <img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-20 h-20 mx-auto mb-2 rounded" onerror="this.src='https://steamcommunity.com/images/favicon.png'">
-                <p class="text-xs font-semibold truncate" title="${escapeHtml(desc.name)}">${escapeHtml(desc.name.substring(0, 30))}</p>
-                <p class="text-xs ${rarityColor || 'text-gray-400'}">${desc.type || ''}</p>
-                <p class="text-xs text-emerald-400 mt-1 font-bold">x${item.amount}</p>
-            </div>`;
-        }
-    });
-   
-    html += `</div>`;
-    if (items.length === 0) html = '<div class="text-center py-10 text-gray-400"><i class="fas fa-box-open text-3xl mb-3 block"></i>Нет предметов</div>';
-    document.getElementById('inventoryResult').innerHTML = html;
-}
-
-// ============= ГЛАВНОЕ - ЗАГРУЗКА ПРИ СТАРТЕ =============
 window.onload = () => {
-    // Запрашиваем аккаунты при загрузке
     window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
     switchTab('accounts');
 };
