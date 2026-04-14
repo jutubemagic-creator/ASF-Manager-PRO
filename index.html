@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         
         * {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
         }
         
         body {
@@ -17,7 +17,6 @@
             min-height: 100vh;
         }
         
-        /* Анимации */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -59,7 +58,7 @@
             background: linear-gradient(135deg, rgba(22, 25, 35, 0.95) 0%, rgba(16, 18, 25, 0.98) 100%);
             border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: all 0.35s;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -113,7 +112,6 @@
             border-radius: 40px;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.3px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -208,7 +206,6 @@
         .card-btn-asf {
             background: linear-gradient(135deg, #00ff88, #00cc66);
             color: #0a0a0f;
-            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
         }
         
         .card-btn-asf:hover {
@@ -264,14 +261,14 @@
             cursor: pointer;
         }
         
-        /* Поиск и фильтры - ИСПРАВЛЕНО */
+        /* Поиск и фильтры */
         .search-input {
             background: rgba(31, 41, 55, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 20px 12px 45px;
             transition: all 0.2s;
-            color: white !important;
+            color: white;
             font-size: 14px;
         }
         
@@ -286,13 +283,12 @@
             box-shadow: 0 0 0 3px rgba(0, 180, 255, 0.1);
         }
         
-        /* SELECT - ИСПРАВЛЕНО */
         select {
             background: rgba(31, 41, 55, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 12px 16px;
-            color: white !important;
+            color: white;
             cursor: pointer;
             font-size: 14px;
         }
@@ -307,7 +303,6 @@
             border-color: #00b4ff;
         }
         
-        /* Кнопки действий */
         .action-btn {
             background: rgba(31, 41, 55, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -353,7 +348,6 @@
         /* Скролл */
         ::-webkit-scrollbar {
             width: 6px;
-            height: 6px;
         }
         
         ::-webkit-scrollbar-track {
@@ -366,7 +360,7 @@
             border-radius: 10px;
         }
         
-        /* Модальные окна - ИСПРАВЛЕНО */
+        /* Модальные окна */
         .modal-content {
             background: rgba(18, 20, 26, 0.98);
             backdrop-filter: blur(20px);
@@ -379,7 +373,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
             padding: 12px 16px;
-            color: white !important;
+            color: white;
             transition: all 0.2s;
         }
         
@@ -391,7 +385,6 @@
             outline: none;
             border-color: #00b4ff;
             background: rgba(31, 41, 55, 0.95);
-            box-shadow: 0 0 0 2px rgba(0, 180, 255, 0.1);
         }
         
         label {
@@ -408,7 +401,6 @@
             padding: 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             align-items: flex-start;
-            transition: all 0.2s;
         }
         
         .detail-row:hover {
@@ -435,7 +427,6 @@
             border-radius: 8px;
             font-size: 10px;
             margin-left: 10px;
-            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -475,7 +466,6 @@
             border-color: rgba(0, 180, 255, 0.3);
         }
         
-        /* Пустое состояние */
         .empty-state {
             background: rgba(31, 41, 55, 0.3);
             border-radius: 24px;
@@ -484,7 +474,6 @@
             border: 1px dashed rgba(255, 255, 255, 0.1);
         }
         
-        /* Основные кнопки */
         .btn-primary {
             background: linear-gradient(135deg, #00b4ff, #0088cc);
             transition: all 0.2s;
@@ -506,29 +495,11 @@
             box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
         }
         
-        /* Текст */
         .text-gradient {
             background: linear-gradient(135deg, #00b4ff, #00ff88);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-        }
-        
-        /* Дополнительно для селектов в модалках */
-        .modal-content select {
-            background: rgba(31, 41, 55, 0.8);
-            color: white !important;
-            width: 100%;
-        }
-        
-        .modal-content select option {
-            background: #1f2937;
-            color: white;
-        }
-        
-        /* Инпут для баланса и других полей */
-        input[type="text"], input[type="password"], input[type="email"], textarea {
-            color: white !important;
         }
     </style>
 </head>
@@ -537,9 +508,7 @@
     <!-- Сайдбар -->
     <div class="sidebar w-72 p-6 flex flex-col">
         <div class="flex items-center gap-3 mb-8">
-            <div class="w-12 h-12 bg-gradient-to-br from-[#00b4ff] to-[#00ff88] rounded-2xl flex items-center justify-center text-2xl shadow-lg">
-                🎮
-            </div>
+            <div class="w-12 h-12 bg-gradient-to-br from-[#00b4ff] to-[#00ff88] rounded-2xl flex items-center justify-center text-2xl shadow-lg">🎮</div>
             <div>
                 <h1 class="text-xl font-bold text-gradient">ASF PRO</h1>
                 <p class="text-xs text-gray-500">Manager v3.3</p>
@@ -579,7 +548,7 @@
     <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
 </div>
 
-<!-- Модальные окна -->
+<!-- Модальное окно детального просмотра -->
 <div id="detailModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[900px] max-h-[85vh] overflow-auto p-6">
         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-700">
@@ -596,6 +565,7 @@
     </div>
 </div>
 
+<!-- Модальное окно редактирования -->
 <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[800px] max-h-[85vh] overflow-auto p-6">
         <h2 id="editTitle" class="text-2xl font-bold mb-5 text-white">Редактирование</h2>
@@ -618,6 +588,7 @@
     </div>
 </div>
 
+<!-- Модальное окно массового редактирования -->
 <div id="massEditModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
     <div class="modal-content w-[500px] p-6">
         <h2 class="text-2xl font-bold mb-5 text-white">Массовое редактирование</h2>
@@ -657,7 +628,7 @@ const games = [
     { name: "Team Fortress 2", appId: "440" },
     { name: "Rust", appId: "252490" },
     { name: "Grand Theft Auto V", appId: "271590" },
-    name: "PUBG: BATTLEGROUNDS", appId: "578080" },
+    { name: "PUBG: BATTLEGROUNDS", appId: "578080" },
     { name: "Apex Legends", appId: "1172470" },
     { name: "Destiny 2", appId: "1085660" },
     { name: "Warframe", appId: "230410" },
@@ -823,23 +794,37 @@ function updateSearchDebounced() {
         renderAccounts();
     }, 300);
 }
-function updateSearch() { updateSearchDebounced(); }
-function updateSort() { currentSort = document.getElementById('sortSelect')?.value || 'date-desc'; renderAccounts(); }
-function clearSearch() { currentFilter = ''; const input = document.getElementById('searchInput'); if (input) input.value = ''; renderAccounts(); }
+
+function updateSearch() {
+    updateSearchDebounced();
+}
+
+function updateSort() {
+    currentSort = document.getElementById('sortSelect')?.value || 'date-desc';
+    renderAccounts();
+}
+
+function clearSearch() {
+    currentFilter = '';
+    const input = document.getElementById('searchInput');
+    if (input) input.value = '';
+    renderAccounts();
+}
 
 function renderStats() {
     const onlineCount = accounts.filter(a => a.Status === 'Online').length;
-    const totalBalance = accounts.reduce((sum, acc) => { const n = parseFloat(acc.Balance.replace(/[^0-9.-]/g, '')); return sum + (isNaN(n) ? 0 : n); }, 0);
+    const totalBalance = accounts.reduce((sum, acc) => {
+        const n = parseFloat(acc.Balance.replace(/[^0-9.-]/g, ''));
+        return sum + (isNaN(n) ? 0 : n);
+    }, 0);
     const withProxy = accounts.filter(a => a.Proxy).length;
     const withMaFile = accounts.filter(a => a.MaFile).length;
-    const totalCards = accounts.reduce((sum, acc) => sum + (acc.CardsRemaining || 0), 0);
-    const totalGames = accounts.reduce((sum, acc) => sum + (acc.GamesCount || 0), 0);
     const avgBalance = accounts.length ? (totalBalance / accounts.length).toFixed(2) : 0;
     
     document.getElementById('mainContent').innerHTML = `
         <div class="max-w-7xl mx-auto">
             <h2 class="text-3xl font-bold mb-6 text-gradient">Статистика аккаунтов</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
                 <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-users text-[#00b4ff]"></i> Всего аккаунтов</div><div class="text-4xl font-bold text-white">${accounts.length}</div></div>
                 <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-circle text-green-400"></i> Онлайн</div><div class="text-4xl font-bold text-green-400">${onlineCount}</div><div class="text-xs text-gray-500 mt-1">${accounts.length ? Math.round(onlineCount/accounts.length*100) : 0}% от всех</div></div>
                 <div class="stat-card"><div class="text-gray-400 text-sm mb-1"><i class="fas fa-coins text-[#00b4ff]"></i> Общий баланс</div><div class="text-4xl font-bold text-emerald-400">${totalBalance.toFixed(2)} ₽</div></div>
@@ -847,21 +832,43 @@ function renderStats() {
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-shield-alt text-[#00b4ff]"></i> Защита аккаунтов</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span><span class="font-bold text-white">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span><span class="font-bold text-white">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span></div></div></div>
-                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-trophy text-yellow-500"></i> Карточки и игры</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-id-card text-[#00b4ff] mr-2"></i> Осталось карточек:</span><span class="font-bold text-emerald-400">${totalCards}</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-black/30"><span class="text-gray-300"><i class="fas fa-gamepad text-[#00b4ff] mr-2"></i> Всего игр:</span><span class="font-bold text-blue-400">${totalGames}</span></div></div></div>
-                <div class="stat-card md:col-span-2"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-history text-[#00b4ff]"></i> Недавняя активность</h3><div class="space-y-2 max-h-64 overflow-auto">${accounts.filter(a => a.LastLogin).sort((a,b) => new Date(b.LastLogin) - new Date(a.LastLogin)).slice(0,10).map(acc => `<div class="flex justify-between items-center text-sm py-2 px-3 rounded-lg hover:bg-white/5 transition"><span class="font-semibold text-white flex items-center gap-2"><div class="w-6 h-6 rounded bg-gradient-to-r from-[#00b4ff] to-cyan-400 flex items-center justify-center text-xs font-bold text-black">${acc.Login[0]}</div>${escapeHtml(acc.Login)}</span><span class="text-gray-400 text-xs">${new Date(acc.LastLogin).toLocaleString('ru-RU')}</span></div>`).join('')}${accounts.filter(a => a.LastLogin).length === 0 ? '<div class="text-center text-gray-500 py-8"><i class="fas fa-calendar-day text-3xl mb-2 block"></i>Нет данных о входах</div>' : ''}</div></div>
+                <div class="stat-card"><h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-history text-[#00b4ff]"></i> Активность</h3><div class="space-y-1 max-h-48 overflow-auto">${accounts.filter(a => a.LastLogin).slice(0,5).map(a => `<div class="text-sm py-1 text-gray-300">${a.Login}: ${new Date(a.LastLogin).toLocaleDateString()}</div>`).join('') || '<div class="text-gray-500">Нет данных</div>'}</div></div>
             </div>
-        </div>`;
+        </div>
+    `;
 }
 
 function renderInventory() {
     let gameOptions = games.map(g => `<option value="${g.appId}">${g.name}</option>`).join('');
     document.getElementById('mainContent').innerHTML = `
         <div class="max-w-6xl mx-auto">
-            <div class="stat-card p-6 mb-6"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
-            <div class="flex gap-4 flex-wrap"><div class="flex-1 min-w-[200px]"><label class="text-gray-400 text-sm mb-2 block">Steam ID или логин</label><input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full"></div><div class="min-w-[180px]"><label class="text-gray-400 text-sm mb-2 block">Выберите игру</label><select id="inventoryAppId" class="w-full">${gameOptions}</select></div><div class="flex items-end"><button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-xl font-bold shadow-lg"><i class="fas fa-search"></i> Загрузить</button></div></div>
-            <div class="mt-4 p-3 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300"><i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие</div></div>
-            <div id="inventoryResult" class="stat-card p-6"><div class="text-center text-gray-500 py-16"><i class="fas fa-steam text-5xl mb-4 block text-[#00b4ff]"></i><p class="text-lg">Введите Steam ID для просмотра инвентаря</p></div></div>
-        </div>`;
+            <div class="stat-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-box text-purple-400"></i> Инвентарь Steam</h2>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="text-gray-400 text-sm mb-2 block">Steam ID или логин</label>
+                        <input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full">
+                    </div>
+                    <div class="min-w-[180px]">
+                        <label class="text-gray-400 text-sm mb-2 block">Выберите игру</label>
+                        <select id="inventoryAppId" class="w-full">${gameOptions}</select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-xl font-bold shadow-lg"><i class="fas fa-search"></i> Загрузить</button>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300">
+                    <i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие
+                </div>
+            </div>
+            <div id="inventoryResult" class="stat-card p-6">
+                <div class="text-center text-gray-500 py-16">
+                    <i class="fas fa-steam text-5xl mb-4 block text-[#00b4ff]"></i>
+                    <p class="text-lg">Введите Steam ID для просмотра инвентаря</p>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function loadInventory() {
@@ -881,9 +888,33 @@ function viewInventory(steamId) {
 function renderSettings() {
     document.getElementById('mainContent').innerHTML = `
         <div class="max-w-3xl mx-auto space-y-6">
-            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-6 text-gradient"><i class="fas fa-database"></i> Управление данными</h2><div class="space-y-3"><button onclick="exportData()" class="btn-success w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button><button onclick="importData()" class="btn-primary w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-upload"></i> Импорт аккаунтов</button></div></div>
-            <div class="stat-card p-8"><h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-info-circle"></i> О программе</h2><p class="text-xl font-bold text-[#00b4ff]">ASF Manager PRO v3.3</p><div class="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-300"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Статистика и мониторинг</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Поиск, фильтрация, сортировка</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Безопасное хранение паролей</div><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Горячие клавиши (Ctrl+N, Ctrl+S, Ctrl+F, Del)</div></div><div class="mt-6 p-4 bg-black/30 rounded-xl"><p class="text-xs text-gray-400"><i class="fas fa-folder-open"></i> Данные хранятся в папке:</p><p class="text-xs font-mono text-gray-300 break-all">ASF_Data\\accounts.json (рядом с EXE)</p></div></div>
-        </div>`;
+            <div class="stat-card p-8">
+                <h2 class="text-2xl font-bold mb-6 text-gradient"><i class="fas fa-database"></i> Управление данными</h2>
+                <div class="space-y-3">
+                    <button onclick="exportData()" class="btn-success w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button>
+                    <button onclick="importData()" class="btn-primary w-full py-4 rounded-xl font-bold shadow-lg"><i class="fas fa-upload"></i> Импорт аккаунтов</button>
+                </div>
+            </div>
+            <div class="stat-card p-8">
+                <h2 class="text-2xl font-bold mb-4 text-gradient"><i class="fas fa-info-circle"></i> О программе</h2>
+                <p class="text-xl font-bold text-[#00b4ff]">ASF Manager PRO v3.3</p>
+                <div class="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-300">
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Статистика и мониторинг</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Поиск, фильтрация, сортировка</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Безопасное хранение паролей</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Горячие клавиши (Ctrl+N, Ctrl+S, Ctrl+F, Del)</div>
+                </div>
+                <div class="mt-6 p-4 bg-black/30 rounded-xl">
+                    <p class="text-xs text-gray-400"><i class="fas fa-folder-open"></i> Данные хранятся в папке:</p>
+                    <p class="text-xs font-mono text-gray-300 break-all">ASF_Data\\accounts.json (рядом с EXE)</p>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function showAccountDetail(id) {
@@ -891,6 +922,7 @@ function showAccountDetail(id) {
     if (!acc) return;
     currentDetailAccount = acc;
     let isPassShowing = showPasswords[acc.Id];
+    
     let html = `
         <div class="detail-row"><div class="detail-label"><i class="fas fa-sign-in-alt w-4 text-[#00b4ff] mr-2"></i> Логин:</div><div class="detail-value">${escapeHtml(acc.Login)} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Login)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-lock w-4 text-[#00b4ff] mr-2"></i> Пароль:</div><div class="detail-value">${isPassShowing ? escapeHtml(acc.Password) : '••••••••'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Password)}')"><i class="fas fa-copy"></i> Копировать</span> <span class="copy-btn" onclick="togglePassword('${acc.Id}')"><i class="fas ${isPassShowing ? 'fa-eye-slash' : 'fa-eye'}"></i> ${isPassShowing ? 'Скрыть' : 'Показать'}</span></div></div>
@@ -903,50 +935,330 @@ function showAccountDetail(id) {
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-plus w-4 text-[#00b4ff] mr-2"></i> Дата создания:</div><div class="detail-value">${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div></div>
         <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-check w-4 text-[#00b4ff] mr-2"></i> Последний вход:</div><div class="detail-value">${acc.LastLogin ? new Date(acc.LastLogin).toLocaleString('ru-RU') : '—'}</div></div>
     `;
-    if (acc.MaFile) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/30 p-3 rounded-lg text-xs overflow-auto max-h-32 text-white">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
-    if (acc.Notes) html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap text-white">${escapeHtml(acc.Notes)}</div></div>`;
+    
+    if (acc.MaFile) {
+        html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/30 p-3 rounded-lg text-xs overflow-auto max-h-32 text-white">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
+    }
+    
+    if (acc.Notes) {
+        html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap text-white">${escapeHtml(acc.Notes)}</div></div>`;
+    }
+    
     document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff]"></i> ${escapeHtml(acc.Login)}`;
     document.getElementById('detailContent').innerHTML = html;
     document.getElementById('detailModal').classList.remove('hidden');
 }
 
-function togglePassword(id) { showPasswords[id] = !showPasswords[id]; showAccountDetail(id); }
-function deleteFromDetail() { if (currentDetailAccount && confirm(`Удалить аккаунт "${currentDetailAccount.Login}" навсегда?`)) { deleteAccount(currentDetailAccount.Id); closeDetailModal(); } }
-function deleteAllAccounts() { if (confirm("⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ аккаунты?")) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAllAccounts", data: "" })); accounts = []; renderAccounts(); showToast('Все аккаунты удалены'); } }
-function runASFForAll() { if (!accounts.length) { showToast('Нет аккаунтов для запуска'); return; } if (confirm(`Запустить ASF для всех ${accounts.length} аккаунтов?`)) { window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" })); } }
-function exportData() { const blob = new Blob([JSON.stringify(accounts, null, 2)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `asf_backup_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(blob); showToast('Экспорт выполнен'); }
-function importData() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = ev => { try { const imported = JSON.parse(ev.target.result); if (Array.isArray(imported)) { accounts = imported; window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); renderAccounts(); showToast(`Импортировано ${accounts.length} аккаунтов`); } } catch { showToast('Ошибка импорта'); } }; reader.readAsText(file); }; input.click(); }
-function editFromDetail() { if (currentDetailAccount) { closeDetailModal(); editAccount(currentDetailAccount.Id); } }
-function runASFFromDetail() { if (currentDetailAccount) { runASF(currentDetailAccount.Login); showToast(`Запуск ASF для ${currentDetailAccount.Login}`); } }
-function addNewAccount() { currentEditId = null; document.getElementById('editTitle').innerHTML = 'Новый аккаунт'; clearEditForm(); document.getElementById('editModal').classList.remove('hidden'); }
-function editAccount(id) { const acc = accounts.find(a => a.Id === id); if (!acc) return; currentEditId = id; document.getElementById('editTitle').innerHTML = `Редактирование: ${acc.Login}`; document.getElementById('editLogin').value = acc.Login || ''; document.getElementById('editPassword').value = acc.Password || ''; document.getElementById('editSteamId').value = acc.SteamId || ''; document.getElementById('editBalance').value = acc.Balance || '0 ₽'; document.getElementById('editEmail').value = acc.Email || ''; document.getElementById('editEmailPass').value = acc.EmailPass || ''; document.getElementById('editProxy').value = acc.Proxy || ''; document.getElementById('editPin').value = acc.Pin || ''; document.getElementById('editMaFile').value = acc.MaFile || ''; document.getElementById('editNotes').value = acc.Notes || ''; document.getElementById('editModal').classList.remove('hidden'); }
-function clearEditForm() { document.getElementById('editLogin').value = `acc_${Date.now().toString().slice(-6)}`; document.getElementById('editPassword').value = ''; document.getElementById('editSteamId').value = ''; document.getElementById('editBalance').value = '0 ₽'; document.getElementById('editEmail').value = ''; document.getElementById('editEmailPass').value = ''; document.getElementById('editProxy').value = ''; document.getElementById('editPin').value = ''; document.getElementById('editMaFile').value = ''; document.getElementById('editNotes').value = ''; }
-function saveEditedAccount() { const data = { Id: currentEditId || Date.now().toString(), Login: document.getElementById('editLogin').value.trim(), Password: document.getElementById('editPassword').value, SteamId: document.getElementById('editSteamId').value, Email: document.getElementById('editEmail').value, EmailPass: document.getElementById('editEmailPass').value, Proxy: document.getElementById('editProxy').value, Pin: document.getElementById('editPin').value, MaFile: document.getElementById('editMaFile').value, Notes: document.getElementById('editNotes').value, Status: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.Status || "Offline") : "Offline", Balance: document.getElementById('editBalance').value || "0 ₽", CreatedAt: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(), LastLogin: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.LastLogin || "") : "", CardsRemaining: 0, GamesCount: 0 }; if (!data.Login) { showToast('Логин обязателен'); return; } if (currentEditId) { const index = accounts.findIndex(a => a.Id === currentEditId); if (index > -1) accounts[index] = data; } else { accounts.unshift(data); } window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); closeEditModal(); renderAccounts(); showToast('Аккаунт сохранён'); }
-function deleteAccount(id) { if (confirm('Удалить аккаунт навсегда?')) { window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAccount", data: id })); accounts = accounts.filter(a => a.Id !== id); selectedAccountsForMass.delete(id); renderAccounts(); showToast('Аккаунт удалён'); } }
-function runASF(login) { window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: login })); }
-function copyToClipboard(text) { if (!text || text === '—') { showToast('Нет данных для копирования'); return; } window.chrome.webview.postMessage(JSON.stringify({ action: "copyToClipboard", data: text })); showToast('Скопировано в буфер обмена!'); }
-function showToast(msg) { const toast = document.createElement('div'); toast.className = 'toast'; toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
-function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); currentDetailAccount = null; }
-function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); currentEditId = null; }
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
-function toggleMassSelect(id) { if (selectedAccountsForMass.has(id)) selectedAccountsForMass.delete(id); else selectedAccountsForMass.add(id); updateMassSelectUI(); renderAccounts(); }
-function updateMassSelectUI() { document.getElementById('selectedCount').innerText = selectedAccountsForMass.size; }
-function showMassEditModal() { if (!selectedAccountsForMass.size) { showToast('Сначала выберите аккаунты'); return; } document.getElementById('massEditModal').classList.remove('hidden'); }
-function closeMassEditModal() { document.getElementById('massEditModal').classList.add('hidden'); document.getElementById('massEditValue').value = ''; }
-function applyMassEdit() { const field = document.getElementById('massEditField').value; const value = document.getElementById('massEditValue').value; if (!value) { showToast('Введите значение для изменения'); return; } const ids = Array.from(selectedAccountsForMass); window.chrome.webview.postMessage(JSON.stringify({ action: "massUpdate", data: JSON.stringify({ AccountIds: ids, Fields: { [field]: value } }) })); closeMassEditModal(); selectedAccountsForMass.clear(); updateMassSelectUI(); showToast(`Обновлено ${ids.length} аккаунтов`); }
-function renderInventoryResult(data) { if (!data?.data?.success || !data.data.assets?.length) { document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16 text-gray-500"><i class="fas fa-box-open text-5xl mb-3 block"></i>Нет предметов или профиль приватный</div>'; return; } const gameName = games.find(g => g.appId === data.appId)?.name || `Игра ${data.appId}`; let html = `<h3 class="text-xl font-bold mb-4 text-white"><i class="fab fa-steam text-[#00b4ff]"></i> ${gameName}</h3><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">`; data.data.assets.forEach(item => { const desc = data.data.descriptions?.find(d => d.classid === item.classid); if (desc) { html += `<div class="inventory-item"><img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-20 h-20 mx-auto mb-2 rounded"><p class="text-xs font-semibold text-white truncate">${escapeHtml(desc.name.substring(0, 30))}</p><p class="text-xs text-emerald-400 font-bold mt-1">x${item.amount}</p></div>`; } }); html += `</div>`; document.getElementById('inventoryResult').innerHTML = html; }
+function togglePassword(id) {
+    showPasswords[id] = !showPasswords[id];
+    showAccountDetail(id);
+}
+
+function deleteFromDetail() {
+    if (currentDetailAccount && confirm(`Удалить аккаунт "${currentDetailAccount.Login}" навсегда?`)) {
+        deleteAccount(currentDetailAccount.Id);
+        closeDetailModal();
+    }
+}
+
+function deleteAllAccounts() {
+    if (confirm("⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ аккаунты?")) {
+        window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAllAccounts", data: "" }));
+        accounts = [];
+        renderAccounts();
+        showToast('Все аккаунты удалены');
+    }
+}
+
+function runASFForAll() {
+    if (!accounts.length) {
+        showToast('Нет аккаунтов для запуска');
+        return;
+    }
+    if (confirm(`Запустить ASF для всех ${accounts.length} аккаунтов?`)) {
+        window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" }));
+    }
+}
+
+function exportData() {
+    const blob = new Blob([JSON.stringify(accounts, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `asf_backup_${new Date().toISOString().slice(0,19)}.json`;
+    a.click();
+    URL.revokeObjectURL(blob);
+    showToast('Экспорт выполнен');
+}
+
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const imported = JSON.parse(ev.target.result);
+                if (Array.isArray(imported)) {
+                    accounts = imported;
+                    window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) }));
+                    renderAccounts();
+                    showToast(`Импортировано ${accounts.length} аккаунтов`);
+                }
+            } catch {
+                showToast('Ошибка импорта');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function editFromDetail() {
+    if (currentDetailAccount) {
+        closeDetailModal();
+        editAccount(currentDetailAccount.Id);
+    }
+}
+
+function runASFFromDetail() {
+    if (currentDetailAccount) {
+        runASF(currentDetailAccount.Login);
+        showToast(`Запуск ASF для ${currentDetailAccount.Login}`);
+    }
+}
+
+function addNewAccount() {
+    currentEditId = null;
+    document.getElementById('editTitle').innerHTML = 'Новый аккаунт';
+    clearEditForm();
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function editAccount(id) {
+    const acc = accounts.find(a => a.Id === id);
+    if (!acc) return;
+    currentEditId = id;
+    document.getElementById('editTitle').innerHTML = `Редактирование: ${acc.Login}`;
+    document.getElementById('editLogin').value = acc.Login || '';
+    document.getElementById('editPassword').value = acc.Password || '';
+    document.getElementById('editSteamId').value = acc.SteamId || '';
+    document.getElementById('editBalance').value = acc.Balance || '0 ₽';
+    document.getElementById('editEmail').value = acc.Email || '';
+    document.getElementById('editEmailPass').value = acc.EmailPass || '';
+    document.getElementById('editProxy').value = acc.Proxy || '';
+    document.getElementById('editPin').value = acc.Pin || '';
+    document.getElementById('editMaFile').value = acc.MaFile || '';
+    document.getElementById('editNotes').value = acc.Notes || '';
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function clearEditForm() {
+    document.getElementById('editLogin').value = `acc_${Date.now().toString().slice(-6)}`;
+    document.getElementById('editPassword').value = '';
+    document.getElementById('editSteamId').value = '';
+    document.getElementById('editBalance').value = '0 ₽';
+    document.getElementById('editEmail').value = '';
+    document.getElementById('editEmailPass').value = '';
+    document.getElementById('editProxy').value = '';
+    document.getElementById('editPin').value = '';
+    document.getElementById('editMaFile').value = '';
+    document.getElementById('editNotes').value = '';
+}
+
+function saveEditedAccount() {
+    const data = {
+        Id: currentEditId || Date.now().toString(),
+        Login: document.getElementById('editLogin').value.trim(),
+        Password: document.getElementById('editPassword').value,
+        SteamId: document.getElementById('editSteamId').value,
+        Email: document.getElementById('editEmail').value,
+        EmailPass: document.getElementById('editEmailPass').value,
+        Proxy: document.getElementById('editProxy').value,
+        Pin: document.getElementById('editPin').value,
+        MaFile: document.getElementById('editMaFile').value,
+        Notes: document.getElementById('editNotes').value,
+        Status: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.Status || "Offline") : "Offline",
+        Balance: document.getElementById('editBalance').value || "0 ₽",
+        CreatedAt: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(),
+        LastLogin: "",
+        CardsRemaining: 0,
+        GamesCount: 0
+    };
+    
+    if (!data.Login) {
+        showToast('Логин обязателен для заполнения');
+        return;
+    }
+    
+    if (currentEditId) {
+        const index = accounts.findIndex(a => a.Id === currentEditId);
+        if (index > -1) accounts[index] = data;
+    } else {
+        accounts.unshift(data);
+    }
+    
+    window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) }));
+    closeEditModal();
+    renderAccounts();
+    showToast('Аккаунт сохранён');
+}
+
+function deleteAccount(id) {
+    if (confirm('Удалить аккаунт навсегда?')) {
+        window.chrome.webview.postMessage(JSON.stringify({ action: "deleteAccount", data: id }));
+        accounts = accounts.filter(a => a.Id !== id);
+        selectedAccountsForMass.delete(id);
+        renderAccounts();
+        showToast('Аккаунт удалён');
+    }
+}
+
+function runASF(login) {
+    window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: login }));
+}
+
+function copyToClipboard(text) {
+    if (!text || text === '—') {
+        showToast('Нет данных для копирования');
+        return;
+    }
+    window.chrome.webview.postMessage(JSON.stringify({ action: "copyToClipboard", data: text }));
+    showToast('Скопировано в буфер обмена!');
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+    currentDetailAccount = null;
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    currentEditId = null;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
+
+function toggleMassSelect(accountId) {
+    if (selectedAccountsForMass.has(accountId)) {
+        selectedAccountsForMass.delete(accountId);
+    } else {
+        selectedAccountsForMass.add(accountId);
+    }
+    updateMassSelectUI();
+    renderAccounts();
+}
+
+function updateMassSelectUI() {
+    const count = selectedAccountsForMass.size;
+    document.getElementById('selectedCount').innerText = count;
+}
+
+function showMassEditModal() {
+    if (selectedAccountsForMass.size === 0) {
+        showToast('Сначала выберите аккаунты (чекбоксы на карточках)');
+        return;
+    }
+    document.getElementById('massEditModal').classList.remove('hidden');
+}
+
+function closeMassEditModal() {
+    document.getElementById('massEditModal').classList.add('hidden');
+    document.getElementById('massEditValue').value = '';
+}
+
+function applyMassEdit() {
+    const field = document.getElementById('massEditField').value;
+    const value = document.getElementById('massEditValue').value;
+    
+    if (!value) {
+        showToast('Введите значение для изменения');
+        return;
+    }
+    
+    const accountIds = Array.from(selectedAccountsForMass);
+    const updateData = {
+        AccountIds: accountIds,
+        Fields: { [field]: value }
+    };
+    
+    window.chrome.webview.postMessage(JSON.stringify({
+        action: "massUpdate",
+        data: JSON.stringify(updateData)
+    }));
+    
+    closeMassEditModal();
+    selectedAccountsForMass.clear();
+    updateMassSelectUI();
+    showToast(`Обновлено ${accountIds.length} аккаунтов`);
+}
+
+function renderInventoryResult(data) {
+    if (!data?.data?.success || !data.data.assets?.length) {
+        document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-16 text-gray-500"><i class="fas fa-box-open text-5xl mb-3 block"></i>Нет предметов или профиль приватный</div>';
+        return;
+    }
+    
+    const gameName = games.find(g => g.appId === data.appId)?.name || `Игра ${data.appId}`;
+    let html = `<h3 class="text-xl font-bold mb-4 text-white"><i class="fab fa-steam text-[#00b4ff]"></i> ${gameName}</h3><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">`;
+    
+    data.data.assets.forEach(item => {
+        const desc = data.data.descriptions?.find(d => d.classid === item.classid);
+        if (desc) {
+            html += `
+            <div class="inventory-item">
+                <img src="https://steamcommunity.com/economy/image/${desc.icon_url}" class="w-20 h-20 mx-auto mb-2 rounded">
+                <p class="text-xs font-semibold text-white truncate">${escapeHtml(desc.name.substring(0, 30))}</p>
+                <p class="text-xs text-emerald-400 font-bold mt-1">x${item.amount}</p>
+            </div>`;
+        }
+    });
+    
+    html += `</div>`;
+    document.getElementById('inventoryResult').innerHTML = html;
+}
 
 window.receiveFromCSharp = function(msg) {
-    if (msg.type === "accounts") { accounts = msg.data || []; if (currentTab === 'accounts') renderAccounts(); if (currentTab === 'stats') renderStats(); document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`; }
-    else if (msg.type === "inventoryData") renderInventoryResult(msg.data);
-    else if (msg.type === "inventoryError") document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-16 text-red-400"><i class="fas fa-exclamation-triangle text-5xl mb-3 block"></i>${msg.data}</div>`;
-    else if (msg.type === "asfStarted") { showToast(msg.data); if (currentTab === 'accounts') renderAccounts(); if (currentTab === 'stats') renderStats(); }
-    else if (msg.type === "asfError") showToast(msg.data);
-    else if (msg.type === "hotkey") { if (msg.data === 'new') addNewAccount(); else if (msg.data === 'search') document.getElementById('searchInput')?.focus(); }
-    else if (msg.type === "massUpdateComplete") { showToast(`Обновлено ${msg.data.count} аккаунтов`); renderAccounts(); }
+    if (msg.type === "accounts") {
+        accounts = msg.data || [];
+        if (currentTab === 'accounts') renderAccounts();
+        if (currentTab === 'stats') renderStats();
+        document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`;
+    } else if (msg.type === "inventoryData") {
+        renderInventoryResult(msg.data);
+    } else if (msg.type === "inventoryError") {
+        document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-16 text-red-400"><i class="fas fa-exclamation-triangle text-5xl mb-3 block"></i>${msg.data}</div>`;
+    } else if (msg.type === "asfStarted") {
+        showToast(msg.data);
+        if (currentTab === 'accounts') renderAccounts();
+        if (currentTab === 'stats') renderStats();
+    } else if (msg.type === "asfError") {
+        showToast(msg.data);
+    } else if (msg.type === "hotkey") {
+        if (msg.data === 'new') addNewAccount();
+        else if (msg.data === 'search') document.getElementById('searchInput')?.focus();
+    } else if (msg.type === "massUpdateComplete") {
+        showToast(`Обновлено ${msg.data.count} аккаунтов`);
+        renderAccounts();
+    }
 };
 
-window.onload = () => { window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" })); switchTab('accounts'); };
+window.onload = () => {
+    window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
+    switchTab('accounts');
+};
 </script>
 </body>
 </html>
