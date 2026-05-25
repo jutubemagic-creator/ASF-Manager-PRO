@@ -38,13 +38,7 @@ namespace ASFManagerPRO
         private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
         
         [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-        
-        [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr hWnd);
-        
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
         
         [DllImport("user32.dll")]
         private static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
@@ -52,12 +46,11 @@ namespace ASFManagerPRO
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
         
-        [DllImport("user32.dll")]
-        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
         
         // Константы
         private const uint WM_SETTEXT = 0x000C;
-        private const uint WM_GETTEXT = 0x000D;
         private const int SW_RESTORE = 9;
         
         // Делегат для EnumWindows
@@ -461,57 +454,6 @@ namespace ASFManagerPRO
             SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
         }
 
-        private void TypeText(string text)
-        {
-            foreach (char c in text)
-            {
-                // Отправляем символ как Unicode
-                var input = new INPUT
-                {
-                    type = 1, // INPUT_KEYBOARD
-                    u = new INPUTUNION
-                    {
-                        ki = new KEYBDINPUT
-                        {
-                            wVk = 0,
-                            wScan = c,
-                            dwFlags = 0x0004 // KEYEVENTF_UNICODE
-                        }
-                    }
-                };
-                
-                SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
-                
-                input.u.ki.dwFlags = 0x0004 | 0x0002; // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-                SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
-                
-                Thread.Sleep(50);
-            }
-        }
-
-        private void PressKey(ushort keyCode)
-        {
-            var input = new INPUT
-            {
-                type = 1, // INPUT_KEYBOARD
-                u = new INPUTUNION
-                {
-                    ki = new KEYBDINPUT
-                    {
-                        wVk = keyCode,
-                        dwFlags = 0x0000 // KEYEVENTF_KEYDOWN
-                    }
-                }
-            };
-            
-            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
-            
-            Thread.Sleep(50);
-            
-            input.u.ki.dwFlags = 0x0002; // KEYEVENTF_KEYUP
-            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
-        }
-
         private bool FindSteamLoginWindow(out IntPtr loginWindow, out IntPtr usernameEdit, out IntPtr passwordEdit)
         {
             loginWindow = IntPtr.Zero;
@@ -520,7 +462,7 @@ namespace ASFManagerPRO
             
             // Список возможных классов окон Steam
             string[] steamWindowClasses = { "SteamUIWindow", "SteamWebUI", "Chrome_WidgetWin_0", "Steam" };
-            string[] loginTitles = { "Steam - Вход", "Вход в Steam", "Login", "Sign In" };
+            string[] loginTitles = { "Steam - Вход", "Вход в Steam", "Login", "Sign In", "Steam" };
             
             foreach (var className in steamWindowClasses)
             {
@@ -580,7 +522,7 @@ namespace ASFManagerPRO
                 {
                     var className = new System.Text.StringBuilder(256);
                     GetClassName(hWnd, className, 256);
-                    if (className.ToString().Contains("Edit") || className.ToString().Contains("TextBox"))
+                    if (className.ToString().Contains("Edit") || className.ToString().Contains("TextBox") || className.ToString().Contains("RichEdit"))
                     {
                         editBoxes.Add(hWnd);
                     }
@@ -596,12 +538,6 @@ namespace ASFManagerPRO
             
             return loginWindow != IntPtr.Zero && usernameEdit != IntPtr.Zero && passwordEdit != IntPtr.Zero;
         }
-
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        private static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
-
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
         private async Task RunSteamWithAutoLogin(string login, string password)
         {
@@ -681,8 +617,10 @@ namespace ASFManagerPRO
                     SendMessage(passwordEdit, WM_SETTEXT, IntPtr.Zero, password);
                     await Task.Delay(300);
 
-                    // Нажимаем Enter для входа
-                    PressKey(0x0D); // VK_RETURN
+                    // Отправляем Enter
+                    SendMessage(loginWindow, 0x0100, (IntPtr)0x0D, IntPtr.Zero); // WM_KEYDOWN Enter
+                    await Task.Delay(50);
+                    SendMessage(loginWindow, 0x0101, (IntPtr)0x0D, IntPtr.Zero); // WM_KEYUP Enter
 
                     account.Status = "Steam Online";
                     account.LastLogin = DateTime.Now.ToString("o");
@@ -887,54 +825,6 @@ namespace ASFManagerPRO
             foreach (var acc in Accounts) if (acc.Id == id) return acc;
             return null;
         }
-
-        // Структуры для SendInput
-        [StructLayout(LayoutKind.Sequential)]
-        private struct INPUT
-        {
-            public uint type;
-            public INPUTUNION u;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct INPUTUNION
-        {
-            [FieldOffset(0)] public MOUSEINPUT mi;
-            [FieldOffset(0)] public KEYBDINPUT ki;
-            [FieldOffset(0)] public HARDWAREINPUT hi;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct MOUSEINPUT
-        {
-            public int dx;
-            public int dy;
-            public uint mouseData;
-            public uint dwFlags;
-            public uint time;
-            public IntPtr dwExtraInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct KEYBDINPUT
-        {
-            public ushort wVk;
-            public ushort wScan;
-            public uint dwFlags;
-            public uint time;
-            public IntPtr dwExtraInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct HARDWAREINPUT
-        {
-            public uint uMsg;
-            public ushort wParamL;
-            public ushort wParamH;
-        }
-
-        [DllImport("user32.dll")]
-        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
     }
 
     public class Account : INotifyPropertyChanged
