@@ -18,6 +18,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
         private string appDataFolder = "";
+        private string configPath = "";
         private bool webViewReady = false;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -36,11 +37,13 @@ namespace ASFManagerPRO
             string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
+            configPath = Path.Combine(appDataFolder, "config.json");
 
             if (!Directory.Exists(appDataFolder))
                 Directory.CreateDirectory(appDataFolder);
 
             LoadAccounts();
+            LoadConfig();
             InitializeWebView();
         }
 
@@ -82,11 +85,9 @@ namespace ASFManagerPRO
                     webView.CoreWebView2.NavigateToString("<html><body style='background:#0a0a0f;color:white;padding:20px'><h1>index.html not found</h1><p>Path: " + htmlPath + "</p></body></html>");
                 }
                 
-                // Ждём полной загрузки страницы
                 webView.CoreWebView2.NavigationCompleted += (sender, e) =>
                 {
                     webViewReady = true;
-                    // ОТПРАВЛЯЕМ АККАУНТЫ ПОСЛЕ ЗАГРУЗКИ СТРАНИЦЫ
                     SendToJS("accounts", Accounts);
                 };
             }
@@ -117,7 +118,6 @@ namespace ASFManagerPRO
                 }
                 else if (msg?.Action == "getAccounts")
                 {
-                    // Когда JS запрашивает аккаунты - отправляем
                     SendToJS("accounts", Accounts);
                 }
                 else if (msg?.Action == "getInventory")
@@ -158,10 +158,37 @@ namespace ASFManagerPRO
                 {
                     UpdateLastLogin(msg.Data ?? "");
                 }
+                else if (msg?.Action == "runSteam")
+                {
+                    var parts = msg.Data.Split('|');
+                    if (parts.Length >= 2)
+                    {
+                        _ = RunSteamWithAccount(parts[0], parts[1]);
+                    }
+                }
+                else if (msg?.Action == "setSteamPath")
+                {
+                    SaveSteamPath(msg.Data);
+                }
+                else if (msg?.Action == "getSteamPath")
+                {
+                    string steamPath = GetSteamPath();
+                    SendToJS("steamPath", steamPath);
+                }
+                else if (msg?.Action == "generateHWID")
+                {
+                    string hwid = GenerateHWID();
+                    SendToJS("hwidGenerated", hwid);
+                }
+                else if (msg?.Action == "openSteamProfileFolder")
+                {
+                    OpenSteamProfileFolder(msg.Data);
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"WebMessage Error: {ex.Message}");
+                SendToJS("error", ex.Message);
             }
         }
 
@@ -184,7 +211,6 @@ namespace ASFManagerPRO
                 }
                 else
                 {
-                    // Создаём тестовый аккаунт если файла нет
                     Accounts.Add(new Account { Login = "test_account", Password = "test123", Balance = "100 ₽" });
                     SaveAccounts();
                     Debug.WriteLine("Создан тестовый аккаунт");
@@ -193,6 +219,44 @@ namespace ASFManagerPRO
             catch (Exception ex)
             {
                 MessageBox.Show($"Load Error: {ex.Message}");
+            }
+        }
+
+        private void LoadConfig()
+        {
+            try
+            {
+                if (File.Exists(configPath))
+                {
+                    string json = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                    if (config != null)
+                    {
+                        if (!string.IsNullOrEmpty(config.SteamPath))
+                            Properties.Settings.Default.SteamPath = config.SteamPath;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"LoadConfig Error: {ex.Message}");
+            }
+        }
+
+        private void SaveConfig()
+        {
+            try
+            {
+                var config = new AppConfig
+                {
+                    SteamPath = Properties.Settings.Default.SteamPath
+                };
+                string json = JsonSerializer.Serialize(config, JsonOptions);
+                File.WriteAllText(configPath, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SaveConfig Error: {ex.Message}");
             }
         }
 
@@ -228,7 +292,7 @@ namespace ASFManagerPRO
                 string json = JsonSerializer.Serialize(new { type, data }, JsonOptions);
                 string script = $"window.receiveFromCSharp({json});";
                 webView.CoreWebView2.ExecuteScriptAsync(script);
-                Debug.WriteLine($"Отправлено в JS: {type}, данных: {data}");
+                Debug.WriteLine($"Отправлено в JS: {type}");
             }
             catch (Exception ex)
             {
@@ -246,15 +310,15 @@ namespace ASFManagerPRO
 
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
-                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
                 string url = $"https://steamcommunity.com/inventory/{steamId}/{appId}/2?l=russian&count=200";
                 string response = await client.GetStringAsync(url);
                 var inventory = JsonSerializer.Deserialize<SteamInventory>(response);
                 SendToJS("inventoryData", new { appId, data = inventory });
             }
-            catch
+            catch (Exception ex)
             {
-                SendToJS("inventoryError", "Не удалось загрузить инвентарь.");
+                SendToJS("inventoryError", $"Не удалось загрузить инвентарь: {ex.Message}");
             }
         }
 
@@ -268,7 +332,7 @@ namespace ASFManagerPRO
                 
                 if (!File.Exists(asfPath))
                 {
-                    SendToJS("asfError", "ASF.exe не найден");
+                    SendToJS("asfError", "ASF.exe не найден. Поместите ASF.exe в папку с программой");
                     return;
                 }
 
@@ -277,25 +341,30 @@ namespace ASFManagerPRO
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = asfPath,
-                        Arguments = $"--command --cryptkey \"{login}\"",
+                        Arguments = $"--command login {login}",
                         UseShellExecute = false,
-                        CreateNoWindow = true
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
                     }
                 };
                 process.Start();
 
-                SendToJS("asfStarted", $"ASF запущен для {login}");
-
                 var account = GetAccountByLogin(login);
                 if (account != null)
                 {
-                    account.Status = "Online";
+                    account.Status = "ASF Online";
                     account.LastLogin = DateTime.Now.ToString("o");
                     SaveAccounts();
                     SendToJS("accounts", Accounts);
                 }
+                
+                SendToJS("asfStarted", $"ASF запущен для {login}");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                SendToJS("asfError", $"Ошибка запуска ASF: {ex.Message}");
+            }
         }
 
         private void RunASFForAll()
@@ -320,13 +389,13 @@ namespace ASFManagerPRO
                         StartInfo = new ProcessStartInfo
                         {
                             FileName = asfPath,
-                            Arguments = $"--command --cryptkey \"{account.Login}\"",
+                            Arguments = $"--command login {account.Login}",
                             UseShellExecute = false,
                             CreateNoWindow = true
                         }
                     };
                     process.Start();
-                    account.Status = "Online";
+                    account.Status = "ASF Online";
                     account.LastLogin = DateTime.Now.ToString("o");
                     successCount++;
                 }
@@ -337,11 +406,257 @@ namespace ASFManagerPRO
             SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
         }
 
+        private async Task RunSteamWithAccount(string login, string password)
+        {
+            try
+            {
+                string steamPath = GetSteamPath();
+                if (string.IsNullOrEmpty(steamPath))
+                {
+                    SendToJS("steamError", "Steam не найден. Укажите путь к Steam.exe в настройках");
+                    return;
+                }
+
+                var account = GetAccountByLogin(login);
+                if (account == null)
+                {
+                    SendToJS("steamError", "Аккаунт не найден");
+                    return;
+                }
+
+                // Создаем отдельную папку для конфигов аккаунта (изоляция)
+                string userDataPath = Path.Combine(appDataFolder, "SteamProfiles", login);
+                Directory.CreateDirectory(userDataPath);
+
+                // Создаем скрипт для автовхода с задержками
+                string scriptPath = await CreateAutoLoginScript(login, password, userDataPath);
+
+                // Формируем аргументы запуска Steam
+                string args = $"-login {login} {password}";
+                
+                // Добавляем параметры изоляции если включено
+                if (account.UseIsolation)
+                {
+                    args += $" -userdata {userDataPath} -config {userDataPath}";
+                }
+                
+                // Добавляем режим запуска
+                switch (account.LaunchMode)
+                {
+                    case "bigpicture":
+                        args += " -bigpicture";
+                        break;
+                    case "vr":
+                        args += " -vr";
+                        break;
+                }
+
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = steamPath,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    WorkingDirectory = Path.GetDirectoryName(steamPath) ?? ""
+                };
+
+                // Добавляем переменные окружения для HWID спуфинга
+                if (!string.IsNullOrEmpty(account.HardwareId))
+                {
+                    startInfo.EnvironmentVariables["STEAM_HWID"] = account.HardwareId;
+                    startInfo.EnvironmentVariables["STEAM_MACHINE_ID"] = account.HardwareId;
+                }
+
+                var process = Process.Start(startInfo);
+                
+                // Обновляем статус аккаунта
+                account.Status = "Steam Online";
+                account.LastLogin = DateTime.Now.ToString("o");
+                account.LastSteamLaunch = DateTime.Now.ToString("o");
+                SaveAccounts();
+                SendToJS("accounts", Accounts);
+                
+                SendToJS("steamStarted", $"Steam запущен для {login}");
+                
+                // Запускаем AutoHotkey скрипт если он существует
+                if (File.Exists(scriptPath))
+                {
+                    await Task.Delay(2000); // Ждем загрузки Steam
+                    Process.Start(scriptPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                SendToJS("steamError", $"Ошибка: {ex.Message}");
+            }
+        }
+
+        private async Task<string> CreateAutoLoginScript(string login, string password, string dataPath)
+        {
+            string scriptContent = $@"
+#NoEnv
+#Persistent
+SetWorkingDir %A_ScriptDir%
+SetTitleMatchMode, 2
+SetKeyDelay, 500, 100
+
+; Ожидаем окно входа в Steam
+WinWait, Steam - Вход, , 30
+if ErrorLevel
+{{
+    WinWait, Вход в Steam, , 30
+}}
+
+WinActivate
+Sleep, 2000
+
+; Очищаем поля
+Send, {{LControl down}}a{{LControl up}}
+Sleep, 200
+Send, {{Delete}}
+Sleep, 200
+
+; Вводим логин
+Send, {login}
+Sleep, 500
+
+; Переходим к полю пароля
+Send, {{Tab}}
+Sleep, 300
+
+; Вводим пароль
+Send, {password}
+Sleep, 500
+
+; Нажимаем Enter для входа
+Send, {{Enter}}
+
+ExitApp
+";
+            
+            string scriptPath = Path.Combine(dataPath, $"login_{login}.ahk");
+            await File.WriteAllTextAsync(scriptPath, scriptContent);
+            return scriptPath;
+        }
+
+        private string GetSteamPath()
+        {
+            // Проверяем сохраненный путь
+            if (Properties.Settings.Default.SteamPath != null && 
+                File.Exists(Properties.Settings.Default.SteamPath))
+            {
+                return Properties.Settings.Default.SteamPath;
+            }
+
+            // Стандартные пути
+            string[] commonPaths = {
+                @"C:\Program Files (x86)\Steam\Steam.exe",
+                @"C:\Program Files\Steam\Steam.exe",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "Steam.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Steam", "Steam.exe"),
+                @"D:\Steam\Steam.exe",
+                @"E:\Steam\Steam.exe"
+            };
+            
+            foreach (string path in commonPaths)
+            {
+                if (File.Exists(path))
+                {
+                    Properties.Settings.Default.SteamPath = path;
+                    Properties.Settings.Default.Save();
+                    SaveConfig();
+                    return path;
+                }
+            }
+            
+            // Проверяем в реестре
+            try
+            {
+                using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam"))
+                {
+                    if (key != null)
+                    {
+                        string installPath = key.GetValue("InstallPath")?.ToString();
+                        if (!string.IsNullOrEmpty(installPath))
+                        {
+                            string exePath = Path.Combine(installPath, "Steam.exe");
+                            if (File.Exists(exePath))
+                            {
+                                Properties.Settings.Default.SteamPath = exePath;
+                                Properties.Settings.Default.Save();
+                                SaveConfig();
+                                return exePath;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+            
+            return "";
+        }
+
+        private void SaveSteamPath(string path)
+        {
+            if (File.Exists(path))
+            {
+                Properties.Settings.Default.SteamPath = path;
+                Properties.Settings.Default.Save();
+                SaveConfig();
+                SendToJS("steamPathSaved", path);
+            }
+            else
+            {
+                SendToJS("steamError", "Указанный файл Steam.exe не найден");
+            }
+        }
+
+        private string GenerateHWID()
+        {
+            // Генерация уникального HWID на основе различных параметров
+            string timestamp = DateTime.Now.Ticks.ToString();
+            string random = Guid.NewGuid().ToString().Substring(0, 8);
+            string hwid = $"HWID-{timestamp.Substring(timestamp.Length - 8)}-{random}".ToUpper();
+            return hwid;
+        }
+
+        private void OpenSteamProfileFolder(string login)
+        {
+            try
+            {
+                string profilePath = Path.Combine(appDataFolder, "SteamProfiles", login);
+                if (Directory.Exists(profilePath))
+                {
+                    Process.Start("explorer.exe", profilePath);
+                }
+                else
+                {
+                    Directory.CreateDirectory(profilePath);
+                    Process.Start("explorer.exe", profilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                SendToJS("error", $"Ошибка открытия папки: {ex.Message}");
+            }
+        }
+
         private void DeleteAccount(string accountId)
         {
             var account = GetAccountById(accountId);
             if (account != null)
             {
+                // Удаляем папку с конфигами Steam если она существует
+                string profilePath = Path.Combine(appDataFolder, "SteamProfiles", account.Login);
+                if (Directory.Exists(profilePath))
+                {
+                    try
+                    {
+                        Directory.Delete(profilePath, true);
+                    }
+                    catch { }
+                }
+                
                 Accounts.Remove(account);
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
@@ -432,8 +747,15 @@ namespace ASFManagerPRO
         public string SteamId { get; set; } = "";
         public string CreatedAt { get; set; } = DateTime.Now.ToString("o");
         public string LastLogin { get; set; } = "";
+        public string LastSteamLaunch { get; set; } = "";
         public int CardsRemaining { get; set; } = 0;
         public int GamesCount { get; set; } = 0;
+        
+        // Новые поля для Steam спуфинга
+        public string SteamConfigPath { get; set; } = "";
+        public string HardwareId { get; set; } = "";
+        public bool UseIsolation { get; set; } = false;
+        public string LaunchMode { get; set; } = "normal";
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -474,5 +796,30 @@ namespace ASFManagerPRO
         public string icon_url { get; set; } = ""; 
         public string type { get; set; } = ""; 
         public string rarity { get; set; } = ""; 
+    }
+
+    public class AppConfig
+    {
+        public string SteamPath { get; set; } = "";
+    }
+}
+
+// Настройки приложения для хранения пути к Steam
+namespace ASFManagerPRO.Properties
+{
+    public sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase
+    {
+        private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+        
+        public static Settings Default => defaultInstance;
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SteamPath
+        {
+            get { return ((string)(this["SteamPath"])); }
+            set { this["SteamPath"] = value; }
+        }
     }
 }
