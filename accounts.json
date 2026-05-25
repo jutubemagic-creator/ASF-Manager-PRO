@@ -1,16 +1,39 @@
-[
-  {
-    "Id": "00000000-0000-0000-0000-000000000001",
-    "Login": "example_account",
-    "Password": "password123",
-    "Email": "example@mail.com",
-    "EmailPass": "emailpass123",
-    "SteamGuard": "",
-    "MaFile": "",
-    "Proxy": "123.45.67.89:8080",
-    "Status": "Offline",
-    "Balance": "0 ₽",
-    "CreatedAt": "2026-04-01T12:00:00",
-    "UpdatedAt": "2026-04-09T22:00:00"
-  }
-]
+public class Account : INotifyPropertyChanged
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Login { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string EmailPass { get; set; } = "";
+    public string Proxy { get; set; } = "";
+    public string Pin { get; set; } = "";
+    public string MaFile { get; set; } = "";
+    public string Notes { get; set; } = "";
+    public string Status { get; set; } = "Offline";
+    public string Balance { get; set; } = "0 ₽";
+    public string SteamId { get; set; } = "";
+    public string CreatedAt { get; set; } = DateTime.Now.ToString("o");
+    public string LastLogin { get; set; } = "";
+    public string LastSteamLaunch { get; set; } = "";
+    public int CardsRemaining { get; set; } = 0;
+    public int GamesCount { get; set; } = 0;
+    
+    // Новые поля для Steam спуфинга
+    public string SteamConfigPath { get; set; } = "";
+    public string HardwareId { get; set; } = "";
+    public bool UseIsolation { get; set; } = false;
+    public string LaunchMode { get; set; } = "normal";
+    public string LastIP { get; set; } = "";
+    public string LastCountry { get; set; } = "";
+    public string SteamLevel { get; set; } = "0";
+    public int TotalGames { get; set; } = 0;
+    public int HoursPlayed { get; set; } = 0;
+    public bool TwoFactorEnabled { get; set; } = false;
+    public string TradeLink { get; set; } = "";
+    public string AvatarUrl { get; set; } = "";
+    public List<string> Tags { get; set; } = new List<string>();
+    public Dictionary<string, string> CustomFields { get; set; } = new Dictionary<string, string>();
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
