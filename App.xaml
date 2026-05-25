@@ -5,6 +5,16 @@
     
     <Application.Resources>
         <!-- Чистая тёмная тема без MaterialDesign -->
+        <SolidColorBrush x:Key="BackgroundColor" Color="#0A0A0F"/>
+        <SolidColorBrush x:Key="ForegroundColor" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#00B4FF"/>
+        <SolidColorBrush x:Key="SuccessColor" Color="#00FF88"/>
+        <SolidColorBrush x:Key="ErrorColor" Color="#FF4444"/>
+        
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="{StaticResource BackgroundColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundColor}"/>
+        </Style>
     </Application.Resources>
     
 </Application>
