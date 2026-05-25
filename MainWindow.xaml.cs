@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,6 +17,79 @@ namespace ASFManagerPRO
 {
     public partial class MainWindow : Window
     {
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+        
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+        
+        [DllImport("user32.dll")]
+        private static extern void SendInput(uint cInputs, INPUT[] pInputs, int cbSize);
+        
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
+        
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct INPUT
+        {
+            public uint type;
+            public INPUTUNION u;
+        }
+        
+        [StructLayout(LayoutKind.Explicit)]
+        private struct INPUTUNION
+        {
+            [FieldOffset(0)] public MOUSEINPUT mi;
+            [FieldOffset(0)] public KEYBDINPUT ki;
+            [FieldOffset(0)] public HARDWAREINPUT hi;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct KEYBDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+        
+        private const uint INPUT_KEYBOARD = 1;
+        private const uint KEYEVENTF_KEYDOWN = 0x0000;
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+        private const uint KEYEVENTF_UNICODE = 0x0004;
+        
+        private const byte VK_RETURN = 0x0D;
+        private const byte VK_TAB = 0x09;
+        
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
         private string appDataFolder = "";
@@ -414,6 +488,83 @@ namespace ASFManagerPRO
             SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
         }
 
+        private void SimulateTyping(string text)
+        {
+            foreach (char c in text)
+            {
+                // Отправляем символ как Unicode
+                INPUT[] inputs = new INPUT[2];
+                
+                // Key down
+                inputs[0] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new INPUTUNION
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = 0,
+                            wScan = c,
+                            dwFlags = KEYEVENTF_UNICODE
+                        }
+                    }
+                };
+                
+                // Key up
+                inputs[1] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new INPUTUNION
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = 0,
+                            wScan = c,
+                            dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
+                        }
+                    }
+                };
+                
+                SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
+                System.Threading.Thread.Sleep(50); // Небольшая задержка между символами
+            }
+        }
+
+        private void SimulateKeyPress(byte keyCode)
+        {
+            INPUT[] inputs = new INPUT[2];
+            
+            // Key down
+            inputs[0] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = keyCode,
+                        dwFlags = KEYEVENTF_KEYDOWN
+                    }
+                }
+            };
+            
+            // Key up
+            inputs[1] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = keyCode,
+                        dwFlags = KEYEVENTF_KEYUP
+                    }
+                }
+            };
+            
+            SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
         private async Task RunSteamWithAccount(string login, string password)
         {
             try
@@ -432,8 +583,15 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Формируем аргументы запуска Steam с логином и паролем напрямую
-                string args = $"-login {login} {password}";
+                // Закрываем Steam если он запущен
+                foreach (var proc in Process.GetProcessesByName("Steam"))
+                {
+                    try { proc.Kill(); } catch { }
+                    await Task.Delay(1000);
+                }
+
+                // Формируем аргументы запуска Steam
+                string args = "";
                 
                 // Добавляем параметры изоляции если включено
                 if (account.UseIsolation)
@@ -454,6 +612,7 @@ namespace ASFManagerPRO
                         break;
                 }
 
+                // Запускаем Steam
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = steamPath,
@@ -463,25 +622,62 @@ namespace ASFManagerPRO
                     WorkingDirectory = Path.GetDirectoryName(steamPath) ?? ""
                 };
 
-                // Добавляем переменные окружения для HWID спуфинга
-                if (!string.IsNullOrEmpty(account.HardwareId))
-                {
-                    startInfo.EnvironmentVariables["STEAM_HWID"] = account.HardwareId;
-                    startInfo.EnvironmentVariables["STEAM_MACHINE_ID"] = account.HardwareId;
-                }
-
                 var process = Process.Start(startInfo);
                 
                 if (process != null)
                 {
-                    // Обновляем статус аккаунта
-                    account.Status = "Steam Online";
-                    account.LastLogin = DateTime.Now.ToString("o");
-                    account.LastSteamLaunch = DateTime.Now.ToString("o");
-                    SaveAccounts();
-                    SendToJS("accounts", Accounts);
+                    SendToJS("steamStarted", $"Steam запущен для {login}, ожидание окна входа...");
                     
-                    SendToJS("steamStarted", $"Steam запущен для {login}");
+                    // Ждем окно входа в Steam
+                    await Task.Delay(5000);
+                    
+                    // Ищем окно входа
+                    IntPtr steamWindow = FindWindow(null, "Steam - Вход");
+                    if (steamWindow == IntPtr.Zero)
+                    {
+                        steamWindow = FindWindow(null, "Вход в Steam");
+                    }
+                    
+                    if (steamWindow != IntPtr.Zero)
+                    {
+                        SetForegroundWindow(steamWindow);
+                        await Task.Delay(500);
+                        
+                        // Эмулируем ввод логина
+                        SimulateTyping(login);
+                        await Task.Delay(500);
+                        
+                        // Нажимаем Tab для перехода к полю пароля
+                        SimulateKeyPress(VK_TAB);
+                        await Task.Delay(300);
+                        
+                        // Эмулируем ввод пароля
+                        SimulateTyping(password);
+                        await Task.Delay(500);
+                        
+                        // Нажимаем Enter для входа
+                        SimulateKeyPress(VK_RETURN);
+                        
+                        // Обновляем статус аккаунта
+                        account.Status = "Steam Online";
+                        account.LastLogin = DateTime.Now.ToString("o");
+                        account.LastSteamLaunch = DateTime.Now.ToString("o");
+                        SaveAccounts();
+                        SendToJS("accounts", Accounts);
+                        
+                        SendToJS("steamStarted", $"Автоматический вход выполнен для {login}");
+                    }
+                    else
+                    {
+                        SendToJS("steamError", "Не удалось найти окно входа в Steam. Возможно, Steam уже был авторизован.");
+                        
+                        // Обновляем статус аккаунта
+                        account.Status = "Steam Online";
+                        account.LastLogin = DateTime.Now.ToString("o");
+                        account.LastSteamLaunch = DateTime.Now.ToString("o");
+                        SaveAccounts();
+                        SendToJS("accounts", Accounts);
+                    }
                 }
                 else
                 {
@@ -496,14 +692,12 @@ namespace ASFManagerPRO
 
         private string GetSteamPath()
         {
-            // Проверяем сохраненный путь
             if (Properties.Settings.Default.SteamPath != null && 
                 File.Exists(Properties.Settings.Default.SteamPath))
             {
                 return Properties.Settings.Default.SteamPath;
             }
 
-            // Стандартные пути
             string[] commonPaths = {
                 @"C:\Program Files (x86)\Steam\Steam.exe",
                 @"C:\Program Files\Steam\Steam.exe",
@@ -524,7 +718,6 @@ namespace ASFManagerPRO
                 }
             }
             
-            // Проверяем в реестре
             try
             {
                 using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam"))
