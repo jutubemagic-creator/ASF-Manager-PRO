@@ -49,8 +49,13 @@ namespace ASFManagerPRO
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
         
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        
         // Константы
         private const uint WM_SETTEXT = 0x000C;
+        private const uint WM_KEYDOWN = 0x0100;
+        private const uint WM_KEYUP = 0x0101;
         private const int SW_RESTORE = 9;
         
         // Делегат для EnumWindows
@@ -460,7 +465,6 @@ namespace ASFManagerPRO
             usernameEdit = IntPtr.Zero;
             passwordEdit = IntPtr.Zero;
             
-            // Список возможных классов окон Steam
             string[] steamWindowClasses = { "SteamUIWindow", "SteamWebUI", "Chrome_WidgetWin_0", "Steam" };
             string[] loginTitles = { "Steam - Вход", "Вход в Steam", "Login", "Sign In", "Steam" };
             
@@ -469,7 +473,6 @@ namespace ASFManagerPRO
                 IntPtr hWnd = FindWindow(className, null);
                 if (hWnd != IntPtr.Zero && IsWindowVisible(hWnd))
                 {
-                    // Проверяем заголовок
                     var title = new System.Text.StringBuilder(256);
                     GetWindowText(hWnd, title, 256);
                     
@@ -486,7 +489,6 @@ namespace ASFManagerPRO
                 }
             }
             
-            // Если не нашли по классам, ищем по всем окнам
             if (loginWindow == IntPtr.Zero)
             {
                 List<IntPtr> windows = new List<IntPtr>();
@@ -516,7 +518,6 @@ namespace ASFManagerPRO
             
             if (loginWindow != IntPtr.Zero)
             {
-                // Ищем поля ввода
                 List<IntPtr> editBoxes = new List<IntPtr>();
                 EnumChildWindows(loginWindow, (hWnd, lParam) =>
                 {
@@ -557,14 +558,12 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Закрываем Steam если запущен
                 foreach (var proc in Process.GetProcessesByName("Steam"))
                 {
                     try { proc.Kill(); } catch { }
                 }
                 await Task.Delay(2000);
 
-                // Запускаем Steam
                 string args = "";
                 if (account.UseIsolation)
                 {
@@ -582,7 +581,6 @@ namespace ASFManagerPRO
 
                 SendToJS("steamStarted", $"Steam запущен для {login}, ищем окно входа...");
 
-                // Ждем появления окна входа (до 30 секунд)
                 IntPtr loginWindow = IntPtr.Zero;
                 IntPtr usernameEdit = IntPtr.Zero;
                 IntPtr passwordEdit = IntPtr.Zero;
@@ -599,28 +597,23 @@ namespace ASFManagerPRO
 
                 if (loginWindow != IntPtr.Zero && usernameEdit != IntPtr.Zero && passwordEdit != IntPtr.Zero)
                 {
-                    // Показываем и активируем окно
                     ShowWindow(loginWindow, SW_RESTORE);
                     SetForegroundWindow(loginWindow);
                     await Task.Delay(500);
 
-                    // Очищаем поля
                     SendMessage(usernameEdit, WM_SETTEXT, IntPtr.Zero, "");
                     SendMessage(passwordEdit, WM_SETTEXT, IntPtr.Zero, "");
                     await Task.Delay(200);
 
-                    // Вводим логин
                     SendMessage(usernameEdit, WM_SETTEXT, IntPtr.Zero, login);
                     await Task.Delay(300);
 
-                    // Вводим пароль
                     SendMessage(passwordEdit, WM_SETTEXT, IntPtr.Zero, password);
                     await Task.Delay(300);
 
-                    // Отправляем Enter
-                    SendMessage(loginWindow, 0x0100, (IntPtr)0x0D, IntPtr.Zero); // WM_KEYDOWN Enter
+                    SendMessage(loginWindow, WM_KEYDOWN, (IntPtr)0x0D, IntPtr.Zero);
                     await Task.Delay(50);
-                    SendMessage(loginWindow, 0x0101, (IntPtr)0x0D, IntPtr.Zero); // WM_KEYUP Enter
+                    SendMessage(loginWindow, WM_KEYUP, (IntPtr)0x0D, IntPtr.Zero);
 
                     account.Status = "Steam Online";
                     account.LastLogin = DateTime.Now.ToString("o");
@@ -628,7 +621,7 @@ namespace ASFManagerPRO
                     SaveAccounts();
                     SendToJS("accounts", Accounts);
 
-                    SendToJS("steamStarted", $"✅ Автоматический вход выполнен для {login}");
+                    SendToJS("steamStarted", $"Автоматический вход выполнен для {login}");
                 }
                 else
                 {
