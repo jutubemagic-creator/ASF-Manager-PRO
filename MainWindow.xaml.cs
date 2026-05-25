@@ -30,13 +30,10 @@ namespace ASFManagerPRO
         private static extern bool SetForegroundWindow(IntPtr hWnd);
         
         [DllImport("user32.dll")]
-        private static extern void SendInput(uint cInputs, INPUT[] pInputs, int cbSize);
+        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
         
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
-        
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
         
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
@@ -492,10 +489,8 @@ namespace ASFManagerPRO
         {
             foreach (char c in text)
             {
-                // Отправляем символ как Unicode
                 INPUT[] inputs = new INPUT[2];
                 
-                // Key down
                 inputs[0] = new INPUT
                 {
                     type = INPUT_KEYBOARD,
@@ -510,7 +505,6 @@ namespace ASFManagerPRO
                     }
                 };
                 
-                // Key up
                 inputs[1] = new INPUT
                 {
                     type = INPUT_KEYBOARD,
@@ -526,7 +520,7 @@ namespace ASFManagerPRO
                 };
                 
                 SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
-                System.Threading.Thread.Sleep(50); // Небольшая задержка между символами
+                System.Threading.Thread.Sleep(30);
             }
         }
 
@@ -534,7 +528,6 @@ namespace ASFManagerPRO
         {
             INPUT[] inputs = new INPUT[2];
             
-            // Key down
             inputs[0] = new INPUT
             {
                 type = INPUT_KEYBOARD,
@@ -548,7 +541,6 @@ namespace ASFManagerPRO
                 }
             };
             
-            // Key up
             inputs[1] = new INPUT
             {
                 type = INPUT_KEYBOARD,
@@ -583,17 +575,9 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Закрываем Steam если он запущен
-                foreach (var proc in Process.GetProcessesByName("Steam"))
-                {
-                    try { proc.Kill(); } catch { }
-                    await Task.Delay(1000);
-                }
-
                 // Формируем аргументы запуска Steam
                 string args = "";
                 
-                // Добавляем параметры изоляции если включено
                 if (account.UseIsolation)
                 {
                     string userDataPath = Path.Combine(appDataFolder, "SteamProfiles", login);
@@ -601,7 +585,6 @@ namespace ASFManagerPRO
                     args += $" -userdata {userDataPath}";
                 }
                 
-                // Добавляем режим запуска
                 switch (account.LaunchMode)
                 {
                     case "bigpicture":
@@ -612,7 +595,6 @@ namespace ASFManagerPRO
                         break;
                 }
 
-                // Запускаем Steam
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = steamPath,
@@ -628,10 +610,8 @@ namespace ASFManagerPRO
                 {
                     SendToJS("steamStarted", $"Steam запущен для {login}, ожидание окна входа...");
                     
-                    // Ждем окно входа в Steam
                     await Task.Delay(5000);
                     
-                    // Ищем окно входа
                     IntPtr steamWindow = FindWindow(null, "Steam - Вход");
                     if (steamWindow == IntPtr.Zero)
                     {
@@ -641,24 +621,19 @@ namespace ASFManagerPRO
                     if (steamWindow != IntPtr.Zero)
                     {
                         SetForegroundWindow(steamWindow);
-                        await Task.Delay(500);
+                        await Task.Delay(800);
                         
-                        // Эмулируем ввод логина
                         SimulateTyping(login);
                         await Task.Delay(500);
                         
-                        // Нажимаем Tab для перехода к полю пароля
                         SimulateKeyPress(VK_TAB);
                         await Task.Delay(300);
                         
-                        // Эмулируем ввод пароля
                         SimulateTyping(password);
                         await Task.Delay(500);
                         
-                        // Нажимаем Enter для входа
                         SimulateKeyPress(VK_RETURN);
                         
-                        // Обновляем статус аккаунта
                         account.Status = "Steam Online";
                         account.LastLogin = DateTime.Now.ToString("o");
                         account.LastSteamLaunch = DateTime.Now.ToString("o");
@@ -669,9 +644,8 @@ namespace ASFManagerPRO
                     }
                     else
                     {
-                        SendToJS("steamError", "Не удалось найти окно входа в Steam. Возможно, Steam уже был авторизован.");
+                        SendToJS("steamError", "Не удалось найти окно входа в Steam");
                         
-                        // Обновляем статус аккаунта
                         account.Status = "Steam Online";
                         account.LastLogin = DateTime.Now.ToString("o");
                         account.LastSteamLaunch = DateTime.Now.ToString("o");
