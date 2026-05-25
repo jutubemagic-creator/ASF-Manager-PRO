@@ -32,8 +32,8 @@ namespace ASFManagerPRO
         [DllImport("user32.dll")]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
         
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
         
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
@@ -86,6 +86,11 @@ namespace ASFManagerPRO
         
         private const byte VK_RETURN = 0x0D;
         private const byte VK_TAB = 0x09;
+        private const byte VK_CONTROL = 0x11;
+        private const byte VK_A = 0x41;
+        private const byte VK_DELETE = 0x2E;
+        
+        private const int SW_RESTORE = 9;
         
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
@@ -557,6 +562,47 @@ namespace ASFManagerPRO
             SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
         }
 
+        private void SimulateKeyDown(byte keyCode)
+        {
+            INPUT input = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = keyCode,
+                        dwFlags = KEYEVENTF_KEYDOWN
+                    }
+                }
+            };
+            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        private void SimulateKeyUp(byte keyCode)
+        {
+            INPUT input = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = keyCode,
+                        dwFlags = KEYEVENTF_KEYUP
+                    }
+                }
+            };
+            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        private void SimulateControlA()
+        {
+            SimulateKeyDown(VK_CONTROL);
+            SimulateKeyPress(VK_A);
+            SimulateKeyUp(VK_CONTROL);
+        }
+
         private async Task RunSteamWithAccount(string login, string password)
         {
             try
@@ -575,8 +621,15 @@ namespace ASFManagerPRO
                     return;
                 }
 
+                // Закрываем все процессы Steam перед запуском нового
+                foreach (var proc in Process.GetProcessesByName("Steam"))
+                {
+                    try { proc.Kill(); } catch { }
+                }
+                await Task.Delay(2000);
+
                 // Формируем аргументы запуска Steam
-                string args = "";
+                string args = "-silent";
                 
                 if (account.UseIsolation)
                 {
@@ -610,28 +663,70 @@ namespace ASFManagerPRO
                 {
                     SendToJS("steamStarted", $"Steam запущен для {login}, ожидание окна входа...");
                     
-                    await Task.Delay(5000);
+                    // Увеличиваем время ожидания до 15 секунд
+                    await Task.Delay(15000);
                     
-                    IntPtr steamWindow = FindWindow(null, "Steam - Вход");
+                    // Пробуем найти окно входа по разным названиям
+                    IntPtr steamWindow = IntPtr.Zero;
+                    string[] windowTitles = new string[]
+                    {
+                        "Steam - Вход",
+                        "Вход в Steam",
+                        "Steam Login",
+                        "Sign in to Steam",
+                        "Steam",
+                        "Вход"
+                    };
+                    
+                    // Также ищем по классу окна
+                    steamWindow = FindWindow("SteamUIWindow", null);
+                    
                     if (steamWindow == IntPtr.Zero)
                     {
-                        steamWindow = FindWindow(null, "Вход в Steam");
+                        steamWindow = FindWindow("SteamWebUI", null);
+                    }
+                    
+                    if (steamWindow == IntPtr.Zero)
+                    {
+                        steamWindow = FindWindow("Chrome_WidgetWin_0", null);
+                    }
+                    
+                    foreach (var title in windowTitles)
+                    {
+                        steamWindow = FindWindow(null, title);
+                        if (steamWindow != IntPtr.Zero)
+                        {
+                            SendToJS("steamStarted", $"Найдено окно: {title}");
+                            break;
+                        }
                     }
                     
                     if (steamWindow != IntPtr.Zero)
                     {
+                        // Показываем и активируем окно
+                        ShowWindow(steamWindow, SW_RESTORE);
                         SetForegroundWindow(steamWindow);
-                        await Task.Delay(800);
+                        await Task.Delay(1000);
                         
+                        // Очищаем поля (Ctrl+A и Delete)
+                        SimulateControlA();
+                        await Task.Delay(200);
+                        SimulateKeyPress(VK_DELETE);
+                        await Task.Delay(300);
+                        
+                        // Вводим логин
                         SimulateTyping(login);
                         await Task.Delay(500);
                         
+                        // Tab для перехода к паролю
                         SimulateKeyPress(VK_TAB);
                         await Task.Delay(300);
                         
+                        // Вводим пароль
                         SimulateTyping(password);
                         await Task.Delay(500);
                         
+                        // Enter для входа
                         SimulateKeyPress(VK_RETURN);
                         
                         account.Status = "Steam Online";
@@ -640,11 +735,12 @@ namespace ASFManagerPRO
                         SaveAccounts();
                         SendToJS("accounts", Accounts);
                         
-                        SendToJS("steamStarted", $"Автоматический вход выполнен для {login}");
+                        SendToJS("steamStarted", $"✅ Автоматический вход выполнен для {login}");
                     }
                     else
                     {
-                        SendToJS("steamError", "Не удалось найти окно входа в Steam");
+                        // Если окно не найдено, отправляем инструкцию пользователю
+                        SendToJS("steamError", "⚠️ Не удалось найти окно входа Steam.\n\nЕсли окно открыто, введите логин и пароль вручную.\n\nСовет: Убедитесь что Steam не запущен до нажатия кнопки.");
                         
                         account.Status = "Steam Online";
                         account.LastLogin = DateTime.Now.ToString("o");
