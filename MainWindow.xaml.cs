@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -19,6 +20,96 @@ namespace ASFManagerPRO
 {
     public partial class MainWindow : Window
     {
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+        
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        [DllImport("user32.dll")]
+        private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+        
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+        
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam);
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+        
+        private const uint WM_SETTEXT = 0x000C;
+        private const uint WM_KEYDOWN = 0x0100;
+        private const uint WM_KEYUP = 0x0101;
+        private const uint WM_CHAR = 0x0102;
+        private const int SW_RESTORE = 9;
+        private const byte VK_RETURN = 0x0D;
+        
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct INPUT
+        {
+            public uint type;
+            public INPUTUNION u;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        private struct INPUTUNION
+        {
+            [FieldOffset(0)] public MOUSEINPUT mi;
+            [FieldOffset(0)] public KEYBDINPUT ki;
+            [FieldOffset(0)] public HARDWAREINPUT hi;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct KEYBDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+        
+        private const uint INPUT_KEYBOARD = 1;
+        private const uint KEYEVENTF_KEYDOWN = 0x0000;
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+        
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
         private string appDataFolder = "";
@@ -417,106 +508,157 @@ namespace ASFManagerPRO
             SendToJS("asfStarted", $"ASF запущен для {successCount} аккаунтов");
         }
 
+        private void PressEnter()
+        {
+            INPUT[] inputs = new INPUT[2];
+            
+            inputs[0] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = VK_RETURN,
+                        dwFlags = KEYEVENTF_KEYDOWN
+                    }
+                }
+            };
+            
+            inputs[1] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = VK_RETURN,
+                        dwFlags = KEYEVENTF_KEYUP
+                    }
+                }
+            };
+            
+            SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
         private async Task<bool> AutoLoginToSteam(string login, string password)
         {
             try
             {
-                // Ищем процесс Steam
-                var steamProcess = Process.GetProcessesByName("Steam").FirstOrDefault();
-                if (steamProcess == null)
-                {
-                    SendToJS("steamError", "Процесс Steam не найден");
-                    return false;
-                }
-
-                // Получаем главное окно Steam
-                var mainWindow = AutomationElement.RootElement.FindFirst(
-                    TreeScope.Children,
-                    new PropertyCondition(AutomationElement.ProcessIdProperty, steamProcess.Id));
+                // Ищем окно входа Steam
+                IntPtr loginWindow = IntPtr.Zero;
+                List<IntPtr> windows = new List<IntPtr>();
                 
-                if (mainWindow == null)
+                EnumWindows((hWnd, lParam) =>
                 {
-                    SendToJS("steamError", "Окно Steam не найдено");
-                    return false;
-                }
-
-                // Ищем все окна Steam
-                var allWindows = AutomationElement.RootElement.FindAll(
-                    TreeScope.Children,
-                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window));
-                
-                AutomationElement loginWindow = null;
-                
-                foreach (AutomationElement window in allWindows)
-                {
-                    string windowTitle = window.Current.Name;
-                    if (windowTitle.Contains("Вход") || windowTitle.Contains("Login") || windowTitle.Contains("Steam"))
+                    if (IsWindowVisible(hWnd))
                     {
-                        loginWindow = window;
-                        break;
+                        var title = new System.Text.StringBuilder(256);
+                        GetWindowText(hWnd, title, 256);
+                        string titleStr = title.ToString();
+                        
+                        if (titleStr.Contains("Вход") || titleStr.Contains("Login") || titleStr.Contains("Steam"))
+                        {
+                            windows.Add(hWnd);
+                        }
                     }
-                }
-
-                if (loginWindow == null)
+                    return true;
+                }, IntPtr.Zero);
+                
+                if (windows.Count == 0)
                 {
                     SendToJS("steamError", "Окно входа не найдено");
                     return false;
                 }
-
-                // Активируем окно
-                var invokePattern = loginWindow.GetCurrentPattern(WindowPattern.Pattern) as WindowPattern;
-                invokePattern?.SetWindowVisualState(WindowVisualState.Normal);
-                loginWindow.SetFocus();
                 
+                loginWindow = windows[0];
+                
+                // Активируем окно
+                ShowWindow(loginWindow, SW_RESTORE);
+                SetForegroundWindow(loginWindow);
                 await Task.Delay(1000);
-
-                // Ищем поле для логина
-                var loginEdit = FindTextField(loginWindow, new[] { "login", "username", "steam account name", "логин" });
-                if (loginEdit == null)
+                
+                // Ищем поля ввода через UI Automation
+                var element = AutomationElement.FromHandle(loginWindow);
+                if (element == null)
                 {
-                    SendToJS("steamError", "Поле для логина не найдено");
+                    SendToJS("steamError", "Не удалось получить доступ к окну");
                     return false;
                 }
-
-                // Ищем поле для пароля
-                var passwordEdit = FindTextField(loginWindow, new[] { "password", "пароль" });
-                if (passwordEdit == null)
+                
+                // Находим все поля Edit
+                var editElements = element.FindAll(TreeScope.Descendants, 
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit));
+                
+                AutomationElement loginEdit = null;
+                AutomationElement passwordEdit = null;
+                
+                foreach (AutomationElement edit in editElements)
                 {
-                    SendToJS("steamError", "Поле для пароля не найдено");
+                    string name = edit.Current.Name?.ToLower() ?? "";
+                    string helpText = edit.Current.HelpText?.ToLower() ?? "";
+                    
+                    if (name.Contains("логин") || name.Contains("login") || name.Contains("username") || 
+                        helpText.Contains("логин") || helpText.Contains("login"))
+                    {
+                        loginEdit = edit;
+                    }
+                    else if (name.Contains("пароль") || name.Contains("password") || 
+                             helpText.Contains("пароль") || helpText.Contains("password"))
+                    {
+                        passwordEdit = edit;
+                    }
+                }
+                
+                // Если не нашли по описанию, берем первое и второе поле
+                if (loginEdit == null && editElements.Count > 0)
+                    loginEdit = editElements[0];
+                if (passwordEdit == null && editElements.Count > 1)
+                    passwordEdit = editElements[1];
+                
+                if (loginEdit == null || passwordEdit == null)
+                {
+                    SendToJS("steamError", "Поля ввода не найдены");
                     return false;
                 }
-
-                // Ищем кнопку входа
-                var loginButton = FindButton(loginWindow, new[] { "войти", "login", "sign in", "enter" });
-
-                // Вводим данные
+                
+                // Вводим логин
                 loginEdit.SetFocus();
                 await Task.Delay(200);
                 
                 var valuePattern = loginEdit.GetCurrentPattern(ValuePattern.Pattern) as ValuePattern;
-                valuePattern?.SetValue(login);
+                if (valuePattern != null)
+                {
+                    valuePattern.SetValue(login);
+                }
+                else
+                {
+                    // Альтернативный метод через SendMessage
+                    IntPtr hwnd = new IntPtr(loginEdit.Current.NativeWindowHandle);
+                    SendMessage(hwnd, WM_SETTEXT, IntPtr.Zero, login);
+                }
                 
                 await Task.Delay(300);
                 
+                // Вводим пароль
                 passwordEdit.SetFocus();
                 await Task.Delay(200);
                 
                 valuePattern = passwordEdit.GetCurrentPattern(ValuePattern.Pattern) as ValuePattern;
-                valuePattern?.SetValue(password);
-                
-                await Task.Delay(300);
-                
-                // Нажимаем кнопку входа
-                if (loginButton != null)
+                if (valuePattern != null)
                 {
-                    var invokePatternBtn = loginButton.GetCurrentPattern(InvokePattern.Pattern) as InvokePattern;
-                    invokePatternBtn?.Invoke();
+                    valuePattern.SetValue(password);
                 }
                 else
                 {
-                    // Или нажимаем Enter
-                    System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+                    IntPtr hwnd = new IntPtr(passwordEdit.Current.NativeWindowHandle);
+                    SendMessage(hwnd, WM_SETTEXT, IntPtr.Zero, password);
                 }
+                
+                await Task.Delay(500);
+                
+                // Нажимаем Enter
+                PressEnter();
                 
                 SendToJS("steamStarted", $"Вход выполнен для {login}");
                 return true;
@@ -526,55 +668,6 @@ namespace ASFManagerPRO
                 SendToJS("steamError", $"Ошибка автоматизации: {ex.Message}");
                 return false;
             }
-        }
-
-        private AutomationElement FindTextField(AutomationElement root, string[] possibleNames)
-        {
-            var editElements = root.FindAll(TreeScope.Descendants, 
-                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit));
-            
-            foreach (AutomationElement element in editElements)
-            {
-                string name = element.Current.Name?.ToLower() ?? "";
-                string helpText = element.Current.HelpText?.ToLower() ?? "";
-                string automationId = element.Current.AutomationId?.ToLower() ?? "";
-                
-                foreach (var searchName in possibleNames)
-                {
-                    if (name.Contains(searchName) || helpText.Contains(searchName) || automationId.Contains(searchName))
-                    {
-                        return element;
-                    }
-                }
-            }
-            
-            // Если не нашли по названиям, берем первый Edit
-            if (editElements.Count > 0)
-                return editElements[0];
-            
-            return null;
-        }
-
-        private AutomationElement FindButton(AutomationElement root, string[] possibleNames)
-        {
-            var buttons = root.FindAll(TreeScope.Descendants, 
-                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button));
-            
-            foreach (AutomationElement element in buttons)
-            {
-                string name = element.Current.Name?.ToLower() ?? "";
-                string automationId = element.Current.AutomationId?.ToLower() ?? "";
-                
-                foreach (var searchName in possibleNames)
-                {
-                    if (name.Contains(searchName) || automationId.Contains(searchName))
-                    {
-                        return element;
-                    }
-                }
-            }
-            
-            return null;
         }
 
         private async Task RunSteamWithAutoLogin(string login, string password)
@@ -611,7 +704,7 @@ namespace ASFManagerPRO
                     args += $" -userdata {userDataPath}";
                 }
 
-                var steamProcess = Process.Start(new ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = steamPath,
                     Arguments = args,
