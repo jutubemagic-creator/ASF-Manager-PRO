@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -163,7 +164,14 @@ namespace ASFManagerPRO
                     var parts = msg.Data.Split('|');
                     if (parts.Length >= 2)
                     {
-                        _ = RunSteamWithAccount(parts[0], parts[1]);
+                        try
+                        {
+                            _ = RunSteamWithAccount(parts[0], parts[1]);
+                        }
+                        catch (Exception ex)
+                        {
+                            SendToJS("steamError", ex.Message);
+                        }
                     }
                 }
                 else if (msg?.Action == "setSteamPath")
@@ -424,20 +432,15 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Создаем отдельную папку для конфигов аккаунта (изоляция)
-                string userDataPath = Path.Combine(appDataFolder, "SteamProfiles", login);
-                Directory.CreateDirectory(userDataPath);
-
-                // Создаем скрипт для автовхода с задержками
-                string scriptPath = await CreateAutoLoginScript(login, password, userDataPath);
-
-                // Формируем аргументы запуска Steam
+                // Формируем аргументы запуска Steam с логином и паролем напрямую
                 string args = $"-login {login} {password}";
                 
                 // Добавляем параметры изоляции если включено
                 if (account.UseIsolation)
                 {
-                    args += $" -userdata {userDataPath} -config {userDataPath}";
+                    string userDataPath = Path.Combine(appDataFolder, "SteamProfiles", login);
+                    Directory.CreateDirectory(userDataPath);
+                    args += $" -userdata {userDataPath}";
                 }
                 
                 // Добавляем режим запуска
@@ -469,74 +472,26 @@ namespace ASFManagerPRO
 
                 var process = Process.Start(startInfo);
                 
-                // Обновляем статус аккаунта
-                account.Status = "Steam Online";
-                account.LastLogin = DateTime.Now.ToString("o");
-                account.LastSteamLaunch = DateTime.Now.ToString("o");
-                SaveAccounts();
-                SendToJS("accounts", Accounts);
-                
-                SendToJS("steamStarted", $"Steam запущен для {login}");
-                
-                // Запускаем AutoHotkey скрипт если он существует
-                if (File.Exists(scriptPath))
+                if (process != null)
                 {
-                    await Task.Delay(2000); // Ждем загрузки Steam
-                    Process.Start(scriptPath);
+                    // Обновляем статус аккаунта
+                    account.Status = "Steam Online";
+                    account.LastLogin = DateTime.Now.ToString("o");
+                    account.LastSteamLaunch = DateTime.Now.ToString("o");
+                    SaveAccounts();
+                    SendToJS("accounts", Accounts);
+                    
+                    SendToJS("steamStarted", $"Steam запущен для {login}");
+                }
+                else
+                {
+                    SendToJS("steamError", "Не удалось запустить Steam");
                 }
             }
             catch (Exception ex)
             {
                 SendToJS("steamError", $"Ошибка: {ex.Message}");
             }
-        }
-
-        private async Task<string> CreateAutoLoginScript(string login, string password, string dataPath)
-        {
-            string scriptContent = $@"
-#NoEnv
-#Persistent
-SetWorkingDir %A_ScriptDir%
-SetTitleMatchMode, 2
-SetKeyDelay, 500, 100
-
-; Ожидаем окно входа в Steam
-WinWait, Steam - Вход, , 30
-if ErrorLevel
-{{
-    WinWait, Вход в Steam, , 30
-}}
-
-WinActivate
-Sleep, 2000
-
-; Очищаем поля
-Send, {{LControl down}}a{{LControl up}}
-Sleep, 200
-Send, {{Delete}}
-Sleep, 200
-
-; Вводим логин
-Send, {login}
-Sleep, 500
-
-; Переходим к полю пароля
-Send, {{Tab}}
-Sleep, 300
-
-; Вводим пароль
-Send, {password}
-Sleep, 500
-
-; Нажимаем Enter для входа
-Send, {{Enter}}
-
-ExitApp
-";
-            
-            string scriptPath = Path.Combine(dataPath, $"login_{login}.ahk");
-            await File.WriteAllTextAsync(scriptPath, scriptContent);
-            return scriptPath;
         }
 
         private string GetSteamPath()
@@ -613,7 +568,6 @@ ExitApp
 
         private string GenerateHWID()
         {
-            // Генерация уникального HWID на основе различных параметров
             string timestamp = DateTime.Now.Ticks.ToString();
             string random = Guid.NewGuid().ToString().Substring(0, 8);
             string hwid = $"HWID-{timestamp.Substring(timestamp.Length - 8)}-{random}".ToUpper();
@@ -646,7 +600,6 @@ ExitApp
             var account = GetAccountById(accountId);
             if (account != null)
             {
-                // Удаляем папку с конфигами Steam если она существует
                 string profilePath = Path.Combine(appDataFolder, "SteamProfiles", account.Login);
                 if (Directory.Exists(profilePath))
                 {
@@ -730,7 +683,6 @@ ExitApp
         }
     }
 
-    // Модели данных
     public class Account : INotifyPropertyChanged
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -751,11 +703,20 @@ ExitApp
         public int CardsRemaining { get; set; } = 0;
         public int GamesCount { get; set; } = 0;
         
-        // Новые поля для Steam спуфинга
         public string SteamConfigPath { get; set; } = "";
         public string HardwareId { get; set; } = "";
         public bool UseIsolation { get; set; } = false;
         public string LaunchMode { get; set; } = "normal";
+        public string LastIP { get; set; } = "";
+        public string LastCountry { get; set; } = "";
+        public string SteamLevel { get; set; } = "0";
+        public int TotalGames { get; set; } = 0;
+        public int HoursPlayed { get; set; } = 0;
+        public bool TwoFactorEnabled { get; set; } = false;
+        public string TradeLink { get; set; } = "";
+        public string AvatarUrl { get; set; } = "";
+        public List<string> Tags { get; set; } = new List<string>();
+        public Dictionary<string, string> CustomFields { get; set; } = new Dictionary<string, string>();
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -804,7 +765,6 @@ ExitApp
     }
 }
 
-// Настройки приложения для хранения пути к Steam
 namespace ASFManagerPRO.Properties
 {
     public sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase
