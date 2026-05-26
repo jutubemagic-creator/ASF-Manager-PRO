@@ -32,7 +32,7 @@ namespace ASFManagerPRO
         private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
         
         [DllImport("user32.dll")]
-        private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
         
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr hWnd);
@@ -46,9 +46,19 @@ namespace ASFManagerPRO
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
         
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        
+        [DllImport("user32.dll")]
+        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+        
         private const int SW_RESTORE = 9;
         private const uint KEYEVENTF_KEYDOWN = 0x0000;
         private const uint KEYEVENTF_KEYUP = 0x0002;
+        private const uint KEYEVENTF_UNICODE = 0x0004;
         
         private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
         
@@ -97,8 +107,6 @@ namespace ASFManagerPRO
         }
         
         private const uint INPUT_KEYBOARD = 1;
-        private const uint KEYEVENTF_UNICODE = 0x0004;
-        
         private const byte VK_TAB = 0x09;
         private const byte VK_RETURN = 0x0D;
         private const byte VK_CONTROL = 0x11;
@@ -691,7 +699,6 @@ namespace ASFManagerPRO
                                (hash[offset + 2] & 0xFF) << 8 |
                                (hash[offset + 3] & 0xFF);
                     
-                    // Steam Guard алфавит: цифры 2-9 и буквы A-Z (исключая 0,1,O,I)
                     string alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
                     int tempCode = code;
                     
@@ -705,9 +712,8 @@ namespace ASFManagerPRO
                     return new string(result);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"GenerateTwoFactorCode Error: {ex.Message}");
                 return "";
             }
         }
@@ -721,16 +727,12 @@ namespace ASFManagerPRO
                 
                 if (maFile != null && !string.IsNullOrEmpty(maFile.shared_secret))
                 {
-                    string code = GenerateTwoFactorCode(maFile.shared_secret);
-                    Debug.WriteLine($"Generated Steam Guard code: {code}");
-                    return code;
+                    return GenerateTwoFactorCode(maFile.shared_secret);
                 }
-                
                 return "";
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"GenerateSteamGuardCode Error: {ex.Message}");
                 return "";
             }
         }
@@ -772,7 +774,6 @@ namespace ASFManagerPRO
         private async Task<bool> FindAndActivateSteamWindow()
         {
             IntPtr steamWindow = IntPtr.Zero;
-            List<IntPtr> windows = new List<IntPtr>();
             
             EnumWindows((hWnd, lParam) =>
             {
@@ -782,17 +783,32 @@ namespace ASFManagerPRO
                     GetWindowText(hWnd, title, 256);
                     string titleStr = title.ToString().ToLower();
                     
-                    if (titleStr.Contains("steam"))
+                    if (titleStr.Contains("steam") && (titleStr.Contains("вход") || titleStr.Contains("login")))
                     {
-                        windows.Add(hWnd);
+                        steamWindow = hWnd;
                         return false;
                     }
                 }
                 return true;
             }, IntPtr.Zero);
             
-            if (windows.Count > 0)
-                steamWindow = windows[0];
+            if (steamWindow == IntPtr.Zero)
+            {
+                EnumWindows((hWnd, lParam) =>
+                {
+                    if (IsWindowVisible(hWnd))
+                    {
+                        var title = new StringBuilder(256);
+                        GetWindowText(hWnd, title, 256);
+                        if (title.ToString().ToLower().Contains("steam"))
+                        {
+                            steamWindow = hWnd;
+                            return false;
+                        }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+            }
             
             if (steamWindow != IntPtr.Zero)
             {
@@ -808,7 +824,15 @@ namespace ASFManagerPRO
         private async Task<bool> FindAndActivateTwoFactorWindow()
         {
             IntPtr twoFactorWindow = IntPtr.Zero;
-            List<IntPtr> windows = new List<IntPtr>();
+            string[] possibleTitles = new string[]
+            {
+                "Steam Guard",
+                "Steam Guard - Код подтверждения",
+                "Подтверждение входа в Steam",
+                "Код подтверждения Steam",
+                "Steam Authentication",
+                "Steam Login"
+            };
             
             EnumWindows((hWnd, lParam) =>
             {
@@ -816,56 +840,25 @@ namespace ASFManagerPRO
                 {
                     var title = new StringBuilder(256);
                     GetWindowText(hWnd, title, 256);
-                    string titleStr = title.ToString().ToLower();
+                    string titleStr = title.ToString();
                     
-                    if ((titleStr.Contains("steam") || titleStr.Contains("код") || titleStr.Contains("code") || 
-                         titleStr.Contains("guard") || titleStr.Contains("authenticator")) &&
-                        (titleStr.Contains("введите") || titleStr.Contains("enter") || titleStr.Contains("проверка")))
+                    foreach (var searchTitle in possibleTitles)
                     {
-                        windows.Add(hWnd);
+                        if (titleStr.Contains(searchTitle))
+                        {
+                            twoFactorWindow = hWnd;
+                            return false;
+                        }
+                    }
+                    
+                    if (titleStr.ToLower().Contains("steam") && (titleStr.ToLower().Contains("код") || titleStr.ToLower().Contains("code")))
+                    {
+                        twoFactorWindow = hWnd;
                         return false;
                     }
                 }
                 return true;
             }, IntPtr.Zero);
-            
-            if (windows.Count == 0)
-            {
-                EnumWindows((hWnd, lParam) =>
-                {
-                    if (IsWindowVisible(hWnd))
-                    {
-                        var title = new StringBuilder(256);
-                        GetWindowText(hWnd, title, 256);
-                        string titleStr = title.ToString().ToLower();
-                        
-                        if (titleStr.Contains("steam"))
-                        {
-                            List<IntPtr> editBoxes = new List<IntPtr>();
-                            EnumChildWindows(hWnd, (childHwnd, childParam) =>
-                            {
-                                StringBuilder className = new StringBuilder(256);
-                                GetClassName(childHwnd, className, 256);
-                                if (className.ToString().Contains("Edit"))
-                                {
-                                    editBoxes.Add(childHwnd);
-                                }
-                                return true;
-                            }, IntPtr.Zero);
-                            
-                            if (editBoxes.Count > 0)
-                            {
-                                windows.Add(hWnd);
-                                return false;
-                            }
-                        }
-                    }
-                    return true;
-                }, IntPtr.Zero);
-            }
-            
-            if (windows.Count > 0)
-                twoFactorWindow = windows[0];
             
             if (twoFactorWindow != IntPtr.Zero)
             {
@@ -883,26 +876,17 @@ namespace ASFManagerPRO
             try
             {
                 var account = GetAccountByLogin(login);
-                if (account == null)
-                {
-                    SendToJS("steamError", "Аккаунт не найден для 2FA");
-                    return;
-                }
+                if (account == null) return;
                 
                 string maFilePath = "";
                 
                 if (!string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
                 {
                     maFilePath = account.MaFilePath;
-                    SendToJS("steamStarted", $"Используем привязанный maFile: {account.MaFileName}");
                 }
                 else
                 {
-                    SendToJS("steamStarted", $"Ищем maFile для {login} в папке {maFilesFolder}");
-                    
                     var maFiles = Directory.GetFiles(maFilesFolder, "*.maFile");
-                    SendToJS("steamStarted", $"Найдено maFile файлов: {maFiles.Length}");
-                    
                     foreach (var file in maFiles)
                     {
                         try
@@ -918,7 +902,6 @@ namespace ASFManagerPRO
                                     account.MaFilePath = maFilePath;
                                     account.MaFileName = Path.GetFileName(maFilePath);
                                     SaveAccounts();
-                                    SendToJS("steamStarted", $"Найден подходящий maFile: {Path.GetFileName(file)}");
                                     break;
                                 }
                             }
@@ -927,78 +910,31 @@ namespace ASFManagerPRO
                     }
                 }
                 
-                if (string.IsNullOrEmpty(maFilePath) || !File.Exists(maFilePath))
-                {
-                    SendToJS("steamError", $"Не найден maFile для аккаунта {login}\n\nПоложите .maFile файл в папку:\n{maFilesFolder}");
-                    return;
-                }
+                if (string.IsNullOrEmpty(maFilePath) || !File.Exists(maFilePath)) return;
                 
-                // Проверяем генерацию кода
-                try
+                // Ждем появления окна 2FA
+                for (int i = 0; i < 30; i++)
                 {
-                    string testCode = GenerateSteamGuardCode(maFilePath);
-                    if (string.IsNullOrEmpty(testCode))
-                    {
-                        SendToJS("steamError", "Не удается сгенерировать код. Проверьте maFile файл.");
-                        return;
-                    }
-                    SendToJS("steamStarted", $"Текущий код для {login}: {testCode}");
-                }
-                catch (Exception ex)
-                {
-                    SendToJS("steamError", $"Ошибка генерации кода: {ex.Message}");
-                    return;
-                }
-                
-                SendToJS("steamStarted", "Ожидаем окно ввода кода Steam Guard...");
-                
-                bool windowFound = false;
-                for (int i = 0; i < 20; i++)
-                {
-                    await Task.Delay(1000);
                     if (await FindAndActivateTwoFactorWindow())
                     {
-                        windowFound = true;
-                        SendToJS("steamStarted", "Окно 2FA найдено!");
+                        string code = GenerateSteamGuardCode(maFilePath);
+                        if (!string.IsNullOrEmpty(code))
+                        {
+                            await Task.Delay(500);
+                            SimulateCtrlA();
+                            await Task.Delay(200);
+                            SimulateKeyPress(VK_DELETE);
+                            await Task.Delay(300);
+                            SimulateTyping(code);
+                            await Task.Delay(500);
+                            SimulateKeyPress(VK_RETURN);
+                        }
                         break;
                     }
-                    if (i == 10)
-                        SendToJS("steamStarted", "Если окно не появляется, возможно код уже был введен ранее");
+                    await Task.Delay(1000);
                 }
-                
-                if (!windowFound)
-                {
-                    SendToJS("steamError", "Не найдено окно для ввода кода. Возможно вход уже выполнен.");
-                    return;
-                }
-                
-                string code = GenerateSteamGuardCode(maFilePath);
-                if (string.IsNullOrEmpty(code))
-                {
-                    SendToJS("steamError", "Не удалось сгенерировать код");
-                    return;
-                }
-                
-                SendToJS("steamStarted", $"Вводим код: {code}");
-                
-                await Task.Delay(500);
-                
-                SimulateCtrlA();
-                await Task.Delay(200);
-                SimulateKeyPress(VK_DELETE);
-                await Task.Delay(300);
-                
-                SimulateTyping(code);
-                await Task.Delay(500);
-                
-                SimulateKeyPress(VK_RETURN);
-                
-                SendToJS("steamStarted", $"Код Steam Guard введен для {login}");
             }
-            catch (Exception ex)
-            {
-                SendToJS("steamError", $"Ошибка 2FA: {ex.Message}");
-            }
+            catch { }
         }
 
         private async Task RunSteamWithAutoLogin(string login, string password)
@@ -1008,7 +944,7 @@ namespace ASFManagerPRO
                 string steamPath = GetSteamPath();
                 if (string.IsNullOrEmpty(steamPath))
                 {
-                    SendToJS("steamError", "Steam не найден. Укажите путь к Steam.exe в настройках");
+                    SendToJS("steamError", "Steam не найден");
                     return;
                 }
 
@@ -1025,7 +961,7 @@ namespace ASFManagerPRO
                 }
                 await Task.Delay(2000);
 
-                string args = "-login";
+                string args = "";
                 if (account.UseIsolation)
                 {
                     string userDataPath = Path.Combine(appDataFolder, "SteamProfiles", login);
@@ -1040,7 +976,7 @@ namespace ASFManagerPRO
                     UseShellExecute = false
                 });
 
-                SendToJS("steamStarted", $"Steam запущен для {login}, ожидание окна...");
+                SendToJS("steamStarted", $"Запуск Steam для {login}...");
 
                 bool windowFound = false;
                 for (int i = 0; i < 20; i++)
@@ -1049,14 +985,13 @@ namespace ASFManagerPRO
                     if (await FindAndActivateSteamWindow())
                     {
                         windowFound = true;
-                        SendToJS("steamStarted", "Окно Steam найдено, выполняем вход...");
                         break;
                     }
                 }
 
                 if (!windowFound)
                 {
-                    SendToJS("steamError", "Не удалось найти окно Steam");
+                    SendToJS("steamError", "Окно Steam не найдено");
                     return;
                 }
 
@@ -1078,9 +1013,7 @@ namespace ASFManagerPRO
 
                 SimulateKeyPress(VK_RETURN);
                 
-                SendToJS("steamStarted", $"Вход выполнен для {login}, ожидание проверки...");
-                
-                await Task.Delay(5000);
+                await Task.Delay(3000);
                 
                 await HandleTwoFactorRequest(login);
 
@@ -1090,11 +1023,11 @@ namespace ASFManagerPRO
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
                 
-                SendToJS("steamStarted", $"Автоматический вход выполнен для {login}");
+                SendToJS("steamStarted", $"Вход выполнен для {login}");
             }
             catch (Exception ex)
             {
-                SendToJS("steamError", $"Ошибка: {ex.Message}");
+                SendToJS("steamError", ex.Message);
             }
         }
 
@@ -1171,8 +1104,7 @@ namespace ASFManagerPRO
         {
             string timestamp = DateTime.Now.Ticks.ToString();
             string random = Guid.NewGuid().ToString().Substring(0, 8);
-            string hwid = $"HWID-{timestamp.Substring(timestamp.Length - 8)}-{random}".ToUpper();
-            return hwid;
+            return $"HWID-{timestamp.Substring(timestamp.Length - 8)}-{random}".ToUpper();
         }
 
         private void OpenSteamProfileFolder(string login)
@@ -1180,19 +1112,13 @@ namespace ASFManagerPRO
             try
             {
                 string profilePath = Path.Combine(appDataFolder, "SteamProfiles", login);
-                if (Directory.Exists(profilePath))
-                {
-                    Process.Start("explorer.exe", profilePath);
-                }
-                else
-                {
+                if (!Directory.Exists(profilePath))
                     Directory.CreateDirectory(profilePath);
-                    Process.Start("explorer.exe", profilePath);
-                }
+                Process.Start("explorer.exe", profilePath);
             }
             catch (Exception ex)
             {
-                SendToJS("error", $"Ошибка открытия папки: {ex.Message}");
+                SendToJS("error", ex.Message);
             }
         }
 
@@ -1201,16 +1127,6 @@ namespace ASFManagerPRO
             var account = GetAccountById(accountId);
             if (account != null)
             {
-                string profilePath = Path.Combine(appDataFolder, "SteamProfiles", account.Login);
-                if (Directory.Exists(profilePath))
-                {
-                    try
-                    {
-                        Directory.Delete(profilePath, true);
-                    }
-                    catch { }
-                }
-                
                 Accounts.Remove(account);
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
