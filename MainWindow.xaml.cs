@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -34,15 +36,6 @@ namespace ASFManagerPRO
         
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr hWnd);
-        
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-        
-        [DllImport("user32.dll")]
-        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
-        
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
         
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
@@ -102,7 +95,6 @@ namespace ASFManagerPRO
         
         private const uint INPUT_KEYBOARD = 1;
         
-        // Коды клавиш
         private const byte VK_TAB = 0x09;
         private const byte VK_RETURN = 0x0D;
         private const byte VK_CONTROL = 0x11;
@@ -112,6 +104,7 @@ namespace ASFManagerPRO
         public ObservableCollection<Account> Accounts { get; set; } = new();
         private string dataPath = "";
         private string appDataFolder = "";
+        private string maFilesFolder = "";
         private string configPath = "";
         private bool webViewReady = false;
 
@@ -130,11 +123,15 @@ namespace ASFManagerPRO
             string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
             string exeFolder = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
             appDataFolder = Path.Combine(exeFolder, "ASF_Data");
+            maFilesFolder = Path.Combine(appDataFolder, "maFiles");
             dataPath = Path.Combine(appDataFolder, "accounts.json");
             configPath = Path.Combine(appDataFolder, "config.json");
 
             if (!Directory.Exists(appDataFolder))
                 Directory.CreateDirectory(appDataFolder);
+            
+            if (!Directory.Exists(maFilesFolder))
+                Directory.CreateDirectory(maFilesFolder);
 
             LoadAccounts();
             LoadConfig();
@@ -183,6 +180,7 @@ namespace ASFManagerPRO
                 {
                     webViewReady = true;
                     SendToJS("accounts", Accounts);
+                    SendToJS("maFilesList", GetMaFilesList());
                 };
             }
             catch (Exception ex)
@@ -284,6 +282,27 @@ namespace ASFManagerPRO
                 else if (msg?.Action == "openSteamProfileFolder")
                 {
                     OpenSteamProfileFolder(msg.Data);
+                }
+                else if (msg?.Action == "getMaFilesList")
+                {
+                    SendToJS("maFilesList", GetMaFilesList());
+                }
+                else if (msg?.Action == "generate2FACode")
+                {
+                    string code = GenerateSteamGuardCode(msg.Data);
+                    SendToJS("twoFactorCode", code);
+                }
+                else if (msg?.Action == "associateMaFile")
+                {
+                    var parts = msg.Data.Split('|');
+                    if (parts.Length >= 2)
+                    {
+                        AssociateMaFileWithAccount(parts[0], parts[1]);
+                    }
+                }
+                else if (msg?.Action == "uploadMaFile")
+                {
+                    _ = SaveMaFileFromBase64(msg.Data);
                 }
             }
             catch (Exception ex)
@@ -578,7 +597,6 @@ namespace ASFManagerPRO
         {
             foreach (char c in text)
             {
-                // Отправляем символ как Unicode
                 INPUT[] inputs = new INPUT[2];
                 
                 inputs[0] = new INPUT
@@ -590,7 +608,7 @@ namespace ASFManagerPRO
                         {
                             wVk = 0,
                             wScan = c,
-                            dwFlags = 0x0004 // KEYEVENTF_UNICODE
+                            dwFlags = 0x0004
                         }
                     }
                 };
@@ -604,7 +622,7 @@ namespace ASFManagerPRO
                         {
                             wVk = 0,
                             wScan = c,
-                            dwFlags = 0x0004 | 0x0002 // KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
+                            dwFlags = 0x0004 | 0x0002
                         }
                     }
                 };
@@ -621,6 +639,118 @@ namespace ASFManagerPRO
             SimulateKeyUp(VK_CONTROL);
         }
 
+        private string GetMaFilesList()
+        {
+            var files = Directory.GetFiles(maFilesFolder, "*.maFile");
+            var result = new List<object>();
+            
+            foreach (var file in files)
+            {
+                try
+                {
+                    string json = File.ReadAllText(file);
+                    var maFile = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    string accountName = maFile?.ContainsKey("account_name") == true ? maFile["account_name"]?.ToString() : Path.GetFileNameWithoutExtension(file);
+                    
+                    result.Add(new
+                    {
+                        fileName = Path.GetFileName(file),
+                        accountName = accountName,
+                        fullPath = file
+                    });
+                }
+                catch { }
+            }
+            
+            return JsonSerializer.Serialize(result);
+        }
+
+        private string GenerateSteamGuardCode(string maFilePath)
+        {
+            try
+            {
+                string json = File.ReadAllText(maFilePath);
+                var maFile = JsonSerializer.Deserialize<SteamMaFile>(json);
+                
+                if (maFile != null && !string.IsNullOrEmpty(maFile.shared_secret))
+                {
+                    return GenerateTwoFactorCode(maFile.shared_secret);
+                }
+                
+                return "";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GenerateSteamGuardCode Error: {ex.Message}");
+                return "";
+            }
+        }
+
+        private string GenerateTwoFactorCode(string sharedSecret)
+        {
+            try
+            {
+                byte[] sharedSecretBytes = Convert.FromBase64String(sharedSecret);
+                long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                long timeStep = currentTime / 30L;
+                
+                byte[] timeBytes = BitConverter.GetBytes(timeStep);
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(timeBytes);
+                
+                using (var hmac = new HMACSHA1(sharedSecretBytes))
+                {
+                    byte[] hash = hmac.ComputeHash(timeBytes);
+                    int offset = hash[19] & 0xF;
+                    int code = (hash[offset] & 0x7F) << 24 |
+                               (hash[offset + 1] & 0xFF) << 16 |
+                               (hash[offset + 2] & 0xFF) << 8 |
+                               (hash[offset + 3] & 0xFF);
+                    
+                    int fullCode = code % 100000000;
+                    return fullCode.ToString("D8");
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private void AssociateMaFileWithAccount(string accountId, string maFilePath)
+        {
+            var account = GetAccountById(accountId);
+            if (account != null)
+            {
+                account.MaFilePath = maFilePath;
+                account.MaFileName = Path.GetFileName(maFilePath);
+                SaveAccounts();
+                SendToJS("accounts", Accounts);
+                SendToJS("maFileAssociated", new { accountId, maFilePath });
+            }
+        }
+
+        private async Task SaveMaFileFromBase64(string base64Data)
+        {
+            try
+            {
+                var parts = base64Data.Split('|');
+                if (parts.Length >= 2)
+                {
+                    string fileName = parts[0];
+                    string content = parts[1];
+                    byte[] bytes = Convert.FromBase64String(content);
+                    string filePath = Path.Combine(maFilesFolder, fileName);
+                    await File.WriteAllBytesAsync(filePath, bytes);
+                    SendToJS("maFileUploaded", GetMaFilesList());
+                }
+            }
+            catch (Exception ex)
+            {
+                SendToJS("error", $"Ошибка сохранения maFile: {ex.Message}");
+            }
+        }
+
         private async Task<bool> FindAndActivateSteamWindow()
         {
             IntPtr steamWindow = IntPtr.Zero;
@@ -634,7 +764,7 @@ namespace ASFManagerPRO
                     GetWindowText(hWnd, title, 256);
                     string titleStr = title.ToString().ToLower();
                     
-                    if (titleStr.Contains("steam") && (titleStr.Contains("вход") || titleStr.Contains("login")))
+                    if (titleStr.Contains("steam"))
                     {
                         windows.Add(hWnd);
                         return false;
@@ -645,27 +775,6 @@ namespace ASFManagerPRO
             
             if (windows.Count > 0)
                 steamWindow = windows[0];
-            else
-            {
-                // Ищем любое окно Steam
-                EnumWindows((hWnd, lParam) =>
-                {
-                    if (IsWindowVisible(hWnd))
-                    {
-                        var title = new System.Text.StringBuilder(256);
-                        GetWindowText(hWnd, title, 256);
-                        if (title.ToString().ToLower().Contains("steam"))
-                        {
-                            windows.Add(hWnd);
-                            return false;
-                        }
-                    }
-                    return true;
-                }, IntPtr.Zero);
-                
-                if (windows.Count > 0)
-                    steamWindow = windows[0];
-            }
             
             if (steamWindow != IntPtr.Zero)
             {
@@ -673,6 +782,38 @@ namespace ASFManagerPRO
                 SetForegroundWindow(steamWindow);
                 await Task.Delay(1000);
                 return true;
+            }
+            
+            return false;
+        }
+
+        private async Task HandleTwoFactorRequest(string login)
+        {
+            try
+            {
+                var account = GetAccountByLogin(login);
+                if (account != null && !string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
+                {
+                    SendToJS("steamStarted", "Требуется код Steam Guard, генерируем...");
+                    
+                    string code = GenerateSteamGuardCode(account.MaFilePath);
+                    if (!string.IsNullOrEmpty(code))
+                    {
+                        await Task.Delay(2000);
+                        
+                        SimulateTyping(code);
+                        await Task.Delay(500);
+                        
+                        SimulateKeyPress(VK_RETURN);
+                        
+                        SendToJS("steamStarted", $"Код Steam Guard введен для {login}");
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SendToJS("steamError", $"Ошибка 2FA: {ex.Message}");
             }
             
             return false;
@@ -696,14 +837,12 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Закрываем Steam если запущен
                 foreach (var proc in Process.GetProcessesByName("Steam"))
                 {
                     try { proc.Kill(); } catch { }
                 }
                 await Task.Delay(2000);
 
-                // Запускаем Steam
                 string args = "-login";
                 if (account.UseIsolation)
                 {
@@ -712,7 +851,7 @@ namespace ASFManagerPRO
                     args += $" -userdata {userDataPath}";
                 }
 
-                var steamProcess = Process.Start(new ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = steamPath,
                     Arguments = args,
@@ -721,7 +860,6 @@ namespace ASFManagerPRO
 
                 SendToJS("steamStarted", $"Steam запущен для {login}, ожидание окна...");
 
-                // Ждем появления окна (до 20 секунд)
                 bool windowFound = false;
                 for (int i = 0; i < 20; i++)
                 {
@@ -742,26 +880,27 @@ namespace ASFManagerPRO
 
                 await Task.Delay(1500);
 
-                // Очищаем поля (Ctrl+A, Delete)
                 SimulateCtrlA();
                 await Task.Delay(200);
                 SimulateKeyPress(VK_DELETE);
                 await Task.Delay(500);
 
-                // Вводим логин
                 SimulateTyping(login);
                 await Task.Delay(500);
 
-                // Нажимаем Tab для перехода к полю пароля
                 SimulateKeyPress(VK_TAB);
                 await Task.Delay(300);
 
-                // Вводим пароль
                 SimulateTyping(password);
                 await Task.Delay(500);
 
-                // Нажимаем Enter для входа
                 SimulateKeyPress(VK_RETURN);
+                
+                SendToJS("steamStarted", $"Вход выполнен для {login}, ожидание проверки...");
+                
+                await Task.Delay(5000);
+                
+                await HandleTwoFactorRequest(login);
 
                 account.Status = "Steam Online";
                 account.LastLogin = DateTime.Now.ToString("o");
@@ -973,6 +1112,8 @@ namespace ASFManagerPRO
         public string Proxy { get; set; } = "";
         public string Pin { get; set; } = "";
         public string MaFile { get; set; } = "";
+        public string MaFilePath { get; set; } = "";
+        public string MaFileName { get; set; } = "";
         public string Notes { get; set; } = "";
         public string Status { get; set; } = "Offline";
         public string Balance { get; set; } = "0 ₽";
@@ -1000,6 +1141,14 @@ namespace ASFManagerPRO
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class SteamMaFile
+    {
+        public string shared_secret { get; set; } = "";
+        public string identity_secret { get; set; } = "";
+        public string account_name { get; set; } = "";
+        public int steam_id { get; set; }
     }
 
     public class WebMessage 
