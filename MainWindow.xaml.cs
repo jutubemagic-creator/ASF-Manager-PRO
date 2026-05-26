@@ -43,12 +43,6 @@ namespace ASFManagerPRO
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
         
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-        
-        [DllImport("user32.dll")]
-        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
-        
         private const int SW_RESTORE = 9;
         private const uint KEYEVENTF_KEYDOWN = 0x0000;
         private const uint KEYEVENTF_KEYUP = 0x0002;
@@ -671,6 +665,44 @@ namespace ASFManagerPRO
             return JsonSerializer.Serialize(result);
         }
 
+        private string GetMaFilePathForAccount(string login)
+        {
+            // Сначала проверяем в аккаунте
+            var account = GetAccountByLogin(login);
+            if (account != null && !string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
+            {
+                return account.MaFilePath;
+            }
+            
+            // Ищем в папке maFiles
+            var maFiles = Directory.GetFiles(maFilesFolder, "*.maFile");
+            foreach (var file in maFiles)
+            {
+                try
+                {
+                    string json = File.ReadAllText(file);
+                    var maFileData = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    if (maFileData != null && maFileData.ContainsKey("account_name"))
+                    {
+                        string accountName = maFileData["account_name"]?.ToString();
+                        if (accountName != null && accountName.Equals(login, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (account != null)
+                            {
+                                account.MaFilePath = file;
+                                account.MaFileName = Path.GetFileName(file);
+                                SaveAccounts();
+                            }
+                            return file;
+                        }
+                    }
+                }
+                catch { }
+            }
+            
+            return "";
+        }
+
         private string GenerateTwoFactorCode(string sharedSecret)
         {
             try
@@ -815,28 +847,6 @@ namespace ASFManagerPRO
             return false;
         }
 
-        private async Task HandleTwoFactorRequest(string login, string code)
-        {
-            SendToJS("steamStarted", $"🔄 Вводим код Steam Guard: {code}");
-            
-            await Task.Delay(1500);
-            
-            // Очищаем поле ввода
-            SimulateCtrlA();
-            await Task.Delay(200);
-            SimulateKeyPress(VK_DELETE);
-            await Task.Delay(300);
-            
-            // Вводим код
-            SimulateTyping(code);
-            await Task.Delay(500);
-            
-            // Нажимаем Enter
-            SimulateKeyPress(VK_RETURN);
-            
-            SendToJS("steamStarted", $"✅ Код {code} введен");
-        }
-
         private async Task RunSteamWithAutoLogin(string login, string password)
         {
             try
@@ -855,48 +865,17 @@ namespace ASFManagerPRO
                     return;
                 }
 
-                // Получаем maFile и генерируем код заранее
-                string maFilePath = "";
-                string twoFactorCode = "";
+                // Проверяем наличие maFile
+                string maFilePath = GetMaFilePathForAccount(login);
+                bool has2FA = !string.IsNullOrEmpty(maFilePath) && File.Exists(maFilePath);
                 
-                if (!string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
+                if (has2FA)
                 {
-                    maFilePath = account.MaFilePath;
+                    SendToJS("steamStarted", $"📱 Найден maFile для {login}, 2FA будет введен автоматически");
                 }
                 else
                 {
-                    var maFiles = Directory.GetFiles(maFilesFolder, "*.maFile");
-                    foreach (var file in maFiles)
-                    {
-                        try
-                        {
-                            string json = File.ReadAllText(file);
-                            var maFileData = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                            if (maFileData != null && maFileData.ContainsKey("account_name"))
-                            {
-                                string accountName = maFileData["account_name"]?.ToString();
-                                if (accountName != null && accountName.Equals(login, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    maFilePath = file;
-                                    account.MaFilePath = maFilePath;
-                                    account.MaFileName = Path.GetFileName(maFilePath);
-                                    SaveAccounts();
-                                    break;
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-                }
-                
-                if (!string.IsNullOrEmpty(maFilePath) && File.Exists(maFilePath))
-                {
-                    twoFactorCode = GenerateSteamGuardCode(maFilePath);
-                    SendToJS("steamStarted", $"📱 Сгенерирован код 2FA: {twoFactorCode}");
-                }
-                else
-                {
-                    SendToJS("steamStarted", "⚠️ maFile не найден, 2FA не будет введен автоматически");
+                    SendToJS("steamStarted", $"⚠️ maFile не найден для {login}, 2FA не будет введен");
                 }
 
                 // Закрываем Steam
@@ -965,15 +944,41 @@ namespace ASFManagerPRO
                 SimulateKeyPress(VK_RETURN);
                 SendToJS("steamStarted", "✅ Нажат Enter, ожидание ответа...");
                 
-                // Ждем появления окна 2FA или успешного входа
+                // Ждем 5 секунд для появления окна 2FA
                 await Task.Delay(5000);
                 
-                // Если есть код 2FA, вводим его
-                if (!string.IsNullOrEmpty(twoFactorCode))
+                // Если есть 2FA, вводим код (генерируем прямо перед вводом)
+                if (has2FA)
                 {
                     SendToJS("steamStarted", "🔐 Ожидание запроса 2FA...");
-                    await Task.Delay(3000);
-                    await HandleTwoFactorRequest(login, twoFactorCode);
+                    await Task.Delay(2000);
+                    
+                    // Генерируем код ТОЛЬКО сейчас, когда он нужен
+                    string twoFactorCode = GenerateSteamGuardCode(maFilePath);
+                    
+                    if (!string.IsNullOrEmpty(twoFactorCode))
+                    {
+                        SendToJS("steamStarted", $"📱 Код 2FA: {twoFactorCode}");
+                        
+                        // Очищаем поле ввода
+                        SimulateCtrlA();
+                        await Task.Delay(200);
+                        SimulateKeyPress(VK_DELETE);
+                        await Task.Delay(300);
+                        
+                        // Вводим код
+                        SimulateTyping(twoFactorCode);
+                        await Task.Delay(500);
+                        
+                        // Нажимаем Enter
+                        SimulateKeyPress(VK_RETURN);
+                        
+                        SendToJS("steamStarted", $"✅ Код {twoFactorCode} введен");
+                    }
+                    else
+                    {
+                        SendToJS("steamError", "Не удалось сгенерировать код 2FA");
+                    }
                 }
 
                 account.Status = "Steam Online";
