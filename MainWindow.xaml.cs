@@ -650,12 +650,12 @@ namespace ASFManagerPRO
                 {
                     string json = File.ReadAllText(file);
                     var maFile = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                    string accountName = maFile?.ContainsKey("account_name") == true ? maFile["account_name"]?.ToString() : Path.GetFileNameWithoutExtension(file);
+                    string accountName = maFile != null && maFile.ContainsKey("account_name") ? maFile["account_name"]?.ToString() : Path.GetFileNameWithoutExtension(file);
                     
                     result.Add(new
                     {
                         fileName = Path.GetFileName(file),
-                        accountName = accountName,
+                        accountName = accountName ?? Path.GetFileNameWithoutExtension(file),
                         fullPath = file
                     });
                 }
@@ -807,7 +807,6 @@ namespace ASFManagerPRO
                         SimulateKeyPress(VK_RETURN);
                         
                         SendToJS("steamStarted", $"Код Steam Guard введен для {login}");
-                        return true;
                     }
                 }
             }
@@ -815,8 +814,6 @@ namespace ASFManagerPRO
             {
                 SendToJS("steamError", $"Ошибка 2FA: {ex.Message}");
             }
-            
-            return false;
         }
 
         private async Task RunSteamWithAutoLogin(string login, string password)
