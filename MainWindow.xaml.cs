@@ -37,23 +37,17 @@ namespace ASFManagerPRO
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr hWnd);
         
-        [DllImport("user32.dll")]
-        private static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
-        
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
         
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
         
         [DllImport("user32.dll")]
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
         
         [DllImport("user32.dll")]
         private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
-        
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
         
         private const int SW_RESTORE = 9;
         private const uint KEYEVENTF_KEYDOWN = 0x0000;
@@ -821,64 +815,49 @@ namespace ASFManagerPRO
             return false;
         }
 
-        private async Task<bool> FindAndActivateTwoFactorWindow()
+        private async Task HandleTwoFactorRequest(string login, string code)
         {
-            IntPtr twoFactorWindow = IntPtr.Zero;
-            string[] possibleTitles = new string[]
-            {
-                "Steam Guard",
-                "Steam Guard - Код подтверждения",
-                "Подтверждение входа в Steam",
-                "Код подтверждения Steam",
-                "Steam Authentication",
-                "Steam Login"
-            };
+            SendToJS("steamStarted", $"🔄 Вводим код Steam Guard: {code}");
             
-            EnumWindows((hWnd, lParam) =>
-            {
-                if (IsWindowVisible(hWnd))
-                {
-                    var title = new StringBuilder(256);
-                    GetWindowText(hWnd, title, 256);
-                    string titleStr = title.ToString();
-                    
-                    foreach (var searchTitle in possibleTitles)
-                    {
-                        if (titleStr.Contains(searchTitle))
-                        {
-                            twoFactorWindow = hWnd;
-                            return false;
-                        }
-                    }
-                    
-                    if (titleStr.ToLower().Contains("steam") && (titleStr.ToLower().Contains("код") || titleStr.ToLower().Contains("code")))
-                    {
-                        twoFactorWindow = hWnd;
-                        return false;
-                    }
-                }
-                return true;
-            }, IntPtr.Zero);
+            await Task.Delay(1500);
             
-            if (twoFactorWindow != IntPtr.Zero)
-            {
-                ShowWindow(twoFactorWindow, SW_RESTORE);
-                SetForegroundWindow(twoFactorWindow);
-                await Task.Delay(1000);
-                return true;
-            }
+            // Очищаем поле ввода
+            SimulateCtrlA();
+            await Task.Delay(200);
+            SimulateKeyPress(VK_DELETE);
+            await Task.Delay(300);
             
-            return false;
+            // Вводим код
+            SimulateTyping(code);
+            await Task.Delay(500);
+            
+            // Нажимаем Enter
+            SimulateKeyPress(VK_RETURN);
+            
+            SendToJS("steamStarted", $"✅ Код {code} введен");
         }
 
-        private async Task HandleTwoFactorRequest(string login)
+        private async Task RunSteamWithAutoLogin(string login, string password)
         {
             try
             {
+                string steamPath = GetSteamPath();
+                if (string.IsNullOrEmpty(steamPath))
+                {
+                    SendToJS("steamError", "Steam не найден");
+                    return;
+                }
+
                 var account = GetAccountByLogin(login);
-                if (account == null) return;
-                
+                if (account == null)
+                {
+                    SendToJS("steamError", "Аккаунт не найден");
+                    return;
+                }
+
+                // Получаем maFile и генерируем код заранее
                 string maFilePath = "";
+                string twoFactorCode = "";
                 
                 if (!string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
                 {
@@ -910,57 +889,24 @@ namespace ASFManagerPRO
                     }
                 }
                 
-                if (string.IsNullOrEmpty(maFilePath) || !File.Exists(maFilePath)) return;
-                
-                // Ждем появления окна 2FA
-                for (int i = 0; i < 30; i++)
+                if (!string.IsNullOrEmpty(maFilePath) && File.Exists(maFilePath))
                 {
-                    if (await FindAndActivateTwoFactorWindow())
-                    {
-                        string code = GenerateSteamGuardCode(maFilePath);
-                        if (!string.IsNullOrEmpty(code))
-                        {
-                            await Task.Delay(500);
-                            SimulateCtrlA();
-                            await Task.Delay(200);
-                            SimulateKeyPress(VK_DELETE);
-                            await Task.Delay(300);
-                            SimulateTyping(code);
-                            await Task.Delay(500);
-                            SimulateKeyPress(VK_RETURN);
-                        }
-                        break;
-                    }
-                    await Task.Delay(1000);
+                    twoFactorCode = GenerateSteamGuardCode(maFilePath);
+                    SendToJS("steamStarted", $"📱 Сгенерирован код 2FA: {twoFactorCode}");
                 }
-            }
-            catch { }
-        }
-
-        private async Task RunSteamWithAutoLogin(string login, string password)
-        {
-            try
-            {
-                string steamPath = GetSteamPath();
-                if (string.IsNullOrEmpty(steamPath))
+                else
                 {
-                    SendToJS("steamError", "Steam не найден");
-                    return;
+                    SendToJS("steamStarted", "⚠️ maFile не найден, 2FA не будет введен автоматически");
                 }
 
-                var account = GetAccountByLogin(login);
-                if (account == null)
-                {
-                    SendToJS("steamError", "Аккаунт не найден");
-                    return;
-                }
-
+                // Закрываем Steam
                 foreach (var proc in Process.GetProcessesByName("Steam"))
                 {
                     try { proc.Kill(); } catch { }
                 }
                 await Task.Delay(2000);
 
+                // Запускаем Steam
                 string args = "";
                 if (account.UseIsolation)
                 {
@@ -976,8 +922,9 @@ namespace ASFManagerPRO
                     UseShellExecute = false
                 });
 
-                SendToJS("steamStarted", $"Запуск Steam для {login}...");
+                SendToJS("steamStarted", $"🚀 Steam запущен для {login}");
 
+                // Ждем окно входа
                 bool windowFound = false;
                 for (int i = 0; i < 20; i++)
                 {
@@ -985,6 +932,7 @@ namespace ASFManagerPRO
                     if (await FindAndActivateSteamWindow())
                     {
                         windowFound = true;
+                        SendToJS("steamStarted", "✅ Окно входа найдено");
                         break;
                     }
                 }
@@ -997,25 +945,36 @@ namespace ASFManagerPRO
 
                 await Task.Delay(1500);
 
+                // Вводим логин и пароль
                 SimulateCtrlA();
                 await Task.Delay(200);
                 SimulateKeyPress(VK_DELETE);
                 await Task.Delay(500);
 
                 SimulateTyping(login);
+                SendToJS("steamStarted", "✅ Логин введен");
                 await Task.Delay(500);
 
                 SimulateKeyPress(VK_TAB);
                 await Task.Delay(300);
 
                 SimulateTyping(password);
+                SendToJS("steamStarted", "✅ Пароль введен");
                 await Task.Delay(500);
 
                 SimulateKeyPress(VK_RETURN);
+                SendToJS("steamStarted", "✅ Нажат Enter, ожидание ответа...");
                 
-                await Task.Delay(3000);
+                // Ждем появления окна 2FA или успешного входа
+                await Task.Delay(5000);
                 
-                await HandleTwoFactorRequest(login);
+                // Если есть код 2FA, вводим его
+                if (!string.IsNullOrEmpty(twoFactorCode))
+                {
+                    SendToJS("steamStarted", "🔐 Ожидание запроса 2FA...");
+                    await Task.Delay(3000);
+                    await HandleTwoFactorRequest(login, twoFactorCode);
+                }
 
                 account.Status = "Steam Online";
                 account.LastLogin = DateTime.Now.ToString("o");
@@ -1023,7 +982,7 @@ namespace ASFManagerPRO
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
                 
-                SendToJS("steamStarted", $"Вход выполнен для {login}");
+                SendToJS("steamStarted", $"🎉 Вход выполнен для {login}");
             }
             catch (Exception ex)
             {
