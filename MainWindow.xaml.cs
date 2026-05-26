@@ -37,11 +37,14 @@ namespace ASFManagerPRO
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr hWnd);
         
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
         
-        [DllImport("user32.dll")]
-        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
         
         private const int SW_RESTORE = 9;
         private const uint KEYEVENTF_KEYDOWN = 0x0000;
@@ -94,6 +97,7 @@ namespace ASFManagerPRO
         }
         
         private const uint INPUT_KEYBOARD = 1;
+        private const uint KEYEVENTF_UNICODE = 0x0004;
         
         private const byte VK_TAB = 0x09;
         private const byte VK_RETURN = 0x0D;
@@ -608,7 +612,7 @@ namespace ASFManagerPRO
                         {
                             wVk = 0,
                             wScan = c,
-                            dwFlags = 0x0004
+                            dwFlags = KEYEVENTF_UNICODE
                         }
                     }
                 };
@@ -622,7 +626,7 @@ namespace ASFManagerPRO
                         {
                             wVk = 0,
                             wScan = c,
-                            dwFlags = 0x0004 | 0x0002
+                            dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
                         }
                     }
                 };
@@ -665,27 +669,6 @@ namespace ASFManagerPRO
             return JsonSerializer.Serialize(result);
         }
 
-        private string GenerateSteamGuardCode(string maFilePath)
-        {
-            try
-            {
-                string json = File.ReadAllText(maFilePath);
-                var maFile = JsonSerializer.Deserialize<SteamMaFile>(json);
-                
-                if (maFile != null && !string.IsNullOrEmpty(maFile.shared_secret))
-                {
-                    return GenerateTwoFactorCode(maFile.shared_secret);
-                }
-                
-                return "";
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"GenerateSteamGuardCode Error: {ex.Message}");
-                return "";
-            }
-        }
-
         private string GenerateTwoFactorCode(string sharedSecret)
         {
             try
@@ -702,17 +685,52 @@ namespace ASFManagerPRO
                 {
                     byte[] hash = hmac.ComputeHash(timeBytes);
                     int offset = hash[19] & 0xF;
+                    
                     int code = (hash[offset] & 0x7F) << 24 |
                                (hash[offset + 1] & 0xFF) << 16 |
                                (hash[offset + 2] & 0xFF) << 8 |
                                (hash[offset + 3] & 0xFF);
                     
-                    int fullCode = code % 100000000;
-                    return fullCode.ToString("D8");
+                    // Steam Guard алфавит: цифры 2-9 и буквы A-Z (исключая 0,1,O,I)
+                    string alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+                    int tempCode = code;
+                    
+                    char[] result = new char[5];
+                    for (int i = 0; i < 5; i++)
+                    {
+                        result[4 - i] = alphabet[tempCode % alphabet.Length];
+                        tempCode /= alphabet.Length;
+                    }
+                    
+                    return new string(result);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"GenerateTwoFactorCode Error: {ex.Message}");
+                return "";
+            }
+        }
+
+        private string GenerateSteamGuardCode(string maFilePath)
+        {
+            try
+            {
+                string json = File.ReadAllText(maFilePath);
+                var maFile = JsonSerializer.Deserialize<SteamMaFile>(json);
+                
+                if (maFile != null && !string.IsNullOrEmpty(maFile.shared_secret))
+                {
+                    string code = GenerateTwoFactorCode(maFile.shared_secret);
+                    Debug.WriteLine($"Generated Steam Guard code: {code}");
+                    return code;
+                }
+                
+                return "";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GenerateSteamGuardCode Error: {ex.Message}");
                 return "";
             }
         }
@@ -760,7 +778,7 @@ namespace ASFManagerPRO
             {
                 if (IsWindowVisible(hWnd))
                 {
-                    var title = new System.Text.StringBuilder(256);
+                    var title = new StringBuilder(256);
                     GetWindowText(hWnd, title, 256);
                     string titleStr = title.ToString().ToLower();
                     
@@ -787,28 +805,195 @@ namespace ASFManagerPRO
             return false;
         }
 
+        private async Task<bool> FindAndActivateTwoFactorWindow()
+        {
+            IntPtr twoFactorWindow = IntPtr.Zero;
+            List<IntPtr> windows = new List<IntPtr>();
+            
+            EnumWindows((hWnd, lParam) =>
+            {
+                if (IsWindowVisible(hWnd))
+                {
+                    var title = new StringBuilder(256);
+                    GetWindowText(hWnd, title, 256);
+                    string titleStr = title.ToString().ToLower();
+                    
+                    if ((titleStr.Contains("steam") || titleStr.Contains("код") || titleStr.Contains("code") || 
+                         titleStr.Contains("guard") || titleStr.Contains("authenticator")) &&
+                        (titleStr.Contains("введите") || titleStr.Contains("enter") || titleStr.Contains("проверка")))
+                    {
+                        windows.Add(hWnd);
+                        return false;
+                    }
+                }
+                return true;
+            }, IntPtr.Zero);
+            
+            if (windows.Count == 0)
+            {
+                EnumWindows((hWnd, lParam) =>
+                {
+                    if (IsWindowVisible(hWnd))
+                    {
+                        var title = new StringBuilder(256);
+                        GetWindowText(hWnd, title, 256);
+                        string titleStr = title.ToString().ToLower();
+                        
+                        if (titleStr.Contains("steam"))
+                        {
+                            List<IntPtr> editBoxes = new List<IntPtr>();
+                            EnumChildWindows(hWnd, (childHwnd, childParam) =>
+                            {
+                                StringBuilder className = new StringBuilder(256);
+                                GetClassName(childHwnd, className, 256);
+                                if (className.ToString().Contains("Edit"))
+                                {
+                                    editBoxes.Add(childHwnd);
+                                }
+                                return true;
+                            }, IntPtr.Zero);
+                            
+                            if (editBoxes.Count > 0)
+                            {
+                                windows.Add(hWnd);
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+            }
+            
+            if (windows.Count > 0)
+                twoFactorWindow = windows[0];
+            
+            if (twoFactorWindow != IntPtr.Zero)
+            {
+                ShowWindow(twoFactorWindow, SW_RESTORE);
+                SetForegroundWindow(twoFactorWindow);
+                await Task.Delay(1000);
+                return true;
+            }
+            
+            return false;
+        }
+
         private async Task HandleTwoFactorRequest(string login)
         {
             try
             {
                 var account = GetAccountByLogin(login);
-                if (account != null && !string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
+                if (account == null)
                 {
-                    SendToJS("steamStarted", "Требуется код Steam Guard, генерируем...");
+                    SendToJS("steamError", "Аккаунт не найден для 2FA");
+                    return;
+                }
+                
+                string maFilePath = "";
+                
+                if (!string.IsNullOrEmpty(account.MaFilePath) && File.Exists(account.MaFilePath))
+                {
+                    maFilePath = account.MaFilePath;
+                    SendToJS("steamStarted", $"Используем привязанный maFile: {account.MaFileName}");
+                }
+                else
+                {
+                    SendToJS("steamStarted", $"Ищем maFile для {login} в папке {maFilesFolder}");
                     
-                    string code = GenerateSteamGuardCode(account.MaFilePath);
-                    if (!string.IsNullOrEmpty(code))
+                    var maFiles = Directory.GetFiles(maFilesFolder, "*.maFile");
+                    SendToJS("steamStarted", $"Найдено maFile файлов: {maFiles.Length}");
+                    
+                    foreach (var file in maFiles)
                     {
-                        await Task.Delay(2000);
-                        
-                        SimulateTyping(code);
-                        await Task.Delay(500);
-                        
-                        SimulateKeyPress(VK_RETURN);
-                        
-                        SendToJS("steamStarted", $"Код Steam Guard введен для {login}");
+                        try
+                        {
+                            string json = File.ReadAllText(file);
+                            var maFileData = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                            if (maFileData != null && maFileData.ContainsKey("account_name"))
+                            {
+                                string accountName = maFileData["account_name"]?.ToString();
+                                if (accountName != null && accountName.Equals(login, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    maFilePath = file;
+                                    account.MaFilePath = maFilePath;
+                                    account.MaFileName = Path.GetFileName(maFilePath);
+                                    SaveAccounts();
+                                    SendToJS("steamStarted", $"Найден подходящий maFile: {Path.GetFileName(file)}");
+                                    break;
+                                }
+                            }
+                        }
+                        catch { }
                     }
                 }
+                
+                if (string.IsNullOrEmpty(maFilePath) || !File.Exists(maFilePath))
+                {
+                    SendToJS("steamError", $"Не найден maFile для аккаунта {login}\n\nПоложите .maFile файл в папку:\n{maFilesFolder}");
+                    return;
+                }
+                
+                // Проверяем генерацию кода
+                try
+                {
+                    string testCode = GenerateSteamGuardCode(maFilePath);
+                    if (string.IsNullOrEmpty(testCode))
+                    {
+                        SendToJS("steamError", "Не удается сгенерировать код. Проверьте maFile файл.");
+                        return;
+                    }
+                    SendToJS("steamStarted", $"Текущий код для {login}: {testCode}");
+                }
+                catch (Exception ex)
+                {
+                    SendToJS("steamError", $"Ошибка генерации кода: {ex.Message}");
+                    return;
+                }
+                
+                SendToJS("steamStarted", "Ожидаем окно ввода кода Steam Guard...");
+                
+                bool windowFound = false;
+                for (int i = 0; i < 20; i++)
+                {
+                    await Task.Delay(1000);
+                    if (await FindAndActivateTwoFactorWindow())
+                    {
+                        windowFound = true;
+                        SendToJS("steamStarted", "Окно 2FA найдено!");
+                        break;
+                    }
+                    if (i == 10)
+                        SendToJS("steamStarted", "Если окно не появляется, возможно код уже был введен ранее");
+                }
+                
+                if (!windowFound)
+                {
+                    SendToJS("steamError", "Не найдено окно для ввода кода. Возможно вход уже выполнен.");
+                    return;
+                }
+                
+                string code = GenerateSteamGuardCode(maFilePath);
+                if (string.IsNullOrEmpty(code))
+                {
+                    SendToJS("steamError", "Не удалось сгенерировать код");
+                    return;
+                }
+                
+                SendToJS("steamStarted", $"Вводим код: {code}");
+                
+                await Task.Delay(500);
+                
+                SimulateCtrlA();
+                await Task.Delay(200);
+                SimulateKeyPress(VK_DELETE);
+                await Task.Delay(300);
+                
+                SimulateTyping(code);
+                await Task.Delay(500);
+                
+                SimulateKeyPress(VK_RETURN);
+                
+                SendToJS("steamStarted", $"Код Steam Guard введен для {login}");
             }
             catch (Exception ex)
             {
@@ -905,7 +1090,7 @@ namespace ASFManagerPRO
                 SaveAccounts();
                 SendToJS("accounts", Accounts);
                 
-                SendToJS("steamStarted", $"✅ Автоматический вход выполнен для {login}");
+                SendToJS("steamStarted", $"Автоматический вход выполнен для {login}");
             }
             catch (Exception ex)
             {
