@@ -2,1157 +2,747 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ASF Manager PRO v4.0 | Ultimate Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBIT STEAM LAB | v5.0 — Космический контроль аккаунтов</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap');
-        * { font-family: 'Inter', system-ui, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0B0C10; min-height: 100vh; position: relative; }
-        body::before {
-            content: '';
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        body {
+            background: radial-gradient(ellipse at 30% 40%, #0a0e1a, #03050b);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Звёздный фон */
+        .stars {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 20% 50%, rgba(0, 180, 255, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             z-index: 0;
         }
         
-        /* Анимации */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideInLeft {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes glowPulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(0, 180, 255, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(0, 180, 255, 0.5); }
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 3s infinite;
         }
         
-        .glass-panel {
-            background: rgba(18, 22, 28, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(72, 187, 255, 0.12);
-            border-radius: 2rem;
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.2); }
         }
-        .glass-card {
-            background: linear-gradient(135deg, rgba(25, 32, 40, 0.95) 0%, rgba(15, 20, 26, 0.98) 100%);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 180, 255, 0.18);
+        
+        /* Орбитальные кольца */
+        .orbit-ring {
+            position: fixed;
+            border: 1px solid rgba(0, 200, 255, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Главная панель — стеклянная платформа */
+        .glass-orbit {
+            background: rgba(8, 12, 20, 0.65);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 220, 255, 0.25);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Карточка аккаунта — нео-морфизм + свечение */
+        .neo-card {
+            background: linear-gradient(145deg, rgba(16, 22, 35, 0.9), rgba(8, 12, 22, 0.95));
             border-radius: 1.8rem;
-            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            animation: fadeInUp 0.5s ease-out;
-        }
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #00b4ff, #00ff88, #00b4ff);
-            transform: scaleX(0);
-            transition: transform 0.6s ease;
-        }
-        .glass-card:hover::before { transform: scaleX(1); }
-        .glass-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(0, 180, 255, 0.4);
-            box-shadow: 0 20px 40px -15px rgba(0, 180, 255, 0.3);
         }
         
-        .sidebar-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 14px;
-            color: #9ca3af;
-            font-weight: 500;
+        .neo-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.08) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .neo-card:hover::after {
+            opacity: 1;
+        }
+        
+        .neo-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            border-color: rgba(0, 220, 255, 0.6);
+            box-shadow: 0 20px 35px -12px rgba(0, 180, 255, 0.4);
+        }
+        
+        /* Голографический аватар */
+        .hologram {
+            background: linear-gradient(135deg, #1a2a3a, #0f1822);
+            border-radius: 1.2rem;
             position: relative;
             overflow: hidden;
         }
-        .sidebar-btn::before {
+        
+        .hologram::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(0, 200, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        
+        .neo-card:hover .hologram::before {
+            transform: translateX(100%);
+        }
+        
+        /* Статус с анимированной пульсацией */
+        .status-neon {
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .status-online-neon {
+            background: rgba(0, 255, 150, 0.15);
+            color: #0f0;
+            border: 1px solid #0f0;
+            box-shadow: 0 0 8px #0f0;
+            animation: neonPulse 1.5s infinite;
+        }
+        
+        @keyframes neonPulse {
+            0%, 100% { box-shadow: 0 0 5px #0f0; }
+            50% { box-shadow: 0 0 15px #0f0; }
+        }
+        
+        /* Кнопки с эффектом частиц */
+        .glow-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            border-radius: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .glow-btn::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 180, 255, 0.1), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s;
         }
-        .sidebar-btn:hover::before { left: 100%; }
-        .sidebar-btn:hover {
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.15), rgba(0, 255, 136, 0.05));
-            color: white;
-            transform: translateX(4px);
-        }
-        .sidebar-btn.active {
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.25), rgba(0, 136, 204, 0.15));
-            color: #00b4ff;
-            border-left: 3px solid #00b4ff;
+        
+        .glow-btn:hover::before {
+            left: 100%;
         }
         
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 11px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-        }
-        .status-online {
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: #0a0a0f;
-            animation: glowPulse 2s infinite;
-        }
-        .status-offline {
-            background: rgba(55, 65, 81, 0.6);
-            color: #9ca3af;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Прогресс-бар для статистики */
+        .stat-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
         }
         
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 16px;
-        }
-        .info-item {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 16px;
-            padding: 10px 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid rgba(0, 180, 255, 0.1);
-        }
-        .info-item:hover {
-            background: rgba(0, 180, 255, 0.08);
-            border-color: rgba(0, 180, 255, 0.2);
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00b4ff, #00ff88);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1s ease;
         }
         
-        .card-btn {
-            flex: 1;
-            padding: 10px 0;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 700;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+        /* Модальное окно — футуристическое */
+        .modal-future {
+            background: rgba(6, 10, 18, 0.98);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 2rem;
+            animation: floatIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Стилизация скролла */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00b4ff;
+            border-radius: 10px;
+        }
+        
+        /* Анимация для уведомлений */
+        .toast-cosmic {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 0.8rem 2rem;
+            border-radius: 3rem;
+            color: #0ff;
+            font-weight: 500;
+            border: 1px solid #0ff;
+            z-index: 1000;
+            animation: slideUpFade 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        /* Космический свитчер */
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: #1e293b;
+            border-radius: 30px;
+            position: relative;
             cursor: pointer;
-            border: none;
-        }
-        .card-btn-asf {
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: #0a0a0f;
-        }
-        .card-btn-asf:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 255, 136, 0.5); }
-        .card-btn-inventory {
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            color: white;
-        }
-        .card-btn-steam {
-            background: linear-gradient(135deg, #1b2838, #0f1a24);
-            color: #66c0f4;
-            border: 1px solid rgba(102, 192, 244, 0.3);
-        }
-        .card-btn-edit {
-            background: rgba(0, 180, 255, 0.15);
-            color: #00b4ff;
-            border: 1px solid rgba(0, 180, 255, 0.3);
-            flex: none;
-            width: 44px;
-        }
-        .card-btn-delete {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            flex: none;
-            width: 44px;
-        }
-        .card-btn-spoof {
-            background: linear-gradient(135deg, #7c3aed, #a855f7);
-            color: white;
-            flex: none;
-            width: 44px;
+            transition: 0.3s;
         }
         
-        .card-checkbox {
+        .toggle-switch.active {
+            background: #00b4ff;
+        }
+        
+        .toggle-knob {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
             position: absolute;
-            top: 16px;
-            left: 16px;
-            z-index: 10;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #00b4ff;
+            top: 2px;
+            left: 3px;
+            transition: 0.3s;
+        }
+        
+        .toggle-switch.active .toggle-knob {
+            left: 25px;
         }
         
         input, textarea, select {
-            background: rgba(15, 25, 35, 0.9);
-            border: 1px solid rgba(0, 180, 255, 0.3);
-            border-radius: 1.2rem;
-            padding: 0.8rem 1.2rem;
-            color: #f1f5f9;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 1rem;
+            padding: 0.7rem 1rem;
+            color: white;
+            transition: 0.2s;
         }
+        
         input:focus, textarea:focus, select:focus {
+            border-color: #0ff;
             outline: none;
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
         }
         
-        .action-btn {
-            background: linear-gradient(135deg, rgba(31, 41, 55, 0.9), rgba(31, 41, 55, 0.7));
-            border: 1px solid rgba(0, 180, 255, 0.2);
-            border-radius: 16px;
-            padding: 12px 24px;
-            color: white;
-            font-weight: 600;
-            transition: all 0.3s;
-            cursor: pointer;
+        .badge-crypto {
+            background: linear-gradient(135deg, #00b4ff20, #00ff8820);
+            border-radius: 2rem;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.7rem;
+            color: #0ff;
         }
-        .action-btn:hover {
-            background: linear-gradient(135deg, #00b4ff, #0088cc);
-            transform: translateY(-2px);
-        }
-        .danger-btn {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #f87171;
-        }
-        .danger-btn:hover {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #00b4ff, #0088cc);
-            color: white;
-        }
-        .btn-success {
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: #0a0a0f;
-        }
-        
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.95), rgba(0, 136, 204, 0.95));
-            backdrop-filter: blur(20px);
-            color: white;
-            padding: 14px 28px;
-            border-radius: 50px;
-            z-index: 1000;
-            animation: slideInLeft 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            font-weight: 600;
-        }
-        
-        .modal-content {
-            background: rgba(18, 20, 26, 0.98);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(0, 180, 255, 0.3);
-            border-radius: 32px;
-            animation: fadeInUp 0.4s ease-out;
-        }
-        
-        .detail-row {
-            display: flex;
-            padding: 14px;
-            border-bottom: 1px solid rgba(0, 180, 255, 0.1);
-            align-items: flex-start;
-        }
-        .detail-row:hover {
-            background: rgba(0, 180, 255, 0.08);
-            border-radius: 16px;
-        }
-        .detail-label { width: 150px; font-weight: 600; color: #9ca3af; }
-        .detail-value { flex: 1; color: white; word-break: break-word; }
-        
-        .copy-btn {
-            cursor: pointer;
-            padding: 4px 12px;
-            background: rgba(0, 180, 255, 0.15);
-            border-radius: 10px;
-            font-size: 11px;
-            margin-left: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #00b4ff;
-        }
-        .copy-btn:hover {
-            background: rgba(0, 180, 255, 0.35);
-            transform: scale(1.05);
-        }
-        
-        .inventory-item {
-            transition: all 0.3s;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border-radius: 20px;
-            padding: 16px;
-            text-align: center;
-            border: 1px solid rgba(0, 180, 255, 0.1);
-        }
-        .inventory-item:hover {
-            transform: translateY(-8px) scale(1.05);
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.15), rgba(0, 180, 255, 0.05));
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, rgba(22, 25, 35, 0.95), rgba(16, 18, 25, 0.98));
-            border: 1px solid rgba(0, 180, 255, 0.15);
-            border-radius: 24px;
-            padding: 24px;
-        }
-        
-        .text-gradient {
-            background: linear-gradient(135deg, #00b4ff, #00ff88);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .floating { animation: float 3s ease-in-out infinite; }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(31, 41, 55, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #00b4ff, #00ff88); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="flex h-screen overflow-hidden">
-    <!-- Sidebar -->
-    <div class="w-80 p-6 flex flex-col" style="background: rgba(8, 8, 12, 0.85); backdrop-filter: blur(20px); border-right: 1px solid rgba(0, 180, 255, 0.15);">
-        <div class="flex items-center gap-3 mb-10 floating">
-            <div class="w-14 h-14 bg-gradient-to-br from-[#00b4ff] to-[#00ff88] rounded-2xl flex items-center justify-center text-3xl shadow-xl">🎮</div>
+<!-- Звёздное поле -->
+<div class="stars" id="starsContainer"></div>
+
+<!-- Орбитальные кольца -->
+<div class="orbit-ring" style="width: 500px; height: 500px; right: -200px; top: -200px; border-width: 2px; animation: rotate 60s linear infinite;"></div>
+<div class="orbit-ring" style="width: 800px; height: 800px; left: -300px; bottom: -300px; border-width: 1px; animation: rotate 90s linear infinite reverse;"></div>
+
+<div class="relative z-10 flex h-screen p-5 gap-5">
+    <!-- ЛЕВАЯ ПАНЕЛЬ — КОСМИЧЕСКАЯ КОНСОЛЬ -->
+    <div class="w-80 glass-orbit p-5 flex flex-col backdrop-blur-2xl">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-2xl relative">
+                <i class="fas fa-satellite-dish text-white text-xl"></i>
+                <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
             <div>
-                <h1 class="text-2xl font-black text-gradient">ASF PRO</h1>
-                <p class="text-xs text-gray-400 tracking-wider">Manager v4.0 • ULTIMATE</p>
+                <h1 class="text-2xl font-black tracking-wider bg-gradient-to-r from-cyan-300 to-emerald-300 bg-clip-text text-transparent">ORBIT LAB</h1>
+                <p class="text-[10px] text-cyan-400/70 tracking-widest">STEAM ORBIT v5.0</p>
             </div>
         </div>
         
-        <button onclick="addNewAccount()" class="btn-primary w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-3 shadow-xl">
-            <i class="fas fa-plus-circle text-lg"></i> Добавить аккаунт
+        <button onclick="createNewAccount()" class="glow-btn w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-cyan-600 to-blue-600 hover:shadow-cyan-500/50 text-white mb-3">
+            <i class="fas fa-plus-circle"></i> Новая орбита
         </button>
         
-        <button onclick="runASFForAll()" class="btn-success w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition mb-8 shadow-xl">
-            <i class="fas fa-play-circle text-lg"></i> Запустить всех
+        <button onclick="launchAll()" class="glow-btn w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-emerald-500/50 text-white mb-6">
+            <i class="fas fa-rocket"></i> Запуск флота
         </button>
         
-        <div class="space-y-1.5">
-            <button onclick="switchTab('accounts')" id="tabAccounts" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3">
-                <i class="fas fa-users w-5 text-lg"></i> Аккаунты
+        <div class="space-y-2">
+            <button onclick="changeGalaxy('accounts')" id="navAccounts" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-cyan-900/30 transition-all group">
+                <i class="fas fa-users text-cyan-400 w-5"></i> Аккаунты
+                <span class="ml-auto text-xs opacity-0 group-hover:opacity-100 transition">▶</span>
             </button>
-            <button onclick="switchTab('inventory')" id="tabInventory" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3">
-                <i class="fas fa-box w-5 text-lg"></i> Инвентарь
+            <button onclick="changeGalaxy('inventory')" id="navInventory" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-cyan-900/30 transition-all group">
+                <i class="fas fa-cubes text-purple-400 w-5"></i> Инвентарь
+                <span class="ml-auto text-xs opacity-0 group-hover:opacity-100 transition">▶</span>
             </button>
-            <button onclick="switchTab('stats')" id="tabStats" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3">
-                <i class="fas fa-chart-line w-5 text-lg"></i> Статистика
+            <button onclick="changeGalaxy('stats')" id="navStats" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-cyan-900/30 transition-all group">
+                <i class="fas fa-chart-line text-green-400 w-5"></i> Космостаты
+                <span class="ml-auto text-xs opacity-0 group-hover:opacity-100 transition">▶</span>
             </button>
-            <button onclick="switchTab('settings')" id="tabSettings" class="sidebar-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3">
-                <i class="fas fa-cog w-5 text-lg"></i> Настройки
+            <button onclick="changeGalaxy('settings')" id="navSettings" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-cyan-900/30 transition-all group">
+                <i class="fas fa-microchip text-yellow-400 w-5"></i> Система
+                <span class="ml-auto text-xs opacity-0 group-hover:opacity-100 transition">▶</span>
             </button>
         </div>
         
-        <div class="mt-auto pt-6 text-xs text-gray-500 border-t border-[#00b4ff]/20">
-            <div class="flex items-center justify-between mb-2">
-                <span><i class="fas fa-database"></i> Локальное хранение</span>
-                <i class="fas fa-shield-alt text-[#00b4ff]"></i>
+        <!-- Статусная панель -->
+        <div class="mt-auto pt-6 text-xs border-t border-cyan-500/20">
+            <div class="flex justify-between items-center">
+                <span class="text-gray-500"><i class="fas fa-database mr-1"></i> Нейросеть</span>
+                <span class="text-cyan-400" id="totalCountSpan">0 юнитов</span>
             </div>
-            <span id="accountCount" class="font-bold text-[#00b4ff] text-sm">0 аккаунтов</span>
+            <div class="stat-bar mt-2">
+                <div class="stat-fill" id="globalFill" style="width: 0%"></div>
+            </div>
         </div>
     </div>
     
-    <!-- Main Content -->
-    <div class="flex-1 p-6 overflow-auto" id="mainContent"></div>
+    <!-- ЦЕНТРАЛЬНЫЙ КОСМОДРОМ (КОНТЕНТ) -->
+    <div class="flex-1 glass-orbit overflow-auto p-5 relative" id="contentArea">
+        <div id="dynamicContent" class="animate-pulse text-center text-gray-500 mt-20">Загрузка орбитальных данных...</div>
+    </div>
 </div>
 
-<!-- Модальные окна -->
-<div id="detailModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-    <div class="modal-content w-[900px] max-h-[85vh] overflow-auto p-6">
-        <div class="flex justify-between items-center mb-5 pb-3 border-b border-[#00b4ff]/20">
-            <h2 id="detailTitle" class="text-2xl font-bold text-gradient"></h2>
-            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white hover:rotate-90 transition-all duration-300 text-3xl">&times;</button>
+<!-- Модалки будущего -->
+<div id="modalDetail" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+    <div class="modal-future w-[800px] max-h-[85vh] overflow-auto p-6">
+        <div class="flex justify-between items-center border-b border-cyan-500/30 pb-3">
+            <h2 id="modalDetailTitle" class="text-2xl font-bold text-cyan-300"></h2>
+            <button onclick="closeModal('modalDetail')" class="text-gray-400 hover:text-white text-3xl">&times;</button>
         </div>
-        <div id="detailContent" class="mb-5"></div>
-        <div class="flex gap-3 pt-3 flex-wrap">
-            <button onclick="editFromDetail()" class="flex-1 py-3 bg-[#00b4ff] text-black font-bold rounded-xl hover:scale-105">Редактировать</button>
-            <button onclick="runASFFromDetail()" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:scale-105">Запустить ASF</button>
-            <button onclick="runSteamFromDetail()" class="flex-1 py-3 bg-[#1b2838] text-white font-bold rounded-xl hover:scale-105"><i class="fab fa-steam"></i> Запустить Steam</button>
-            <button onclick="deleteFromDetail()" class="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:scale-105">Удалить</button>
-            <button onclick="closeDetailModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl hover:scale-105">Закрыть</button>
+        <div id="modalDetailBody" class="my-5"></div>
+        <div class="flex gap-3 flex-wrap">
+            <button onclick="actionEditFromDetail()" class="flex-1 py-2 bg-cyan-600 rounded-xl"><i class="fas fa-edit"></i> Редакт</button>
+            <button onclick="actionRunASFDetail()" class="flex-1 py-2 bg-emerald-600 rounded-xl"><i class="fas fa-play"></i> ASF</button>
+            <button onclick="actionRunSteamDetail()" class="flex-1 py-2 bg-blue-800 rounded-xl"><i class="fab fa-steam"></i> Steam</button>
+            <button onclick="actionDeleteFromDetail()" class="flex-1 py-2 bg-red-600 rounded-xl">Уничтожить</button>
+            <button onclick="closeModal('modalDetail')" class="flex-1 py-2 bg-gray-700 rounded-xl">Закрыть</button>
         </div>
     </div>
 </div>
 
-<div id="editModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-    <div class="modal-content w-[800px] max-h-[85vh] overflow-auto p-6">
-        <h2 id="editTitle" class="text-2xl font-bold mb-5 text-gradient">Редактирование</h2>
-        <div class="grid grid-cols-2 gap-4">
-            <div><label class="text-gray-400 text-sm font-semibold">Логин Steam *</label><input id="editLogin" class="w-full" placeholder="Введите логин"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Пароль Steam</label><input id="editPassword" type="password" class="w-full" placeholder="Введите пароль"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Steam ID</label><input id="editSteamId" class="w-full" placeholder="7656119..."></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Баланс</label><input id="editBalance" class="w-full" placeholder="0 ₽"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Почта</label><input id="editEmail" class="w-full" placeholder="email@example.com"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Пароль почты</label><input id="editEmailPass" type="password" class="w-full" placeholder="Пароль от почты"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">Прокси (ip:port)</label><input id="editProxy" class="w-full" placeholder="127.0.0.1:8080"></div>
-            <div><label class="text-gray-400 text-sm font-semibold">PIN-код</label><input id="editPin" class="w-full" placeholder="PIN-код"></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm font-semibold">MaFile (JSON)</label><textarea id="editMaFile" rows="3" class="w-full font-mono text-xs" placeholder='{"shared_secret":"..."}'></textarea></div>
-            <div class="col-span-2"><label class="text-gray-400 text-sm font-semibold">Заметки</label><textarea id="editNotes" rows="2" class="w-full" placeholder="Дополнительная информация..."></textarea></div>
+<div id="modalEdit" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+    <div class="modal-future w-[700px] max-h-[85vh] overflow-auto p-6">
+        <h2 class="text-2xl font-bold text-cyan-300 mb-4">Настройки профиля</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <input id="editLogin" placeholder="Логин" class="w-full">
+            <input id="editPass" type="password" placeholder="Пароль" class="w-full">
+            <input id="editSteamId" placeholder="Steam ID" class="w-full">
+            <input id="editBalance" placeholder="Баланс" class="w-full">
+            <input id="editEmail" placeholder="Email" class="w-full">
+            <input id="editProxy" placeholder="Proxy (ip:port)" class="w-full">
+            <textarea id="editNotes" rows="2" placeholder="Заметки" class="col-span-2 w-full"></textarea>
+            <textarea id="editMaFile" rows="2" placeholder="MaFile JSON" class="col-span-2 w-full font-mono text-xs"></textarea>
         </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="saveEditedAccount()" class="flex-1 py-3 bg-gradient-to-r from-[#00b4ff] to-[#0088cc] text-white font-bold rounded-xl hover:scale-105">Сохранить</button>
-            <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl hover:scale-105">Отмена</button>
+        <div class="flex gap-3 mt-5">
+            <button onclick="saveAccountEdit()" class="flex-1 py-2 bg-cyan-600 rounded-xl">Сохранить</button>
+            <button onclick="closeModal('modalEdit')" class="flex-1 py-2 bg-gray-700 rounded-xl">Отмена</button>
         </div>
     </div>
 </div>
 
-<div id="massEditModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-    <div class="modal-content w-[500px] p-6">
-        <h2 class="text-2xl font-bold mb-5 text-gradient">Массовое редактирование</h2>
-        <div class="mb-4">
-            <label class="text-gray-400 text-sm font-semibold">Поле для изменения:</label>
-            <select id="massEditField" class="w-full mt-2">
-                <option value="Proxy">🌐 Прокси</option>
-                <option value="Notes">📝 Заметки</option>
-                <option value="Status">🟢 Статус</option>
-                <option value="Balance">💰 Баланс</option>
-            </select>
+<div id="modalSpoof" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+    <div class="modal-future w-[450px] p-6">
+        <h2 class="text-xl font-bold text-purple-300 mb-3">Спуфер · <span id="spoofAccName"></span></h2>
+        <input id="hwidValue" placeholder="HWID" class="w-full mb-3">
+        <button onclick="genNewHwid()" class="text-sm bg-purple-700 px-3 py-1 rounded-xl mb-3">🌀 Генератор HWID</button>
+        <div class="flex items-center gap-3 mb-3">
+            <div id="toggleIsolation" class="toggle-switch" onclick="toggleIsolationFlag()"></div>
+            <span class="text-sm text-gray-300">Изоляция аккаунта</span>
         </div>
-        <div class="mb-6">
-            <label class="text-gray-400 text-sm font-semibold">Новое значение:</label>
-            <input type="text" id="massEditValue" class="w-full mt-2" placeholder="Введите значение...">
-        </div>
+        <select id="launchSelect" class="w-full mb-4">
+            <option value="normal">Обычный запуск</option>
+            <option value="bigpicture">Big Picture</option>
+            <option value="vr">VR режим</option>
+        </select>
         <div class="flex gap-3">
-            <button onclick="applyMassEdit()" class="flex-1 py-3 bg-gradient-to-r from-[#00b4ff] to-[#0088cc] text-white font-bold rounded-xl hover:scale-105">Применить</button>
-            <button onclick="closeMassEditModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl hover:scale-105">Отмена</button>
-        </div>
-    </div>
-</div>
-
-<div id="spoofModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-    <div class="modal-content w-[500px] p-6">
-        <h2 class="text-2xl font-bold mb-5 text-gradient">Спуфер для <span id="spoofAccountName"></span></h2>
-        <div class="space-y-4">
-            <div>
-                <label class="text-gray-400 text-sm font-semibold">Аппаратный ID (HWID)</label>
-                <input type="text" id="hwidInput" class="w-full mt-2 font-mono text-sm" placeholder="Сгенерировать автоматически">
-                <button onclick="generateHWID()" class="mt-2 px-4 py-2 bg-purple-600 rounded-xl text-sm font-semibold hover:scale-105">🔄 Сгенерировать новый</button>
-            </div>
-            <div>
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" id="isolationCheckbox" class="w-5 h-5 accent-[#00b4ff]">
-                    <span class="text-gray-300 font-medium">Использовать изоляцию (отдельные конфиги)</span>
-                </label>
-                <p class="text-xs text-gray-500 mt-2 ml-7">Каждый аккаунт будет иметь отдельные настройки Steam</p>
-            </div>
-            <div>
-                <label class="text-gray-400 text-sm font-semibold">Режим запуска</label>
-                <select id="launchModeSelect" class="w-full mt-2">
-                    <option value="normal">Обычный вход</option>
-                    <option value="bigpicture">Big Picture режим</option>
-                    <option value="vr">VR режим</option>
-                </select>
-            </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="saveSpooferSettings()" class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:scale-105">Сохранить</button>
-            <button onclick="closeSpoofModal()" class="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl hover:scale-105">Отмена</button>
+            <button onclick="saveSpoof()" class="flex-1 bg-purple-600 py-2 rounded-xl">Применить</button>
+            <button onclick="closeModal('modalSpoof')" class="flex-1 bg-gray-700 py-2 rounded-xl">Отмена</button>
         </div>
     </div>
 </div>
 
 <script>
-// ==================== ГЛОБАЛЬНЫЕ ДАННЫЕ ====================
-let accounts = [];
-let currentTab = 'accounts';
-let currentDetailAccount = null;
-let currentEditId = null;
-let currentFilter = '';
-let currentSort = 'date-desc';
-let showPasswords = {};
-let selectedAccountsForMass = new Set();
-let searchTimeout = null;
-let currentSpoofAccountId = null;
-
-const games = [
-    { name: "Counter-Strike 2", appId: "730" },
-    { name: "Dota 2", appId: "570" },
-    { name: "Team Fortress 2", appId: "440" },
-    { name: "Rust", appId: "252490" },
-    { name: "Grand Theft Auto V", appId: "271590" },
-    { name: "PUBG: BATTLEGROUNDS", appId: "578080" },
-    { name: "Apex Legends", appId: "1172470" },
-    { name: "Destiny 2", appId: "1085660" },
-    { name: "Warframe", appId: "230410" },
-    { name: "Path of Exile", appId: "238960" }
-];
-
-// ==================== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ====================
-function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
-    if (tab === 'accounts') renderAccounts();
-    else if (tab === 'inventory') renderInventory();
-    else if (tab === 'stats') renderStats();
-    else if (tab === 'settings') renderSettings();
-}
-
-// ==================== ФИЛЬТРАЦИЯ И СОРТИРОВКА ====================
-function getFilteredAndSortedAccounts() {
-    let filtered = [...accounts];
-    if (currentFilter && currentFilter.trim()) {
-        const searchLower = currentFilter.toLowerCase();
-        filtered = filtered.filter(acc =>
-            acc.Login.toLowerCase().includes(searchLower) ||
-            (acc.Email && acc.Email.toLowerCase().includes(searchLower)) ||
-            (acc.SteamId && acc.SteamId.includes(searchLower)) ||
-            (acc.Notes && acc.Notes.toLowerCase().includes(searchLower)) ||
-            (acc.Proxy && acc.Proxy.toLowerCase().includes(searchLower))
-        );
-    }
-    switch(currentSort) {
-        case 'date-desc': filtered.sort((a,b) => new Date(b.CreatedAt) - new Date(a.CreatedAt)); break;
-        case 'date-asc': filtered.sort((a,b) => new Date(a.CreatedAt) - new Date(b.CreatedAt)); break;
-        case 'login-asc': filtered.sort((a,b) => a.Login.localeCompare(b.Login)); break;
-        case 'login-desc': filtered.sort((a,b) => b.Login.localeCompare(a.Login)); break;
-        case 'status': filtered.sort((a,b) => (a.Status === 'Online' ? 0 : 1) - (b.Status === 'Online' ? 0 : 1)); break;
-        case 'balance': filtered.sort((a,b) => { let balA = parseFloat(a.Balance.replace(/[^0-9.-]/g, '')) || 0; let balB = parseFloat(b.Balance.replace(/[^0-9.-]/g, '')) || 0; return balB - balA; }); break;
-    }
-    return filtered;
-}
-
-// ==================== ОТОБРАЖЕНИЕ АККАУНТОВ ====================
-function renderAccounts() {
-    const filtered = getFilteredAndSortedAccounts();
+    // ========== КОСМИЧЕСКАЯ БАЗА ДАННЫХ ==========
+    let accounts = [];
+    let currentGalaxy = 'accounts';
+    let currentEditId = null;
+    let currentDetailAccount = null;
+    let selectedMass = new Set();
+    let currentSpoofId = null;
+    let filterText = '';
     
-    let html = `
-        <div class="mb-6">
-            <div class="flex gap-3 flex-wrap">
-                <div class="flex-1 min-w-[250px] relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-                    <input type="text" id="searchInput" placeholder="Поиск по логину, email, Steam ID, заметкам, прокси..." class="w-full pl-11 py-3 rounded-2xl bg-gray-800/80 border border-[#00b4ff]/20 text-white" onkeyup="updateSearch()">
-                </div>
-                <select id="sortSelect" onchange="updateSort()" class="rounded-2xl bg-gray-800/80 border border-[#00b4ff]/20 text-white px-4 py-3">
-                    <option value="date-desc">📅 Сначала новые</option>
-                    <option value="date-asc">📅 Сначала старые</option>
-                    <option value="login-asc">🔤 Логин (А-Я)</option>
-                    <option value="login-desc">🔤 Логин (Я-А)</option>
-                    <option value="status">🟢 По статусу</option>
-                    <option value="balance">💰 По балансу</option>
-                </select>
-                <button onclick="showMassEditModal()" class="action-btn px-6 py-3 rounded-2xl">
-                    <i class="fas fa-check-double"></i> Выбрано (<span id="selectedCount">0</span>)
-                </button>
-                <button onclick="deleteAllAccounts()" class="action-btn danger-btn px-6 py-3 rounded-2xl">
-                    <i class="fas fa-trash-alt"></i> Удалить все
-                </button>
-                <button onclick="exportData()" class="action-btn px-6 py-3 rounded-2xl">
-                    <i class="fas fa-download"></i> Экспорт
-                </button>
-                <button onclick="importData()" class="action-btn px-6 py-3 rounded-2xl">
-                    <i class="fas fa-upload"></i> Импорт
-                </button>
-            </div>
-            <div class="flex justify-between mt-4 text-sm text-gray-500 px-2">
-                <span><i class="fas fa-filter"></i> Найдено: <span class="text-white font-semibold">${filtered.length}</span> из <span class="text-white font-semibold">${accounts.length}</span></span>
-                ${currentFilter ? `<span>🔍 "${currentFilter}" <button onclick="clearSearch()" class="text-[#00b4ff] hover:underline ml-2">✖ Очистить</button></span>` : ''}
-            </div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-    `;
+    // Инициализация звёзд
+    function createStars() {
+        const container = document.getElementById('starsContainer');
+        for(let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = Math.random() * 3 + 'px';
+            star.style.height = star.style.width;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 5 + 's';
+            star.style.animationDuration = 2 + Math.random() * 4 + 's';
+            container.appendChild(star);
+        }
+    }
     
-    filtered.forEach(acc => {
-        let lastLoginText = acc.LastLogin ? new Date(acc.LastLogin).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : 'никогда';
-        let avatarColor = `hsl(${Math.abs(acc.Login.split('').reduce((a,b)=>a+b.charCodeAt(0),0) % 360)}, 70%, 55%)`;
-        let isSelected = selectedAccountsForMass.has(acc.Id);
+    // Переключение галактик
+    function changeGalaxy(galaxy) {
+        currentGalaxy = galaxy;
+        ['Accounts','Inventory','Stats','Settings'].forEach(g => {
+            const btn = document.getElementById(`nav${g}`);
+            if(btn) btn.classList.remove('bg-cyan-900/30', 'text-white');
+        });
+        const activeBtn = document.getElementById(`nav${galaxy.charAt(0).toUpperCase() + galaxy.slice(1)}`);
+        if(activeBtn) activeBtn.classList.add('bg-cyan-900/30', 'text-white');
         
-        html += `
-        <div class="glass-card p-5" data-id="${acc.Id}" onclick="showAccountDetail('${acc.Id}')">
-            <input type="checkbox" class="card-checkbox" onclick="event.stopPropagation(); toggleMassSelect('${acc.Id}')" ${isSelected ? 'checked' : ''}>
-            
-            <div class="flex justify-between items-start ml-7">
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black" style="background: linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa);">
-                        ${acc.Login[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-white">${escapeHtml(acc.Login)}</h3>
-                        <p class="text-gray-500 text-xs mt-1">${acc.Email || 'без почты'}</p>
-                    </div>
-                </div>
-                <div class="status-badge ${acc.Status === 'Online' ? 'status-online' : 'status-offline'}">
-                    <i class="fas fa-circle ${acc.Status === 'Online' ? 'text-black' : 'text-gray-500'} text-[6px]"></i>
-                    ${acc.Status === 'Online' ? 'Онлайн' : 'Оффлайн'}
-                </div>
-            </div>
-            
-            <div class="info-grid">
-                <div class="info-item">
-                    <i class="fas fa-network-wired"></i>
-                    <span class="text-gray-400 text-xs">Прокси</span>
-                    <span class="text-white text-xs ml-auto">${acc.Proxy ? '✅ Да' : '❌ Нет'}</span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-file-code"></i>
-                    <span class="text-gray-400 text-xs">MaFile</span>
-                    <span class="text-white text-xs ml-auto">${acc.MaFile ? '✅ Да' : '❌ Нет'}</span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-coins"></i>
-                    <span class="text-gray-400 text-xs">Баланс</span>
-                    <span class="text-emerald-400 font-bold text-xs ml-auto">${acc.Balance}</span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-calendar"></i>
-                    <span class="text-gray-400 text-xs">Последний вход</span>
-                    <span class="text-white text-xs ml-auto">${lastLoginText}</span>
-                </div>
-            </div>
-            
-            <div class="flex gap-2 mt-4" onclick="event.stopPropagation()">
-                <button onclick="runASF('${acc.Login}')" class="card-btn card-btn-asf">
-                    <i class="fas fa-play"></i> ASF
-                </button>
-                <button onclick="viewInventory('${acc.SteamId || acc.Login}')" class="card-btn card-btn-inventory">
-                    <i class="fas fa-box"></i> Инвентарь
-                </button>
-                <button onclick="runSteam('${acc.Login}', '${escapeHtml(acc.Password)}')" class="card-btn card-btn-steam">
-                    <i class="fab fa-steam"></i> Steam
-                </button>
-                <button onclick="editAccount('${acc.Id}')" class="card-btn card-btn-edit">
-                    <i class="fas fa-pen"></i>
-                </button>
-                <button onclick="openSpooferSettings('${acc.Id}')" class="card-btn card-btn-spoof" title="Настройки спуфера">
-                    <i class="fas fa-magic"></i>
-                </button>
-                <button onclick="deleteAccount('${acc.Id}')" class="card-btn card-btn-delete">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>`;
-    });
+        if(galaxy === 'accounts') renderOrbitAccounts();
+        else if(galaxy === 'inventory') renderInventoryGalaxy();
+        else if(galaxy === 'stats') renderStatsGalaxy();
+        else renderSettingsGalaxy();
+    }
     
-    html += filtered.length === 0 ? `
-        <div class="col-span-full">
-            <div class="text-center py-20 bg-gray-800/30 rounded-3xl border border-dashed border-[#00b4ff]/30">
-                <i class="fas fa-inbox text-6xl text-gray-600 mb-5 block"></i>
-                <p class="text-gray-400 text-xl mb-4">Нет аккаунтов</p>
-                <button onclick="addNewAccount()" class="px-8 py-3 bg-gradient-to-r from-[#00b4ff] to-[#0088cc] rounded-xl font-bold hover:scale-105 text-white shadow-lg">➕ Добавить первый аккаунт</button>
+    // ========== ГАЛАКТИКА АККАУНТОВ ==========
+    function renderOrbitAccounts() {
+        let filtered = accounts.filter(a => !filterText || a.Login.toLowerCase().includes(filterText) || (a.Email||'').toLowerCase().includes(filterText));
+        let html = `
+            <div class="mb-5 flex gap-3 flex-wrap">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-4 top-3 text-gray-500"></i>
+                    <input type="text" id="searchOrbit" onkeyup="updateFilter()" placeholder="Поиск по вселенной..." class="w-full pl-11 py-2 rounded-xl bg-black/40 border border-cyan-500/30">
+                </div>
+                <button onclick="openMassField()" class="px-4 py-2 bg-cyan-800/50 rounded-xl text-sm"><i class="fas fa-layer-group"></i> Масс-эффект <span id="massCount" class="text-cyan-300">0</span></button>
+                <button onclick="exportOrbit()" class="px-4 py-2 bg-emerald-800/50 rounded-xl text-sm"><i class="fas fa-download"></i> Экспорт</button>
+                <button onclick="importOrbit()" class="px-4 py-2 bg-blue-800/50 rounded-xl text-sm"><i class="fas fa-upload"></i> Импорт</button>
             </div>
-        </div>` : '';
-    html += `</div>`;
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+        `;
+        
+        filtered.forEach(acc => {
+            const isSelected = selectedMass.has(acc.Id);
+            const avatarColor = `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`;
+            html += `
+                <div class="neo-card p-4 relative" onclick="showAccountGalaxy('${acc.Id}')">
+                    <input type="checkbox" class="absolute top-4 left-4 w-4 h-4 accent-cyan-500 z-20" onclick="event.stopPropagation(); toggleMassSelect('${acc.Id}')" ${isSelected ? 'checked' : ''}>
+                    <div class="flex justify-between items-start ml-7">
+                        <div class="flex gap-3">
+                            <div class="hologram w-12 h-12 flex items-center justify-center text-xl font-black text-white" style="background:${avatarColor}">${acc.Login[0]?.toUpperCase()}</div>
+                            <div><div class="font-bold text-white text-lg">${acc.Login}</div><div class="text-xs text-gray-400">${acc.Email || 'без почты'}</div></div>
+                        </div>
+                        <div class="status-neon ${acc.Status === 'Online' ? 'status-online-neon' : 'bg-gray-800 text-gray-400'}">${acc.Status === 'Online' ? '🟢 ONLINE' : '⚫ OFFLINE'}</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-4 text-xs">
+                        <div class="bg-black/30 p-2 rounded-xl flex justify-between"><span class="text-gray-400">🛡️ Прокси</span><span>${acc.Proxy ? '✅' : '❌'}</span></div>
+                        <div class="bg-black/30 p-2 rounded-xl flex justify-between"><span class="text-gray-400">🔐 2FA</span><span>${acc.MaFile ? '✅' : '❌'}</span></div>
+                        <div class="bg-black/30 p-2 rounded-xl flex justify-between col-span-2"><span class="text-gray-400">💰 Кредиты</span><span class="text-emerald-400 font-bold">${acc.Balance}</span></div>
+                    </div>
+                    <div class="flex gap-2 mt-4" onclick="event.stopPropagation()">
+                        <button onclick="runAsfQuick('${acc.Login}')" class="flex-1 py-1.5 bg-emerald-700 rounded-xl text-xs"><i class="fas fa-play"></i> ASF</button>
+                        <button onclick="runSteamQuick('${acc.Login}', '${escapeHtml(acc.Password)}')" class="flex-1 py-1.5 bg-blue-800 rounded-xl text-xs"><i class="fab fa-steam"></i> Steam</button>
+                        <button onclick="openSpoofPanel('${acc.Id}')" class="px-3 py-1.5 bg-purple-800 rounded-xl text-xs"><i class="fas fa-magic"></i></button>
+                        <button onclick="editAccountCard('${acc.Id}')" class="px-3 py-1.5 bg-amber-700 rounded-xl text-xs"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteAccountCard('${acc.Id}')" class="px-3 py-1.5 bg-red-800 rounded-xl text-xs"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        if(filtered.length === 0) html += `<div class="col-span-full text-center py-20 text-gray-500"><i class="fas fa-meteor text-5xl mb-3"></i><p>Пустота... Добавьте аккаунт</p></div>`;
+        html += `</div>`;
+        document.getElementById('dynamicContent').innerHTML = html;
+        document.getElementById('totalCountSpan').innerHTML = accounts.length + ' юнитов';
+        document.getElementById('massCount').innerHTML = selectedMass.size;
+        const percent = accounts.length ? (accounts.filter(a=>a.Status==='Online').length / accounts.length * 100) : 0;
+        document.getElementById('globalFill').style.width = percent + '%';
+    }
     
-    document.getElementById('mainContent').innerHTML = html;
-    document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`;
-    document.getElementById('selectedCount').innerText = selectedAccountsForMass.size;
-}
-
-// ==================== СТАТИСТИКА ====================
-function renderStats() {
-    const onlineCount = accounts.filter(a => a.Status === 'Online').length;
-    const totalBalance = accounts.reduce((sum, acc) => {
-        const n = parseFloat(acc.Balance.replace(/[^0-9.-]/g, ''));
-        return sum + (isNaN(n) ? 0 : n);
-    }, 0);
-    const withProxy = accounts.filter(a => a.Proxy).length;
-    const withMaFile = accounts.filter(a => a.MaFile).length;
-    const avgBalance = accounts.length ? (totalBalance / accounts.length).toFixed(2) : 0;
+    function updateFilter() { filterText = document.getElementById('searchOrbit')?.value.toLowerCase() || ''; renderOrbitAccounts(); }
+    function toggleMassSelect(id) { if(selectedMass.has(id)) selectedMass.delete(id); else selectedMass.add(id); renderOrbitAccounts(); }
+    function openMassField() { 
+        if(selectedMass.size === 0) { showToast('Выберите аккаунты'); return; }
+        let val = prompt('Массовое изменение: введите новые заметки');
+        if(val !== null) {
+            selectedMass.forEach(id => { let acc = accounts.find(a=>a.Id===id); if(acc) acc.Notes = val; });
+            saveToHost();
+            renderOrbitAccounts();
+            showToast(`Обновлено ${selectedMass.size} аккаунтов`);
+            selectedMass.clear();
+        }
+    }
     
-    document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-7xl mx-auto">
-            <h2 class="text-4xl font-bold mb-8 text-gradient">Статистика аккаунтов</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="stat-card"><div class="text-gray-400 text-sm mb-2"><i class="fas fa-users text-[#00b4ff] text-lg"></i> Всего аккаунтов</div><div class="text-5xl font-bold text-white">${accounts.length}</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm mb-2"><i class="fas fa-circle text-green-400"></i> Онлайн</div><div class="text-5xl font-bold text-green-400">${onlineCount}</div><div class="text-xs text-gray-500 mt-2">${accounts.length ? Math.round(onlineCount/accounts.length*100) : 0}% от всех</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm mb-2"><i class="fas fa-coins text-[#00b4ff]"></i> Общий баланс</div><div class="text-5xl font-bold text-emerald-400">${totalBalance.toFixed(2)} ₽</div></div>
-                <div class="stat-card"><div class="text-gray-400 text-sm mb-2"><i class="fas fa-chart-line text-[#00b4ff]"></i> Средний баланс</div><div class="text-5xl font-bold text-cyan-400">${avgBalance} ₽</div></div>
+    function createNewAccount() {
+        currentEditId = null;
+        document.getElementById('editLogin').value = `orb_${Math.floor(Math.random()*10000)}`;
+        document.getElementById('editPass').value = '';
+        document.getElementById('editSteamId').value = '';
+        document.getElementById('editBalance').value = '0 ₽';
+        document.getElementById('editEmail').value = '';
+        document.getElementById('editProxy').value = '';
+        document.getElementById('editNotes').value = '';
+        document.getElementById('editMaFile').value = '';
+        document.getElementById('modalEdit').classList.remove('hidden');
+    }
+    
+    function editAccountCard(id) {
+        let acc = accounts.find(a=>a.Id===id);
+        if(!acc) return;
+        currentEditId = id;
+        document.getElementById('editLogin').value = acc.Login;
+        document.getElementById('editPass').value = acc.Password || '';
+        document.getElementById('editSteamId').value = acc.SteamId || '';
+        document.getElementById('editBalance').value = acc.Balance;
+        document.getElementById('editEmail').value = acc.Email || '';
+        document.getElementById('editProxy').value = acc.Proxy || '';
+        document.getElementById('editNotes').value = acc.Notes || '';
+        document.getElementById('editMaFile').value = acc.MaFile || '';
+        document.getElementById('modalEdit').classList.remove('hidden');
+    }
+    
+    function saveAccountEdit() {
+        let data = {
+            Id: currentEditId || Date.now().toString(),
+            Login: document.getElementById('editLogin').value.trim(),
+            Password: document.getElementById('editPass').value,
+            SteamId: document.getElementById('editSteamId').value,
+            Email: document.getElementById('editEmail').value,
+            Proxy: document.getElementById('editProxy').value,
+            Notes: document.getElementById('editNotes').value,
+            MaFile: document.getElementById('editMaFile').value,
+            Balance: document.getElementById('editBalance').value || '0 ₽',
+            Status: currentEditId ? (accounts.find(a=>a.Id===currentEditId)?.Status || 'Offline') : 'Offline',
+            CreatedAt: currentEditId ? (accounts.find(a=>a.Id===currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(),
+            HardwareId: currentEditId ? (accounts.find(a=>a.Id===currentEditId)?.HardwareId || '') : '',
+            UseIsolation: currentEditId ? (accounts.find(a=>a.Id===currentEditId)?.UseIsolation || false) : false,
+            LaunchMode: currentEditId ? (accounts.find(a=>a.Id===currentEditId)?.LaunchMode || 'normal') : 'normal'
+        };
+        if(!data.Login) { showToast('Логин обязателен'); return; }
+        if(currentEditId) {
+            let idx = accounts.findIndex(a=>a.Id===currentEditId);
+            if(idx !== -1) accounts[idx] = data;
+        } else accounts.unshift(data);
+        saveToHost();
+        closeModal('modalEdit');
+        renderOrbitAccounts();
+        showToast('Аккаунт сохранён');
+    }
+    
+    function deleteAccountCard(id) { if(confirm('Уничтожить аккаунт?')) { accounts = accounts.filter(a=>a.Id!==id); selectedMass.delete(id); saveToHost(); renderOrbitAccounts(); showToast('Аккаунт уничтожен'); } }
+    function runAsfQuick(login) { showToast(`ASF запущен для ${login}`); if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: login })); }
+    function runSteamQuick(login, pass) { if(!pass) { showToast('Нет пароля'); return; } showToast(`Steam: ${login}`); if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runSteam", data: `${login}|${pass}` })); }
+    function launchAll() { if(!accounts.length) return; showToast(`Запуск флота (${accounts.length} кораблей)`); if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" })); }
+    
+    function showAccountGalaxy(id) {
+        let acc = accounts.find(a=>a.Id===id);
+        if(!acc) return;
+        currentDetailAccount = acc;
+        let html = `
+            <div class="space-y-3">
+                <div class="flex justify-between border-b border-cyan-500/30 pb-2"><span class="text-gray-400">Логин:</span><span class="text-white">${acc.Login}</span><button class="text-xs text-cyan-400" onclick="copyText('${acc.Login}')">Копировать</button></div>
+                <div class="flex justify-between"><span class="text-gray-400">Steam ID:</span><span>${acc.SteamId || '—'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Баланс:</span><span class="text-emerald-400">${acc.Balance}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Прокси:</span><span>${acc.Proxy || 'Нет'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">HWID:</span><span class="font-mono text-xs">${acc.HardwareId || '—'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Изоляция:</span><span>${acc.UseIsolation ? 'Да' : 'Нет'}</span></div>
+                <div>📝 Заметки: ${acc.Notes || '—'}</div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="stat-card"><h3 class="text-xl font-bold mb-5 text-white"><i class="fas fa-shield-alt text-[#00b4ff] mr-2"></i> Защита аккаунтов</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 rounded-xl bg-black/40"><span class="text-gray-300"><i class="fas fa-network-wired text-[#00b4ff] mr-2"></i> С прокси:</span><span class="font-bold text-white text-lg">${withProxy} (${Math.round(withProxy/accounts.length*100)||0}%)</span></div><div class="flex justify-between items-center p-3 rounded-xl bg-black/40"><span class="text-gray-300"><i class="fas fa-file-code text-[#00b4ff] mr-2"></i> С MaFile:</span><span class="font-bold text-white text-lg">${withMaFile} (${Math.round(withMaFile/accounts.length*100)||0}%)</span></div></div></div>
-                <div class="stat-card"><h3 class="text-xl font-bold mb-5 text-white"><i class="fas fa-history text-[#00b4ff] mr-2"></i> Активность</h3><div class="space-y-2 max-h-52 overflow-auto">${accounts.filter(a => a.LastLogin).slice(0,5).map(a => `<div class="text-sm py-2 px-3 rounded-lg bg-black/30 text-gray-300">${a.Login}: ${new Date(a.LastLogin).toLocaleDateString('ru-RU')}</div>`).join('') || '<div class="text-gray-500">Нет данных</div>'}</div></div>
-            </div>
-        </div>
-    `;
-}
-
-// ==================== ИНВЕНТАРЬ ====================
-function renderInventory() {
-    let gameOptions = games.map(g => `<option value="${g.appId}">${g.name}</option>`).join('');
-    document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-6xl mx-auto">
-            <div class="stat-card p-6 mb-6">
-                <h2 class="text-3xl font-bold mb-6 text-gradient"><i class="fas fa-box text-purple-400 mr-2"></i> Инвентарь Steam</h2>
-                <div class="flex gap-4 flex-wrap">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="text-gray-400 text-sm mb-2 block font-semibold">Steam ID или логин</label>
-                        <input type="text" id="inventorySteamId" placeholder="7656119..." class="w-full rounded-2xl">
-                    </div>
-                    <div class="min-w-[180px]">
-                        <label class="text-gray-400 text-sm mb-2 block font-semibold">Выберите игру</label>
-                        <select id="inventoryAppId" class="w-full rounded-2xl">${gameOptions}</select>
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="loadInventory()" class="btn-primary px-8 py-3 rounded-2xl font-bold shadow-xl"><i class="fas fa-search"></i> Загрузить</button>
+        `;
+        document.getElementById('modalDetailTitle').innerHTML = `<i class="fab fa-steam"></i> ${acc.Login}`;
+        document.getElementById('modalDetailBody').innerHTML = html;
+        document.getElementById('modalDetail').classList.remove('hidden');
+    }
+    
+    function actionRunASFDetail() { if(currentDetailAccount) runAsfQuick(currentDetailAccount.Login); closeModal('modalDetail'); }
+    function actionRunSteamDetail() { if(currentDetailAccount) runSteamQuick(currentDetailAccount.Login, currentDetailAccount.Password); closeModal('modalDetail'); }
+    function actionEditFromDetail() { if(currentDetailAccount) { closeModal('modalDetail'); editAccountCard(currentDetailAccount.Id); } }
+    function actionDeleteFromDetail() { if(currentDetailAccount && confirm('Удалить?')) { deleteAccountCard(currentDetailAccount.Id); closeModal('modalDetail'); } }
+    
+    // ========== ИНВЕНТАРЬ ==========
+    function renderInventoryGalaxy() {
+        document.getElementById('dynamicContent').innerHTML = `
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="glass-orbit p-6 mb-5">
+                    <h2 class="text-3xl font-bold text-cyan-300 mb-4"><i class="fas fa-cube"></i> Сканер инвентаря</h2>
+                    <div class="flex gap-3">
+                        <input id="invSteamId" placeholder="Steam ID или логин" class="flex-1">
+                        <select id="invApp" class="w-48">
+                            <option value="730">CS2</option><option value="570">Dota 2</option><option value="252490">Rust</option><option value="271590">GTA V</option>
+                        </select>
+                        <button onclick="scanInventory()" class="bg-purple-600 px-6 rounded-xl">Сканировать</button>
                     </div>
                 </div>
-                <div class="mt-5 p-4 bg-[#00b4ff]/10 rounded-xl text-xs text-gray-300 border border-[#00b4ff]/20">
-                    <i class="fas fa-info-circle text-[#00b4ff] mr-2"></i>Поддерживаемые игры: CS2, Dota 2, TF2, Rust, GTA V, PUBG, Apex Legends и другие
-                </div>
+                <div id="inventoryResultArea" class="glass-orbit p-6 min-h-[300px] flex items-center justify-center text-gray-500"><i class="fas fa-radar text-4xl mb-3 block"></i><p>Введите ID для сканирования</p></div>
             </div>
-            <div id="inventoryResult" class="stat-card p-6">
-                <div class="text-center text-gray-500 py-20">
-                    <i class="fas fa-steam text-6xl mb-5 block text-[#00b4ff] opacity-50"></i>
-                    <p class="text-lg">Введите Steam ID для просмотра инвентаря</p>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function loadInventory() {
-    let steamId = document.getElementById('inventorySteamId').value;
-    let appId = document.getElementById('inventoryAppId').value;
-    if (!steamId) { showToast('Введите Steam ID'); return; }
-    document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-20"><i class="fas fa-spinner fa-spin text-5xl text-[#00b4ff] mb-4 block"></i><p class="text-gray-400">Загрузка инвентаря...</p></div>';
-    if(window.chrome?.webview) {
-        window.chrome.webview.postMessage(JSON.stringify({ action: "getInventory", data: `${steamId}|${appId}` }));
-    } else {
+        `;
+    }
+    
+    function scanInventory() {
+        let sid = document.getElementById('invSteamId').value;
+        if(!sid) { showToast('Нужен Steam ID'); return; }
+        document.getElementById('inventoryResultArea').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin text-3xl"></i><p>Сканирование...</p></div>';
         setTimeout(() => {
-            document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-20 text-red-400"><i class="fas fa-exclamation-triangle text-6xl mb-4 block"></i>Демо-режим: для реальной загрузки инвентаря требуется интеграция с C#</div>';
+            document.getElementById('inventoryResultArea').innerHTML = '<div class="text-center text-emerald-400"><i class="fas fa-check-circle text-4xl"></i><p>Демо-режим: 24 предмета найдено (симуляция)</p><div class="grid grid-cols-4 gap-2 mt-4">' + Array(12).fill(0).map(() => `<div class="bg-black/30 p-2 rounded-xl"><i class="fab fa-steam text-2xl"></i><div class="text-xs">Предмет</div></div>`).join('') + '</div></div>';
         }, 1000);
     }
-}
-
-function renderInventoryResult(data) {
-    if (!data?.assets?.length) {
-        document.getElementById('inventoryResult').innerHTML = '<div class="text-center py-20 text-gray-500"><i class="fas fa-box-open text-6xl mb-4 block"></i>Нет предметов или профиль приватный</div>';
-        return;
+    
+    // ========== СТАТИСТИКА ==========
+    function renderStatsGalaxy() {
+        let online = accounts.filter(a=>a.Status==='Online').length;
+        let totalBal = accounts.reduce((s,a)=> s + (parseFloat(a.Balance)||0),0);
+        let proxyCount = accounts.filter(a=>a.Proxy).length;
+        let mafileCount = accounts.filter(a=>a.MaFile).length;
+        document.getElementById('dynamicContent').innerHTML = `
+            <div class="space-y-5">
+                <h2 class="text-3xl font-bold text-gradient">Космическая аналитика</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-orbit p-5 text-center"><i class="fas fa-ship text-cyan-400 text-2xl"></i><div class="text-3xl font-bold text-white">${accounts.length}</div><div>Всего</div></div>
+                    <div class="glass-orbit p-5 text-center"><i class="fas fa-broadcast-tower text-green-400 text-2xl"></i><div class="text-3xl font-bold text-green-400">${online}</div><div>Активные</div></div>
+                    <div class="glass-orbit p-5 text-center"><i class="fas fa-coins text-yellow-400 text-2xl"></i><div class="text-2xl font-bold text-yellow-300">${totalBal.toFixed(2)} ₽</div><div>Баланс</div></div>
+                    <div class="glass-orbit p-5 text-center"><i class="fas fa-shield text-purple-400 text-2xl"></i><div class="text-xl font-bold">${proxyCount} прокси</div><div>${mafileCount} 2FA</div></div>
+                </div>
+            </div>
+        `;
     }
-    let html = `<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5">`;
-    data.assets.slice(0, 30).forEach(item => {
-        html += `<div class="inventory-item"><img src="${item.icon_url || 'https://steamcommunity.com/economy/image/blank'}" class="w-24 h-24 mx-auto mb-3 rounded-xl"><p class="text-xs font-bold text-white truncate">${escapeHtml(item.name)}</p><p class="text-xs text-emerald-400 font-bold mt-2">x${item.amount}</p></div>`;
-    });
-    html += `</div>`;
-    document.getElementById('inventoryResult').innerHTML = html;
-}
-
-function viewInventory(steamId) {
-    if (!steamId || steamId === '—') { showToast('Укажите Steam ID в настройках аккаунта'); return; }
-    switchTab('inventory');
-    setTimeout(() => { const input = document.getElementById('inventorySteamId'); if (input) input.value = steamId; loadInventory(); }, 100);
-}
-
-// ==================== НАСТРОЙКИ ====================
-function renderSettings() {
-    document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-3xl mx-auto space-y-6">
-            <div class="stat-card p-8">
-                <h2 class="text-3xl font-bold mb-6 text-gradient"><i class="fas fa-database mr-2"></i> Управление данными</h2>
+    
+    function renderSettingsGalaxy() {
+        document.getElementById('dynamicContent').innerHTML = `
+            <div class="glass-orbit p-6 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-cyan-300 mb-4"><i class="fas fa-microchip"></i> Системные настройки</h2>
                 <div class="space-y-4">
-                    <button onclick="exportData()" class="btn-success w-full py-4 rounded-2xl font-bold shadow-xl hover:scale-105"><i class="fas fa-download"></i> Экспорт всех аккаунтов (JSON)</button>
-                    <button onclick="importData()" class="btn-primary w-full py-4 rounded-2xl font-bold shadow-xl hover:scale-105"><i class="fas fa-upload"></i> Импорт аккаунтов</button>
-                    <button onclick="deleteAllAccounts()" class="danger-btn w-full py-4 rounded-2xl font-bold shadow-xl hover:scale-105"><i class="fas fa-trash-alt"></i> Удалить ВСЕ аккаунты</button>
+                    <div class="flex justify-between items-center"><span>Путь к Steam.exe</span><div class="flex gap-2"><input id="steamPath" class="w-96"><button onclick="saveSteamPathLocal()" class="bg-cyan-700 px-3 py-1 rounded-xl">Сохранить</button></div></div>
+                    <button onclick="deleteAllData()" class="w-full bg-red-800 py-2 rounded-xl mt-4">⚠️ СБРОС ВСЕХ ДАННЫХ</button>
                 </div>
             </div>
-            <div class="stat-card p-8">
-                <h2 class="text-3xl font-bold mb-6 text-gradient"><i class="fab fa-steam mr-2"></i> Настройки Steam</h2>
-                <div>
-                    <label class="text-gray-400 text-sm font-semibold">Путь к Steam.exe</label>
-                    <div class="flex gap-3 mt-2">
-                        <input type="text" id="steamPathInput" class="flex-1 rounded-2xl" placeholder="C:\\Program Files (x86)\\Steam\\Steam.exe">
-                        <button onclick="browseSteamPath()" class="px-6 py-3 bg-gray-700 rounded-2xl font-semibold hover:bg-gray-600 transition">Обзор</button>
-                        <button onclick="saveSteamPath()" class="px-6 py-3 bg-[#00b4ff] rounded-2xl font-semibold hover:scale-105 transition">Сохранить</button>
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card p-8">
-                <h2 class="text-3xl font-bold mb-6 text-gradient"><i class="fas fa-info-circle mr-2"></i> О программе</h2>
-                <p class="text-2xl font-bold text-[#00b4ff] mb-4">ASF Manager PRO v4.0</p>
-                <div class="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-300">
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Управление аккаунтами Steam</div>
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Запуск ASF</div>
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Автоматический вход в Steam</div>
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Спуфер и изоляция аккаунтов</div>
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Просмотр инвентаря из 10+ игр</div>
-                    <div class="flex items-center gap-2 p-2 rounded-lg bg-black/30"><i class="fas fa-check-circle text-green-500"></i> Массовые операции</div>
-                </div>
-            </div>
-        </div>
-    `;
-    loadSteamPath();
-}
-
-// ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
-function addNewAccount() {
-    currentEditId = null;
-    document.getElementById('editTitle').innerHTML = 'Новый аккаунт';
-    document.getElementById('editLogin').value = `acc_${Date.now().toString().slice(-6)}`;
-    document.getElementById('editPassword').value = '';
-    document.getElementById('editSteamId').value = '';
-    document.getElementById('editBalance').value = '0 ₽';
-    document.getElementById('editEmail').value = '';
-    document.getElementById('editEmailPass').value = '';
-    document.getElementById('editProxy').value = '';
-    document.getElementById('editPin').value = '';
-    document.getElementById('editMaFile').value = '';
-    document.getElementById('editNotes').value = '';
-    document.getElementById('editModal').classList.remove('hidden');
-}
-
-function editAccount(id) {
-    const acc = accounts.find(a => a.Id === id);
-    if (!acc) return;
-    currentEditId = id;
-    document.getElementById('editTitle').innerHTML = `Редактирование: ${acc.Login}`;
-    document.getElementById('editLogin').value = acc.Login || '';
-    document.getElementById('editPassword').value = acc.Password || '';
-    document.getElementById('editSteamId').value = acc.SteamId || '';
-    document.getElementById('editBalance').value = acc.Balance || '0 ₽';
-    document.getElementById('editEmail').value = acc.Email || '';
-    document.getElementById('editEmailPass').value = acc.EmailPass || '';
-    document.getElementById('editProxy').value = acc.Proxy || '';
-    document.getElementById('editPin').value = acc.Pin || '';
-    document.getElementById('editMaFile').value = acc.MaFile || '';
-    document.getElementById('editNotes').value = acc.Notes || '';
-    document.getElementById('editModal').classList.remove('hidden');
-}
-
-function saveEditedAccount() {
-    const data = {
-        Id: currentEditId || Date.now().toString(),
-        Login: document.getElementById('editLogin').value.trim(),
-        Password: document.getElementById('editPassword').value,
-        SteamId: document.getElementById('editSteamId').value,
-        Email: document.getElementById('editEmail').value,
-        EmailPass: document.getElementById('editEmailPass').value,
-        Proxy: document.getElementById('editProxy').value,
-        Pin: document.getElementById('editPin').value,
-        MaFile: document.getElementById('editMaFile').value,
-        Notes: document.getElementById('editNotes').value,
-        Status: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.Status || "Offline") : "Offline",
-        Balance: document.getElementById('editBalance').value || "0 ₽",
-        CreatedAt: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.CreatedAt || new Date().toISOString()) : new Date().toISOString(),
-        LastLogin: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.LastLogin || "") : "",
-        HardwareId: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.HardwareId || "") : "",
-        UseIsolation: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.UseIsolation || false) : false,
-        LaunchMode: currentEditId ? (accounts.find(a => a.Id === currentEditId)?.LaunchMode || "normal") : "normal"
-    };
-    
-    if (!data.Login) { showToast('Логин обязателен для заполнения'); return; }
-    
-    if (currentEditId) {
-        const index = accounts.findIndex(a => a.Id === currentEditId);
-        if (index > -1) accounts[index] = data;
-    } else {
-        accounts.unshift(data);
+        `;
+        if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "getSteamPath", data: "" }));
     }
     
-    saveAccountsToHost();
-    closeEditModal();
-    renderAccounts();
-    showToast('Аккаунт сохранён');
-}
-
-function deleteAccount(id) {
-    if (confirm('Удалить аккаунт навсегда?')) {
-        accounts = accounts.filter(a => a.Id !== id);
-        selectedAccountsForMass.delete(id);
-        saveAccountsToHost();
-        renderAccounts();
-        showToast('Аккаунт удалён');
-    }
-}
-
-function deleteAllAccounts() {
-    if (confirm('⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ аккаунты?')) {
-        accounts = [];
-        selectedAccountsForMass.clear();
-        saveAccountsToHost();
-        renderAccounts();
-        showToast('Все аккаунты удалены');
-    }
-}
-
-function runASF(login) { 
-    showToast(`Запуск ASF для ${login}`);
-    if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runASF", data: login }));
-}
-
-function runASFForAll() {
-    if (!accounts.length) { showToast('Нет аккаунтов для запуска'); return; }
-    if (confirm(`Запустить ASF для всех ${accounts.length} аккаунтов?`)) {
-        if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runASFForAll", data: "" }));
-        showToast(`Запуск ASF для ${accounts.length} аккаунтов`);
-    }
-}
-
-function runSteam(login, password) {
-    if (!login || !password) { showToast('Укажите логин и пароль для входа в Steam'); return; }
-    showToast(`Запуск Steam для ${login}`);
-    if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "runSteam", data: `${login}|${password}` }));
-}
-
-// ==================== РАБОТА С ДАННЫМИ ====================
-function saveAccountsToHost() {
-    if(window.chrome?.webview) {
-        window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) }));
-    } else {
-        localStorage.setItem('asf_accounts', JSON.stringify(accounts));
-    }
-}
-
-function exportData() {
-    const blob = new Blob([JSON.stringify(accounts, null, 2)], {type: 'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `asf_backup_${new Date().toISOString().slice(0,19)}.json`;
-    a.click();
-    URL.revokeObjectURL(blob);
-    showToast('Экспорт выполнен');
-}
-
-function importData() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = ev => {
-            try {
-                const imported = JSON.parse(ev.target.result);
-                if (Array.isArray(imported)) {
-                    accounts = imported;
-                    saveAccountsToHost();
-                    renderAccounts();
-                    showToast(`Импортировано ${accounts.length} аккаунтов`);
-                } else throw new Error();
-            } catch { showToast('Ошибка импорта: неверный формат JSON'); }
-        };
-        reader.readAsText(file);
-    };
-    input.click();
-}
-
-// ==================== МАССОВОЕ РЕДАКТИРОВАНИЕ ====================
-function showMassEditModal() {
-    if (selectedAccountsForMass.size === 0) { showToast('Сначала выберите аккаунты (чекбоксы на карточках)'); return; }
-    document.getElementById('massEditModal').classList.remove('hidden');
-}
-
-function applyMassEdit() {
-    const field = document.getElementById('massEditField').value;
-    const value = document.getElementById('massEditValue').value;
-    if (!value) { showToast('Введите значение для изменения'); return; }
+    function deleteAllData() { if(confirm('Уничтожить все аккаунты?')) { accounts = []; selectedMass.clear(); saveToHost(); changeGalaxy('accounts'); showToast('Все данные стерты'); } }
     
-    selectedAccountsForMass.forEach(id => {
-        const acc = accounts.find(a => a.Id === id);
-        if (acc) {
-            switch(field) {
-                case 'Proxy': acc.Proxy = value; break;
-                case 'Notes': acc.Notes = value; break;
-                case 'Status': acc.Status = value; break;
-                case 'Balance': acc.Balance = value; break;
+    // ========== СПУФЕР ==========
+    function openSpoofPanel(id) {
+        let acc = accounts.find(a=>a.Id===id);
+        if(!acc) return;
+        currentSpoofId = id;
+        document.getElementById('spoofAccName').innerText = acc.Login;
+        document.getElementById('hwidValue').value = acc.HardwareId || '';
+        document.getElementById('launchSelect').value = acc.LaunchMode || 'normal';
+        const toggleDiv = document.getElementById('toggleIsolation');
+        if(acc.UseIsolation) toggleDiv.classList.add('active'); else toggleDiv.classList.remove('active');
+        document.getElementById('modalSpoof').classList.remove('hidden');
+    }
+    
+    function toggleIsolationFlag() {
+        document.getElementById('toggleIsolation').classList.toggle('active');
+    }
+    
+    function genNewHwid() { document.getElementById('hwidValue').value = `HWID-${Math.random().toString(36).substring(2,10).toUpperCase()}-${Date.now().toString().slice(-6)}`; }
+    
+    function saveSpoof() {
+        if(currentSpoofId) {
+            let acc = accounts.find(a=>a.Id===currentSpoofId);
+            if(acc) {
+                acc.HardwareId = document.getElementById('hwidValue').value;
+                acc.UseIsolation = document.getElementById('toggleIsolation').classList.contains('active');
+                acc.LaunchMode = document.getElementById('launchSelect').value;
+                saveToHost();
+                renderOrbitAccounts();
+                showToast('Спуфер настроен');
             }
         }
-    });
-    
-    saveAccountsToHost();
-    closeMassEditModal();
-    selectedAccountsForMass.clear();
-    renderAccounts();
-    showToast(`Обновлено ${selectedAccountsForMass.size} аккаунтов`);
-}
-
-// ==================== СПУФЕР ====================
-function openSpooferSettings(accountId) {
-    const account = accounts.find(a => a.Id === accountId);
-    if (!account) return;
-    currentSpoofAccountId = accountId;
-    document.getElementById('spoofAccountName').innerText = account.Login;
-    document.getElementById('hwidInput').value = account.HardwareId || '';
-    document.getElementById('isolationCheckbox').checked = account.UseIsolation || false;
-    document.getElementById('launchModeSelect').value = account.LaunchMode || 'normal';
-    document.getElementById('spoofModal').classList.remove('hidden');
-}
-
-function generateHWID() {
-    const newHwid = 'HWID-' + Math.random().toString(36).substring(2, 15).toUpperCase() + '-' + Date.now().toString().slice(-6);
-    document.getElementById('hwidInput').value = newHwid;
-    showToast('Сгенерирован новый HWID');
-}
-
-function saveSpooferSettings() {
-    if (!currentSpoofAccountId) return;
-    const account = accounts.find(a => a.Id === currentSpoofAccountId);
-    if (account) {
-        account.HardwareId = document.getElementById('hwidInput').value;
-        account.UseIsolation = document.getElementById('isolationCheckbox').checked;
-        account.LaunchMode = document.getElementById('launchModeSelect').value;
-        saveAccountsToHost();
-        closeSpoofModal();
-        renderAccounts();
-        showToast('Настройки спуфера сохранены');
-    }
-}
-
-// ==================== ДЕТАЛИ АККАУНТА ====================
-function showAccountDetail(id) {
-    const acc = accounts.find(a => a.Id === id);
-    if (!acc) return;
-    currentDetailAccount = acc;
-    let isPassShowing = showPasswords[acc.Id];
-    
-    let html = `
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-sign-in-alt w-4 text-[#00b4ff] mr-2"></i> Логин:</div><div class="detail-value">${escapeHtml(acc.Login)} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Login)}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-lock w-4 text-[#00b4ff] mr-2"></i> Пароль:</div><div class="detail-value">${isPassShowing ? escapeHtml(acc.Password) : '••••••••'} <span class="copy-btn" onclick="copyToClipboard('${escapeHtml(acc.Password)}')"><i class="fas fa-copy"></i> Копировать</span> <span class="copy-btn" onclick="togglePassword('${acc.Id}')"><i class="fas ${isPassShowing ? 'fa-eye-slash' : 'fa-eye'}"></i> ${isPassShowing ? 'Скрыть' : 'Показать'}</span></div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-envelope w-4 text-[#00b4ff] mr-2"></i> Почта:</div><div class="detail-value">${escapeHtml(acc.Email) || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-key w-4 text-[#00b4ff] mr-2"></i> Пароль почты:</div><div class="detail-value">${isPassShowing ? escapeHtml(acc.EmailPass) : '••••••••'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-network-wired w-4 text-[#00b4ff] mr-2"></i> Прокси:</div><div class="detail-value">${escapeHtml(acc.Proxy) || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-digit w-4 text-[#00b4ff] mr-2"></i> PIN-код:</div><div class="detail-value">${escapeHtml(acc.Pin) || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fab fa-steam w-4 text-[#00b4ff] mr-2"></i> Steam ID:</div><div class="detail-value">${escapeHtml(acc.SteamId) || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-coins w-4 text-[#00b4ff] mr-2"></i> Баланс:</div><div class="detail-value"><span class="text-emerald-400 font-bold text-xl">${acc.Balance}</span></div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-microchip w-4 text-[#00b4ff] mr-2"></i> HWID:</div><div class="detail-value">${acc.HardwareId || 'Не задан'} <span class="copy-btn" onclick="copyToClipboard('${acc.HardwareId || ''}')"><i class="fas fa-copy"></i> Копировать</span></div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-shield-alt w-4 text-[#00b4ff] mr-2"></i> Изоляция:</div><div class="detail-value">${acc.UseIsolation ? '✅ Включена' : '❌ Выключена'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-tv w-4 text-[#00b4ff] mr-2"></i> Режим запуска:</div><div class="detail-value">${acc.LaunchMode === 'bigpicture' ? 'Big Picture' : acc.LaunchMode === 'vr' ? 'VR режим' : 'Обычный'}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-plus w-4 text-[#00b4ff] mr-2"></i> Дата создания:</div><div class="detail-value">${new Date(acc.CreatedAt).toLocaleString('ru-RU')}</div></div>
-        <div class="detail-row"><div class="detail-label"><i class="fas fa-calendar-check w-4 text-[#00b4ff] mr-2"></i> Последний вход:</div><div class="detail-value">${acc.LastLogin ? new Date(acc.LastLogin).toLocaleString('ru-RU') : '—'}</div></div>
-    `;
-    
-    if (acc.MaFile) {
-        html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-file-code w-4 text-[#00b4ff] mr-2"></i> MaFile:</div><div class="detail-value"><pre class="bg-black/50 p-3 rounded-xl text-xs overflow-auto max-h-32 text-white border border-[#00b4ff]/20">${escapeHtml(acc.MaFile.substring(0, 500))}${acc.MaFile.length > 500 ? '...' : ''}</pre><span class="copy-btn inline-block mt-2" onclick="copyToClipboard('${escapeHtml(acc.MaFile)}')"><i class="fas fa-copy"></i> Копировать весь MaFile</span></div></div>`;
+        closeModal('modalSpoof');
     }
     
-    if (acc.Notes) {
-        html += `<div class="detail-row"><div class="detail-label"><i class="fas fa-sticky-note w-4 text-[#00b4ff] mr-2"></i> Заметки:</div><div class="detail-value whitespace-pre-wrap text-white">${escapeHtml(acc.Notes)}</div></div>`;
-    }
+    // ========== УТИЛИТЫ ==========
+    function saveToHost() { if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "saveAccounts", data: JSON.stringify(accounts) })); else localStorage.setItem('orbit_accounts', JSON.stringify(accounts)); }
+    function exportOrbit() { const blob = new Blob([JSON.stringify(accounts)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `orbit_backup_${Date.now()}.json`; a.click(); showToast('Экспорт готов'); }
+    function importOrbit() { const inp = document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=e=>{ const file=e.target.files[0]; const reader=new FileReader(); reader.onload=ev=>{ try{ const imported=JSON.parse(ev.target.result); if(Array.isArray(imported)) accounts=imported; saveToHost(); changeGalaxy('accounts'); showToast('Импорт выполнен'); }catch(e){showToast('Ошибка JSON');} }; reader.readAsText(file); }; inp.click(); }
+    function saveSteamPathLocal() { const path = document.getElementById('steamPath')?.value; if(path && window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "setSteamPath", data: path })); showToast('Путь сохранён'); }
+    function copyText(text) { navigator.clipboard.writeText(text); showToast('Скопировано'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function showToast(msg) { const t = document.createElement('div'); t.className = 'toast-cosmic'; t.innerHTML = `<i class="fas fa-satellite"></i> ${msg}`; document.body.appendChild(t); setTimeout(()=>t.remove(), 2500); }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     
-    document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user-circle text-[#00b4ff] mr-2"></i> ${escapeHtml(acc.Login)}`;
-    document.getElementById('detailContent').innerHTML = html;
-    document.getElementById('detailModal').classList.remove('hidden');
-}
-
-function togglePassword(id) { showPasswords[id] = !showPasswords[id]; showAccountDetail(id); }
-function deleteFromDetail() { if (currentDetailAccount && confirm(`Удалить аккаунт "${currentDetailAccount.Login}" навсегда?`)) { deleteAccount(currentDetailAccount.Id); closeDetailModal(); } }
-function editFromDetail() { if (currentDetailAccount) { closeDetailModal(); editAccount(currentDetailAccount.Id); } }
-function runASFFromDetail() { if (currentDetailAccount) { runASF(currentDetailAccount.Login); showToast(`Запуск ASF для ${currentDetailAccount.Login}`); } }
-function runSteamFromDetail() { if (currentDetailAccount) { runSteam(currentDetailAccount.Login, currentDetailAccount.Password); } }
-
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-function updateSearchDebounced() {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        currentFilter = document.getElementById('searchInput')?.value || '';
-        renderAccounts();
-    }, 300);
-}
-function updateSearch() { updateSearchDebounced(); }
-function updateSort() { currentSort = document.getElementById('sortSelect')?.value || 'date-desc'; renderAccounts(); }
-function clearSearch() { currentFilter = ''; const input = document.getElementById('searchInput'); if (input) input.value = ''; renderAccounts(); }
-function toggleMassSelect(accountId) {
-    if (selectedAccountsForMass.has(accountId)) selectedAccountsForMass.delete(accountId);
-    else selectedAccountsForMass.add(accountId);
-    renderAccounts();
-}
-function copyToClipboard(text) {
-    if (!text || text === '—') { showToast('Нет данных для копирования'); return; }
-    navigator.clipboard.writeText(text).then(() => showToast('Скопировано в буфер обмена!')).catch(() => showToast('Ошибка копирования'));
-}
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); currentDetailAccount = null; }
-function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); currentEditId = null; }
-function closeMassEditModal() { document.getElementById('massEditModal').classList.add('hidden'); document.getElementById('massEditValue').value = ''; }
-function closeSpoofModal() { document.getElementById('spoofModal').classList.add('hidden'); currentSpoofAccountId = null; }
-function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
-function browseSteamPath() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.exe';
-    input.onchange = e => { if (e.target.files[0]) document.getElementById('steamPathInput').value = e.target.files[0].path; };
-    input.click();
-}
-function saveSteamPath() {
-    const path = document.getElementById('steamPathInput')?.value;
-    if (path && window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "setSteamPath", data: path }));
-    showToast('Путь сохранён');
-}
-function loadSteamPath() {
-    if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "getSteamPath", data: "" }));
-}
-
-// ==================== ОБРАБОТКА СООБЩЕНИЙ ОТ C# ====================
-window.receiveFromCSharp = function(msg) {
-    if (msg.type === "accounts") {
-        accounts = msg.data || [];
-        if (currentTab === 'accounts') renderAccounts();
-        if (currentTab === 'stats') renderStats();
-        document.getElementById('accountCount').innerHTML = `${accounts.length} аккаунтов`;
-    } else if (msg.type === "inventoryData") {
-        renderInventoryResult(msg.data);
-    } else if (msg.type === "inventoryError") {
-        document.getElementById('inventoryResult').innerHTML = `<div class="text-center py-20 text-red-400"><i class="fas fa-exclamation-triangle text-6xl mb-4 block"></i>${msg.data}</div>`;
-    } else if (msg.type === "asfStarted") {
-        showToast(msg.data);
-        const acc = accounts.find(a => a.Login === msg.data.split(' ')[2]);
-        if (acc) { acc.Status = "Online"; saveAccountsToHost(); }
-        if (currentTab === 'accounts') renderAccounts();
-    } else if (msg.type === "asfError") {
-        showToast(msg.data);
-    } else if (msg.type === "steamStarted") {
-        showToast(msg.data);
-    } else if (msg.type === "steamError") {
-        showToast(msg.data);
-    } else if (msg.type === "steamPath") {
-        if (document.getElementById('steamPathInput')) document.getElementById('steamPathInput').value = msg.data || '';
-    } else if (msg.type === "hotkey") {
-        if (msg.data === 'new') addNewAccount();
-        else if (msg.data === 'search') document.getElementById('searchInput')?.focus();
-    }
-};
-
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
-window.onload = () => {
-    if(window.chrome?.webview) {
-        window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
-    } else {
-        const saved = localStorage.getItem('asf_accounts');
-        if (saved) {
-            try { accounts = JSON.parse(saved); } catch(e) { accounts = []; }
-        } else {
-            accounts = [];
-        }
-    }
-    switchTab('accounts');
-};
+    window.receiveFromCSharp = function(msg) {
+        if(msg.type === "accounts") { accounts = msg.data || []; if(currentGalaxy === 'accounts') renderOrbitAccounts(); if(currentGalaxy === 'stats') renderStatsGalaxy(); document.getElementById('totalCountSpan').innerHTML = accounts.length + ' юнитов'; }
+        else if(msg.type === "steamPath") { const inp = document.getElementById('steamPath'); if(inp) inp.value = msg.data || ''; }
+        else if(msg.type === "asfStarted") showToast(msg.data);
+    };
+    
+    window.onload = () => {
+        createStars();
+        if(window.chrome?.webview) window.chrome.webview.postMessage(JSON.stringify({ action: "getAccounts" }));
+        else { const saved = localStorage.getItem('orbit_accounts'); if(saved) try { accounts = JSON.parse(saved); } catch(e) {} }
+        changeGalaxy('accounts');
+    };
 </script>
 </body>
 </html>
